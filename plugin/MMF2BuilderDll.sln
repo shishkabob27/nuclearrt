@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.10.35027.167
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MMF2BuilderDll", "MMF2BuilderDll.vcxproj", "{145E0180-C6C7-486B-9AEA-8100F3D04DE0}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x86 = Debug|x86
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{145E0180-C6C7-486B-9AEA-8100F3D04DE0}.Debug|x86.ActiveCfg = Debug|Win32
+		{145E0180-C6C7-486B-9AEA-8100F3D04DE0}.Debug|x86.Build.0 = Debug|Win32
+		{145E0180-C6C7-486B-9AEA-8100F3D04DE0}.Release|x86.ActiveCfg = Release|Win32
+		{145E0180-C6C7-486B-9AEA-8100F3D04DE0}.Release|x86.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {94ED2F46-D272-48F6-BC1B-DE0F3DF1524C}
+	EndGlobalSection
+EndGlobal
