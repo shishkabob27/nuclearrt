@@ -104,10 +104,7 @@ namespace CTFAK.Core.CCN.Chunks.Banks.ImageBank
 							colorArray = ImageTranslator.AndroidMode3ToRGBA(imageData, Width, Height, false);
 							break;
 						case 4:
-							if (Settings.Android)
-								colorArray = ImageTranslator.AndroidMode4ToRGBA(imageData, Width, Height, false);
-							else
-								colorArray = ImageTranslator.Normal24BitMaskedToRGBA(imageData, Width, Height, Flags["Alpha"], Transparent, Settings.F3);
+							colorArray = ImageTranslator.Normal24BitMaskedToRGBA(imageData, Width, Height, Flags["Alpha"], Transparent, false);
 							break;
 						case 5:
 							colorArray = ImageTranslator.AndroidMode5ToRGBA(imageData, Width, Height, Flags["Alpha"]);
@@ -213,43 +210,6 @@ namespace CTFAK.Core.CCN.Chunks.Banks.ImageBank
 
 			var start = reader.Tell();
 			var dataSize = 0;
-			if (Settings.Android)
-			{
-				Handle = reader.ReadInt16();
-
-				switch (Handle >> 16)
-				{
-					case 0:
-						GraphicMode = 0;
-						break;
-					case 3:
-						GraphicMode = 2;
-						break;
-					case 5:
-						GraphicMode = 7;
-						break;
-				}
-
-				if (Settings.Build >= 284 && !IsMFA)
-					Handle--;
-				GraphicMode = (byte)reader.ReadInt32();
-				Width = reader.ReadInt16();
-				Height = reader.ReadInt16();
-				HotspotX = reader.ReadInt16();
-				HotspotY = reader.ReadInt16();
-				ActionX = reader.ReadInt16();
-				ActionY = reader.ReadInt16();
-				dataSize = reader.ReadInt32();
-
-				if (reader.PeekByte() == 255)
-					imageData = reader.ReadBytes(dataSize);
-				else
-					imageData = Decompressor.DecompressBlock(reader, dataSize);
-
-				return;
-
-				// couldn't care less
-			}
 
 			Handle = reader.ReadInt32();
 			if (Settings.Build >= 284 && !IsMFA)
@@ -322,31 +282,23 @@ namespace CTFAK.Core.CCN.Chunks.Banks.ImageBank
 				else
 					Transparent = Color.Black; //ig?
 
-
-				if (Settings.Android)
+				if (Settings.TwoFivePlus)
 				{
-					//couldn't care less
+					var decompSizePlus = decompressedReader.ReadInt32();
+					var rawImg = decompressedReader.ReadBytes(dataSize - 4);
+					var target = new byte[decompSizePlus];
+					LZ4Codec.Decode(rawImg, target);
+					imageData = target;
+				}
+				else if (Flags["LZX"])
+				{
+					var decompSize = decompressedReader.ReadInt32();
+					imageData = Decompressor.DecompressBlock(decompressedReader,
+										(int)(decompressedReader.Size() - decompressedReader.Tell()));
 				}
 				else
 				{
-					if (Settings.TwoFivePlus)
-					{
-						var decompSizePlus = decompressedReader.ReadInt32();
-						var rawImg = decompressedReader.ReadBytes(dataSize - 4);
-						var target = new byte[decompSizePlus];
-						LZ4Codec.Decode(rawImg, target);
-						imageData = target;
-					}
-					else if (Flags["LZX"])
-					{
-						var decompSize = decompressedReader.ReadInt32();
-						imageData = Decompressor.DecompressBlock(decompressedReader,
-											(int)(decompressedReader.Size() - decompressedReader.Tell()));
-					}
-					else
-					{
-						imageData = decompressedReader.ReadBytes(dataSize);
-					}
+					imageData = decompressedReader.ReadBytes(dataSize);
 				}
 
 				newImageData = null;
@@ -413,18 +365,6 @@ namespace CTFAK.Core.CCN.Chunks.Banks.ImageBank
 					GraphicMode = 4;
 					break;
 				case 4:
-					if (Settings.Android)
-					{
-						imageData = ImageTranslator.AndroidMode4ToRGBA(imageData, Width, Height, Flags["Alpha"]);
-						imageData = ImageTranslator.RGBAToRGBMasked(imageData, Width, Height, Flags["Alpha"]);
-						GraphicMode = 4;
-					}
-					else if (Settings.F3)
-					{
-						imageData = ImageTranslator.Normal24BitMaskedToRGBA(imageData, Width, Height, Flags["Alpha"], Transparent, Settings.Fusion3Seed);
-						imageData = ImageTranslator.RGBAToRGBMasked(imageData, Width, Height, Flags["Alpha"]);
-						GraphicMode = 4;
-					}
 					break;
 				case 5:
 					imageData = ImageTranslator.AndroidMode5ToRGBA(imageData, Width, Height, Flags["Alpha"]);

@@ -40,7 +40,6 @@ namespace CTFAK.CCN.Chunks.Frame
 			}
 			parentType = reader.ReadInt16();
 			parentHandle = reader.ReadInt16();
-			if (Settings.Old || Settings.F3) return;
 			layer = reader.ReadInt16();
 			instance = reader.ReadInt16();
 		}
@@ -395,11 +394,6 @@ case 13132: // Unknown
 			BackgroudIndex = reader.ReadInt32();
 			if (Settings.Fusion3Seed) reader.Skip(6);
 			Name = reader.ReadYuniversal();
-			if (Settings.Android)
-			{
-				XCoeff = 1;
-				YCoeff = 1;
-			}
 		}
 	}
 

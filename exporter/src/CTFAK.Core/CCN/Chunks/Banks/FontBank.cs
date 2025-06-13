@@ -28,7 +28,6 @@ namespace CTFAK.CCN.Chunks.Banks
 			Items = new List<FontItem>();
 			for (int i = 0; i < count; i++)
 			{
-				if (Settings.Android) continue;
 				var item = new FontItem();
 				item.Compressed = Compressed;
 				item.Read(reader);

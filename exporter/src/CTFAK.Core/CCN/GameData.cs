@@ -98,7 +98,6 @@ namespace CTFAK.CCN
 				if (reader.Tell() >= reader.Size()) break;
 				var newChunk = new Chunk();
 				var chunkData = newChunk.Read(reader);
-				if (newChunk.Id == 32494 && Settings.F3) Settings.Fusion3Seed = true;
 				if (CTFAKCore.parameters.Contains("-onlyimages"))
 				{
 					if (newChunk.Id != 26214 && // Image Bank
@@ -114,7 +113,7 @@ namespace CTFAK.CCN
 						continue;
 				}
 				//if (newChunk.Id == 32639) break;
-				if (newChunk.Id == 8787 && !Settings.F3) Settings.gameType = Settings.GameType.TWOFIVEPLUS;
+				if (newChunk.Id == 8787) Settings.gameType = Settings.GameType.TWOFIVEPLUS;
 				var chunkReader = new ByteReader(chunkData);
 				chunkIndex++;
 				string chunkName = "";

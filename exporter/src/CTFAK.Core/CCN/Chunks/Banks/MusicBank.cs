@@ -17,7 +17,6 @@ namespace CTFAK.CCN.Chunks.Banks
 		public override void Read(ByteReader reader)
 		{
 			NumOfItems = reader.ReadInt32();
-			if (Settings.Android) return;
 			for (int i = 0; i < NumOfItems; i++)
 			{
 				var item = new MusicFile();

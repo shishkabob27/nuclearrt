@@ -54,16 +54,13 @@ namespace CTFAK.CCN.Chunks.Frame
 				}
 				else if (identifier == EventCount)
 				{
-					if (Settings.Android) reader.Skip(4); // Does nothing.
 					var size = reader.ReadInt32();
 				}
 				else if (identifier == EventgroupData)
 				{
 					var size = reader.ReadInt32();
-					if (Settings.Android) size += 4;
 
 					var endPosition = reader.Tell() + size;
-					if (Settings.Android) reader.ReadInt32();
 					while (true)
 					{
 						var eg = new EventGroup();

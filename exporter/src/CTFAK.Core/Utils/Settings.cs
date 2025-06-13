@@ -29,9 +29,5 @@ namespace CTFAK.Utils
 		public static GameType gameType;
 		public static bool Old => gameType.HasFlag(GameType.MMF15);
 		public static bool TwoFivePlus => gameType.HasFlag(GameType.TWOFIVEPLUS);
-		public static bool Android => gameType.HasFlag(GameType.ANDROID);
-		public static bool F3 => gameType.HasFlag(GameType.F3);
-		public static bool iOS => gameType.HasFlag(GameType.IOS);
-		public static bool Normal => gameType == GameType.NORMAL;
 	}
 }

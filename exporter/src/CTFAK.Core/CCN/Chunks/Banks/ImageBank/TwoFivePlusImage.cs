@@ -54,8 +54,6 @@ namespace CTFAK.Core.CCN.Chunks.Banks.ImageBank
 			ActionY = reader.ReadInt16();
 			Transparent = reader.ReadColor();
 			//Logger.Log("Image Handle '" + Handle + "'s Transparent color: [" + Transparent + "]");
-			if (Settings.F3)
-				Transparent = Color.Black;
 			var decompSizePlus = reader.ReadInt32();
 			var rawImg = reader.ReadBytes(Math.Max(0, dataSize - 4));
 			var task = new Task(() =>

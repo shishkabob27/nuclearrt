@@ -27,7 +27,7 @@ namespace CTFAK.Core.CCN.Chunks.Banks.SoundBank
 
 			for (int i = 0; i < NumOfItems; i++)
 			{
-				if ((Settings.Android || Settings.Old || Settings.Fusion3Seed) && !Settings.isMFA) continue;
+				if ((Settings.Old || Settings.Fusion3Seed) && !Settings.isMFA) continue;
 
 				var item = new SoundItem();
 
