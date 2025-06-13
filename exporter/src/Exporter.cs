@@ -231,17 +231,17 @@ public class Exporter
 				{
 					objectInfos.Append(", std::make_shared<AlterableFlags>(");
 					objectInfos.Append("std::vector<bool>{");
-					objectInfos.Append("0");
-					//TODO: Add flags
-					//foreach (var flag in common.ObjectAlterableValues.AlterableFlags.Keys)
-					//{
-					//	objectInfos.Append($"{common.ObjectAlterableValues.AlterableFlags.GetFlag(flag).ToString().ToLower()}, ");
-					//}
+					for (int i = 0; i < 32; i++)
+					{
+						objectInfos.Append($"{common.Values.Flags.GetFlag(i).ToString().ToLower()}, ");
+					}
 					objectInfos.Append("})");
 				}
 				else
 				{
-					objectInfos.Append(", nullptr");
+					objectInfos.Append(", std::make_shared<AlterableFlags>(");
+					objectInfos.Append("std::vector<bool>{");
+					objectInfos.Append("})");
 				}
 
 				//Animation

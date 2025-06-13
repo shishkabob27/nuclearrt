@@ -34,6 +34,13 @@ namespace CTFAK.Memory
 			return false;
 		}
 
+		public bool GetFlag(int pos)
+		{
+			if (pos >= 0)
+				return (flag & ((uint)Math.Pow(2, pos))) != 0;
+			return false;
+		}
+
 		public void SetFlag(string key, bool value)
 		{
 			if (value)

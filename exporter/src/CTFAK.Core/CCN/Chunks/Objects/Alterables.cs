@@ -9,7 +9,7 @@ namespace CTFAK.CCN.Chunks.Objects
 	public class AlterableValues : ChunkLoader
 	{
 		public List<int> Items = new List<int>();
-		public int Flags = 0;
+		public BitDict Flags = new BitDict(new string[]{});
 
 		public override void Read(ByteReader reader)
 		{
@@ -28,7 +28,7 @@ namespace CTFAK.CCN.Chunks.Objects
 			}
 			try
 			{
-				Flags = reader.ReadInt32();
+				Flags.flag = reader.ReadUInt32();
 			}
 			catch { }
 		}
