@@ -106,8 +106,6 @@ namespace NuclearRTExporter
 					}
 				}
 
-				//DEBUG: REMOVE THIS IN PRODUCTION
-				runtimeBaseDir = new DirectoryInfo("D:\\development\\nuclearrt-alpha\\runtime");
 				if (!runtimeBaseDir.Name.Equals("runtime", StringComparison.OrdinalIgnoreCase))
 				{
 					Log("Runtime base directory not found!");
