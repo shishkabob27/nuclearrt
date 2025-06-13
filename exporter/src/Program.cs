@@ -28,13 +28,11 @@ namespace NuclearRTExporter
 				// Check if we have enough arguments
 				if (StartupArgs.Length < 2)
 				{
-					//return null;
+					return null;
 				}
 
-				//string ccnPath = StartupArgs[0];
-				//string outputPath = StartupArgs[1];
-				string ccnPath = "C:\\Users\\shishkabob\\Desktop\\application.ccn";
-				string outputPath = "C:\\Users\\shishkabob\\Desktop\\nucleartesterneb\\ijweg.txt";
+				string ccnPath = StartupArgs[0];
+				string outputPath = StartupArgs[1];
 
 				if (string.IsNullOrEmpty(ccnPath) || string.IsNullOrEmpty(outputPath))
 				{
