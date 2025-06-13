@@ -115,85 +115,58 @@ namespace CTFAK.CCN.Chunks
 			{
 				var item = new PlayerControl(reader);
 				Items.Add(item);
-				item.Read();
+				item.ControlType = reader.ReadInt16();
+			}
+
+			for (int i = 0; i < 4; i++)
+			{
+				Items[i].Keys.Read();
 			}
 		}
 	}
 
 	public class PlayerControl
 	{
-		int _controlType;
 		ByteReader _reader;
-		Keys _keys;
 
-		public int ControlType => _controlType;
-		public Keys Keys => _keys;
+		public int ControlType;
+		public Keys Keys;
 
 		public PlayerControl(ByteReader reader)
 		{
 			this._reader = reader;
-		}
-
-		public void Read()
-		{
-			_keys = new Keys(_reader);
-			_controlType = _reader.ReadInt16();
-			_keys.Read();
+			Keys = new Keys(_reader);
 		}
 	}
 
 	public class Keys
 	{
-		short _up;
-		short _down;
-		short _left;
-		short _right;
-		short _button1;
-		short _button2;
-		short _button3;
-		short _button4;
 		ByteReader _reader;
 
-		public short Up => _up;
-		public short Down => _down;
-		public short Left => _left;
-		public short Right => _right;
-		public short Button1 => _button1;
-		public short Button2 => _button2;
-		public short Button3 => _button3;
-		public short Button4 => _button4;
+		public short Up;
+		public short Down;
+		public short Left;
+		public short Right;
+		public short Button1;
+		public short Button2;
+		public short Button3;
+		public short Button4;
+
 		public Keys(ByteReader reader)
 		{
 			this._reader = reader;
 		}
 
-
 		public void Read()
 		{
-			_up = _reader.ReadInt16();
-			_down = _reader.ReadInt16();
-			_left = _reader.ReadInt16();
-			_right = _reader.ReadInt16();
-			_button1 = _reader.ReadInt16();
-			_button2 = _reader.ReadInt16();
-			//if (Settings.GameType == GameType.OnePointFive) return;
-			_button3 = _reader.ReadInt16();
-			_button4 = _reader.ReadInt16();
+			Up = _reader.ReadInt16();
+			Down = _reader.ReadInt16();
+			Left = _reader.ReadInt16();
+			Right = _reader.ReadInt16();
+			Button1 = _reader.ReadInt16();
+			Button2 = _reader.ReadInt16();
+			Button3 = _reader.ReadInt16();
+			Button4 = _reader.ReadInt16();
 		}
-
-		public void Write(ByteWriter Writer)
-		{
-			Writer.WriteInt16(_up);
-			Writer.WriteInt16(_down);
-			Writer.WriteInt16(_left);
-			Writer.WriteInt16(_right);
-			Writer.WriteInt16(_button1);
-			Writer.WriteInt16(_button2);
-			Writer.WriteInt16(_button3);
-			Writer.WriteInt16(_button4);
-
-		}
-
-
 	}
 }
