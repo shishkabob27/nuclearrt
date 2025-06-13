@@ -706,7 +706,7 @@ public class Exporter
 				{
 					var cond = evt.Conditions[k];
 
-					eventFunctions.AppendLine($"//{cond.ToString()} (ObjectType: {cond.ObjectType}, Num: {cond.Num})");
+					eventFunctions.AppendLine($"// (ObjectType: {cond.ObjectType}, Num: {cond.Num})");
 
 					string ifStatement = (cond.OtherFlags & 1) == 0 ? "if (!" : "if (";
 
@@ -1059,9 +1059,11 @@ public class Exporter
 									}
 									break;
 								case 8: // Center Display at X
+									act.ObjectInfoList = -1; // TODO: im doing this because or else it will write it as an "SetScrollX(instance->X)" rather than "SetScrollX(player_selector->begin()->X)"
 									eventFunctions.AppendLine($"SetScrollX({ConvertExpression((ExpressionParameter)act.Items[0].Loader, act)});");
 									break;
 								case 9: // Center Display at Y
+									act.ObjectInfoList = -1; // TODO: im doing this because or else it will write it as an "SetScrollX(instance->X)" rather than "SetScrollX(player_selector->begin()->X)"
 									eventFunctions.AppendLine($"SetScrollY({ConvertExpression((ExpressionParameter)act.Items[0].Loader, act)});");
 									break;
 							}
@@ -1073,6 +1075,8 @@ public class Exporter
 									{
 										string loopName = SanitizeObjectName(ConvertExpression((ExpressionParameter)act.Items[0].Loader, act).ToString());
 										loopName = loopName.Substring(2, loopName.Length - 4); // remove first 2 letters and last 2 letters as they are quotes
+
+										act.ObjectInfoList = -1; // TODO: im doing this because or else it will write it as an "instance->???" rather than "player_selector->begin()->???"
 
 										eventFunctions.AppendLine($"loop_{loopName}_running = true;");
 										eventFunctions.AppendLine($"loop_{loopName}_index = 0;");
@@ -1514,21 +1518,21 @@ public class Exporter
 			}
 			else if (expression.ObjectType > 0 && expression.Num == 1) // Y Position
 			{
-				if (GetObject(expression.ObjectInfo).Item1 == GetObject(eventBase.ObjectInfo).Item1 && GetObject(expression.ObjectInfo).Item2 == GetObject(eventBase.ObjectInfo).Item2)
+				if (expression.ObjectInfo == eventBase.ObjectInfo && expression.ObjectInfoList == eventBase.ObjectInfoList)
 					result += "instance->Y";
 				else
 					result += $"(*{GetSelector(expression.ObjectInfo)}->begin())->Y";
 			}
 			else if (expression.ObjectType > 0 && expression.Num == 2) // Image
 			{
-				if (GetObject(expression.ObjectInfo).Item1 == GetObject(eventBase.ObjectInfo).Item1 && GetObject(expression.ObjectInfo).Item2 == GetObject(eventBase.ObjectInfo).Item2)
+				if (expression.ObjectInfo == eventBase.ObjectInfo && expression.ObjectInfoList == eventBase.ObjectInfoList)
 					result += "std::dynamic_pointer_cast<CommonProperties>(instance->OI->Properties)->oAnimations->GetCurrentFrameIndex()";
 				else
 					result += $"std::dynamic_pointer_cast<CommonProperties>((*{GetSelector(expression.ObjectInfo)}->begin())->OI->Properties)->oAnimations->GetCurrentFrameIndex()";
 			}
 			else if (expression.ObjectType > 0 && expression.Num == 11) // X Position
 			{
-				if (GetObject(expression.ObjectInfo).Item1 == GetObject(eventBase.ObjectInfo).Item1 && GetObject(expression.ObjectInfo).Item2 == GetObject(eventBase.ObjectInfo).Item2)
+				if (expression.ObjectInfo == eventBase.ObjectInfo && expression.ObjectInfoList == eventBase.ObjectInfoList)
 					result += "instance->X";
 				else
 					result += $"(*{GetSelector(expression.ObjectInfo)}->begin())->X";
@@ -1539,14 +1543,14 @@ public class Exporter
 			}
 			else if (expression.ObjectType > 0 && expression.Num == 14) // Animation Number
 			{
-				if (GetObject(expression.ObjectInfo).Item1 == GetObject(eventBase.ObjectInfo).Item1 && GetObject(expression.ObjectInfo).Item2 == GetObject(eventBase.ObjectInfo).Item2)
+				if (expression.ObjectInfo == eventBase.ObjectInfo && expression.ObjectInfoList == eventBase.ObjectInfoList)
 					result += "std::dynamic_pointer_cast<CommonProperties>(instance->OI->Properties)->oAnimations->GetCurrentSequenceIndex()";
 				else
 					result += $"std::dynamic_pointer_cast<CommonProperties>((*{GetSelector(expression.ObjectInfo)}->begin())->OI->Properties)->oAnimations->GetCurrentSequenceIndex()";
 			}
 			else if (expression.ObjectType > 0 && expression.Num == 16) // Alterable Value
 			{
-				if (GetObject(expression.ObjectInfo).Item1 == GetObject(eventBase.ObjectInfo).Item1 && GetObject(expression.ObjectInfo).Item2 == GetObject(eventBase.ObjectInfo).Item2)
+				if (expression.ObjectInfo == eventBase.ObjectInfo && expression.ObjectInfoList == eventBase.ObjectInfoList)
 					result += "std::dynamic_pointer_cast<CommonProperties>(instance->OI->Properties)->oAlterableValues->GetValue(" + ((ShortExp)expression.Loader).Value + ")";
 				else
 					result += $"std::dynamic_pointer_cast<CommonProperties>((*{GetSelector(expression.ObjectInfo)}->begin())->OI->Properties)->oAlterableValues->GetValue({((ShortExp)expression.Loader).Value})";
@@ -1571,7 +1575,7 @@ public class Exporter
 			{
 				if (expression.ObjectType == 2) // Angle
 				{
-					if (GetObject(expression.ObjectInfo).Item1 == GetObject(eventBase.ObjectInfo).Item1 && GetObject(expression.ObjectInfo).Item2 == GetObject(eventBase.ObjectInfo).Item2)
+					if (expression.ObjectInfo == eventBase.ObjectInfo && expression.ObjectInfoList == eventBase.ObjectInfoList)
 						result += "instance->GetAngle()";
 					else
 						result += $"(*{GetSelector(expression.ObjectInfo)}->begin())->GetAngle()";
