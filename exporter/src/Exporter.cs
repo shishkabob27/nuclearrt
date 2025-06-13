@@ -75,26 +75,33 @@ public class Exporter
 		// Global Values
 		var globalValues = new StringBuilder();
 		globalValues.Append("{ ");
-		foreach (var value in GameData.globalValues.Items)
+		if (GameData.globalValues != null)
 		{
-			globalValues.Append(value);
-			if (value != GameData.globalValues.Items.Last())
+			foreach (var value in GameData.globalValues.Items)
 			{
-				globalValues.Append(", ");
+				globalValues.Append(value);
+				if (value != GameData.globalValues.Items.Last())
+				{
+					globalValues.Append(", ");
+				}
 			}
 		}
 		globalValues.Append(" }");
 		appData = appData.Replace("{{ global_values }}", globalValues.ToString());
 
+
 		// Global Strings
 		var globalStrings = new StringBuilder();
 		globalStrings.Append("{ ");
-		foreach (var str in GameData.globalStrings.Items)
+		if (GameData.globalStrings != null)
 		{
-			globalStrings.Append($"\"{SanitizeString(str)}\"");
-			if (str != GameData.globalStrings.Items.Last())
+			foreach (var str in GameData.globalStrings.Items)
 			{
-				globalStrings.Append(", ");
+				globalStrings.Append($"\"{SanitizeString(str)}\"");
+				if (str != GameData.globalStrings.Items.Last())
+				{
+					globalStrings.Append(", ");
+				}
 			}
 		}
 		globalStrings.Append(" }");
