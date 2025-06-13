@@ -21,9 +21,8 @@ namespace CTFAK.MMFParser.EXE.Loaders.Events.Expressions
 		public override void Read(ByteReader reader)
 		{
 			var currentPosition = reader.Tell();
-			var old = false;//Settings.GameType == GameType.OnePointFive&&!Settings.DoMFA;
-			ObjectType = (old ? reader.ReadSByte() : reader.ReadInt16());
-			Num = old ? reader.ReadSByte() : reader.ReadInt16();
+			ObjectType = reader.ReadInt16();
+			Num = reader.ReadInt16();
 
 			if (ObjectType == 0 && Num == 0) return;
 
