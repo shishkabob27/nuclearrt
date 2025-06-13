@@ -8,7 +8,11 @@ namespace CTFAK.MMFParser.EXE.Loaders.Events.Parameters
 	public class Group : ParameterCommon
 	{
 		public long Offset;
-		public ushort Flags;
+		public BitDict Flags = new BitDict(new string[]
+		{
+			"InactiveOnStart",
+			"Closed"
+		});
 		public ushort Id;
 		public string Name;
 		public int Password;
@@ -50,7 +54,7 @@ namespace CTFAK.MMFParser.EXE.Loaders.Events.Parameters
 		public override void Read(ByteReader reader)
 		{
 			Offset = reader.Tell() - 24;
-			Flags = reader.ReadUInt16();
+			Flags.flag = reader.ReadUInt16();
 			Id = reader.ReadUInt16();
 			Name = reader.ReadWideString();
 			if (Settings.Build >= 293) Name = "Group " + Id;

@@ -505,13 +505,13 @@ public class Exporter
 
 			//Group enabled on start
 			StringBuilder groupActive = new StringBuilder();
-			for (int j = 0; j < GameData.Frames[i].events.Items.Count; j++)
+			for (int j = 0; j < MfaData.Frames[i].Events.Items.Count; j++)
 			{
-				var evt = GameData.Frames[i].events.Items[j];
+				var evt = MfaData.Frames[i].Events.Items[j];
 				if (evt.Conditions[0].ObjectType == -1 && evt.Conditions[0].Num == -10)
 				{
 					int groupId = (evt.Conditions[0].Items[0].Loader as Group).Id;
-					bool isActiveOnStart = ((evt.Conditions[0].Items[0].Loader as Group).Flags | 1) == 0;
+					bool isActiveOnStart = !(evt.Conditions[0].Items[0].Loader as Group).Flags.GetFlag("InactiveOnStart");
 					groupActive.Append($"SetGroupActive({groupId}, {isActiveOnStart.ToString().ToLower()});\n");
 				}
 			}
