@@ -1009,7 +1009,7 @@ public class Exporter
 									{
 										eventFunctions.AppendLine($"auto parent = *{GetSelector((int)create.Position.ObjectInfoParent)}->begin();");
 									}
-									eventFunctions.AppendLine($"CreateInstance({create.Position.X}, {create.Position.Y}, {create.Position.Layer}, {create.ObjectInfo}, {create.Position.Angle}, {(create.Position.ObjectInfoParent != ushort.MaxValue ? "parent.get()" : "nullptr")});");
+									eventFunctions.AppendLine($"CreateInstance({create.Position.X}, {create.Position.Y}, {create.Position.Layer}, {GetObject(create.ObjectInfo).Item1}, {create.Position.Angle}, {(create.Position.ObjectInfoParent != ushort.MaxValue ? "parent.get()" : "nullptr")});");
 									//add to selector
 									eventFunctions.AppendLine($"{GetSelector(create.ObjectInfo)}->AddExternalInstance(ObjectInstances.back());");
 									eventFunctions.AppendLine("}");
@@ -1019,7 +1019,7 @@ public class Exporter
 									string X = ConvertExpression((ExpressionParameter)act.Items[1].Loader, act);
 									string Y = ConvertExpression((ExpressionParameter)act.Items[2].Loader, act);
 									string layer = ConvertExpression((ExpressionParameter)act.Items[3].Loader, act);
-									eventFunctions.AppendLine($"CreateInstance({X}, {Y}, ({layer}) - 1, {obj.ObjectInfo}, 0);");
+									eventFunctions.AppendLine($"CreateInstance({X}, {Y}, ({layer}) - 1, {GetObject(obj.ObjectInfo).Item1}, 0);");
 									//add to selector
 									eventFunctions.AppendLine($"{GetSelector(obj.ObjectInfo)}->AddExternalInstance(ObjectInstances.back());");
 									break;
