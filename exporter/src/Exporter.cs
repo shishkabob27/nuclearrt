@@ -473,8 +473,10 @@ public class Exporter
 			StringBuilder objectInstances = new StringBuilder();
 			foreach (var obj in GameData.Frames[i].objects)
 			{
-				//TODO
-				//if (obj.InstanceFlags.GetFlag("CreateOnly")) continue; // Skip instances not created on start
+				// Skip instances not created on start
+				if (obj.parentType != 0) continue;
+				if (GameData.frameitems[(int)obj.objectInfo].properties is ObjectCommon common && common.Flags.GetFlag("DoNotCreateAtStart")) continue;
+
 				objectInstances.Append($"ObjectInstances.push_back(factory.CreateInstance({obj.handle}, {obj.objectInfo}, {obj.x}, {obj.y}, {obj.layer}, {obj.instance})); // {GameData.frameitems[(int)obj.objectInfo].name}\n");
 			}
 			frameCpp = frameCpp.Replace("{{ OBJECT_INSTANCES }}", objectInstances.ToString());
