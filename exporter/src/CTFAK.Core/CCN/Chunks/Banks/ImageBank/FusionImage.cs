@@ -236,18 +236,7 @@ namespace CTFAK.Core.CCN.Chunks.Banks.ImageBank
 				ByteReader decompressedReader;
 				if (!IsMFA)
 				{
-					if (Settings.Old)
-					{
-						decompressedReader = new ByteReader(Decompressor.DecompressOldBlock(newImageData,
-											newImageData.Length, onepointfiveDecompressedSize, out var actualSize));
-						reader.Seek(onepointfiveStart + actualSize);
-					}
-
-					else
-					{
-						decompressedReader =
-											new ByteReader(Decompressor.DecompressBlock(newImageData));
-					}
+					decompressedReader = new ByteReader(Decompressor.DecompressBlock(newImageData));
 
 					newImageData = null;
 				}
@@ -256,11 +245,7 @@ namespace CTFAK.Core.CCN.Chunks.Banks.ImageBank
 					decompressedReader = reader;
 				}
 
-
-				if (Settings.Old)
-					Checksum = decompressedReader.ReadInt16();
-				else
-					Checksum = decompressedReader.ReadInt32();
+				Checksum = decompressedReader.ReadInt32();
 				references = decompressedReader.ReadInt32();
 				if (Settings.TwoFivePlus)
 					decompressedReader.Skip(4);
@@ -271,16 +256,12 @@ namespace CTFAK.Core.CCN.Chunks.Banks.ImageBank
 				Height = decompressedReader.ReadInt16();
 				GraphicMode = decompressedReader.ReadByte();
 				Flags.flag = decompressedReader.ReadByte();
-				if (!Settings.Old)
-					decompressedReader.ReadInt16();
+				decompressedReader.ReadInt16();
 				HotspotX = decompressedReader.ReadInt16();
 				HotspotY = decompressedReader.ReadInt16();
 				ActionX = decompressedReader.ReadInt16();
 				ActionY = decompressedReader.ReadInt16();
-				if (!Settings.Old)
-					Transparent = decompressedReader.ReadColor();
-				else
-					Transparent = Color.Black; //ig?
+				Transparent = decompressedReader.ReadColor();
 
 				if (Settings.TwoFivePlus)
 				{

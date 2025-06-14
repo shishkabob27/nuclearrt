@@ -45,31 +45,6 @@ namespace CTFAK.Memory
 			return ZlibStream.UncompressBuffer(reader.ReadBytes(size));
 		}
 
-		public static byte[] DecompressOld(ByteReader reader)
-		{
-			var decompressedSize = reader.PeekInt32() != -1 ? reader.ReadInt32() : 0;
-			var start = reader.Tell();
-			var compressedSize = reader.Size();
-			var buffer = reader.ReadBytes((int)compressedSize);
-			int actualSize;
-			var data = DecompressOldBlock(buffer, (int)compressedSize, decompressedSize, out actualSize);
-			reader.Seek(start + actualSize);
-			return data;
-		}
-
-		public static byte[] DecompressOldBlock(byte[] buff, int size, int decompSize, out int actual_size)
-		{
-			var originalBuff = Marshal.AllocHGlobal(size);
-			Marshal.Copy(buff, 0, originalBuff, buff.Length);
-			var outputBuff = Marshal.AllocHGlobal(decompSize);
-			actual_size = NativeLib.decompressOld(originalBuff, size, outputBuff, decompSize);
-			Marshal.FreeHGlobal(originalBuff);
-			var data = new byte[decompSize];
-			Marshal.Copy(outputBuff, data, 0, decompSize);
-			Marshal.FreeHGlobal(outputBuff);
-			return data;
-		}
-
 		public static byte[] CompressBlock(byte[] data)
 		{
 			var compOpts = new ZLibCompressOptions();
