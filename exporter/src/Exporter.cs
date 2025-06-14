@@ -486,7 +486,6 @@ public class Exporter
 			List<uint> uniqueHandles = new List<uint>();
 			foreach (var obj in GameData.Frames[i].objects)
 			{
-				//it needs to be an easy to iterate through list, it will also be reset in each function
 				if (!uniqueHandles.Contains(obj.objectInfo))
 				{
 					uniqueHandles.Add(obj.objectInfo);
@@ -749,7 +748,7 @@ public class Exporter
 									else if (button == 4)
 										button = 1;
 
-									eventFunctions.AppendLine($"{ifStatement} (Application::Instance().GetInput()->IsMouseButtonPressed({button}, {(click.IsDouble == 0 ? false : true).ToString().ToLower()}))) goto {nextLabel};"); //check if the user is clicking	
+									eventFunctions.AppendLine($"{ifStatement} (Application::Instance().GetInput()->IsMouseButtonPressed({button}, {(click.IsDouble == 0 ? false : true).ToString().ToLower()}))) goto {nextLabel};"); //check if the user is clicking
 
 									//Check mouse is over object
 									ParamObject paramObj = (ParamObject)cond.Items[1].Loader;
