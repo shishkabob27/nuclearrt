@@ -1,6 +1,6 @@
 # NuclearRT
 
-NuclearRT is a custom High-performance C++ runtime for Clickteam Fusion 2.5.
+NuclearRT is a fast, open-source, cross-platform C++ runtime for Clickteam Fusion 2.5.
 
 ## Features
 - Faster than the default runtime.
