@@ -1086,6 +1086,8 @@ public class Exporter
 
 										act.ObjectInfoList = -1; // TODO: im doing this because or else it will write it as an "instance->???" rather than "player_selector->begin()->???"
 
+										eventFunctions.AppendLine("{");
+
 										eventFunctions.AppendLine($"loop_{loopName}_running = true;");
 										eventFunctions.AppendLine($"loop_{loopName}_index = 0;");
 										eventFunctions.AppendLine($"int loopTimes = {ConvertExpression((ExpressionParameter)act.Items[1].Loader, act)};");
@@ -1093,6 +1095,8 @@ public class Exporter
 										eventFunctions.AppendLine($"    {loopName}_loop();");
 										eventFunctions.AppendLine($"    if (!loop_{loopName}_running) break;");
 										eventFunctions.AppendLine($"    loop_{loopName}_index++;");
+										eventFunctions.AppendLine("}");
+
 										eventFunctions.AppendLine("}");
 									}
 									break;
