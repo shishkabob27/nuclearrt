@@ -1,5 +1,6 @@
 using Avalonia;
 using CTFAK.EXE;
+using CTFAK.Utils;
 
 namespace NuclearRTExporter
 {
@@ -26,13 +27,14 @@ namespace NuclearRTExporter
 			try
 			{
 				// Check if we have enough arguments
-				if (StartupArgs.Length < 2)
+				if (StartupArgs.Length < 3)
 				{
 					return null;
 				}
 
-				string ccnPath = StartupArgs[0];
-				string outputPath = StartupArgs[1];
+				BuildType buildType = Enum.Parse<BuildType>(StartupArgs[0]);
+				string ccnPath = StartupArgs[1];
+				string outputPath = StartupArgs[2];
 
 				if (string.IsNullOrEmpty(ccnPath) || string.IsNullOrEmpty(outputPath))
 				{
@@ -41,6 +43,7 @@ namespace NuclearRTExporter
 
 				return new ExportSettings
 				{
+					BuildType = buildType,
 					CcnPath = ccnPath,
 					OutputPath = outputPath,
 				};
@@ -55,6 +58,7 @@ namespace NuclearRTExporter
 
 	public class ExportSettings
 	{
+		public BuildType BuildType { get; set; } = BuildType.SourceCode;
 		public string CcnPath { get; set; } = string.Empty;
 		public string OutputPath { get; set; } = string.Empty;
 	}
@@ -68,30 +72,30 @@ namespace NuclearRTExporter
 			logAction = logger;
 		}
 
-		public bool Run(string ccnPath, string outputPath)
+		public bool Run(ExportSettings settings)
 		{
 			try
 			{
 				// Validate inputs
-				if (string.IsNullOrEmpty(ccnPath))
+				if (string.IsNullOrEmpty(settings.CcnPath))
 				{
 					Log("CCN path cannot be empty!");
 					return false;
 				}
 
-				if (!File.Exists(ccnPath))
+				if (!File.Exists(settings.CcnPath))
 				{
 					Log("CCN file does not exist!");
 					return false;
 				}
 
-				if (string.IsNullOrEmpty(outputPath))
+				if (string.IsNullOrEmpty(settings.OutputPath))
 				{
 					Log("Output path cannot be empty!");
 					return false;
 				}
 
-				DirectoryInfo outputDir = new DirectoryInfo(outputPath); // get the directory name because the output path is a file
+				DirectoryInfo outputDir = new DirectoryInfo(settings.OutputPath); // get the directory name because the output path is a file
 				outputDir = outputDir.Parent;
 
 				//find the runtime base directory by going up the current directory until we find the runtime directory somewhere in the folder structure
@@ -115,7 +119,7 @@ namespace NuclearRTExporter
 
 				Log("Reading .ccn file...");
 				CCNFileReader ccnReader = new CCNFileReader();
-				ccnReader.LoadGame(ccnPath);
+				ccnReader.LoadGame(settings.CcnPath);
 
 				//Read MFA file
 				Log("Reading .mfa file...");
@@ -131,6 +135,11 @@ namespace NuclearRTExporter
 				Log("Extracting resources...");
 				GameDataParser gameDataParser = new GameDataParser();
 				gameDataParser.Parse(ccnReader, outputDir);
+
+				// Compile the project
+				Log("Compiling project...");
+				Compiler compiler = new Compiler();
+				compiler.Compile(settings.BuildType, outputDir);
 
 				Log("Export completed successfully!");
 				return true;

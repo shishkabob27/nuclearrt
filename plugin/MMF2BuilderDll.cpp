@@ -27,18 +27,26 @@
 #define BUILDER_ID 0x40000000
 
 LPCWSTR BUILD_NAMES[] = {
-    L"NuclearRT (Source)"
+    L"NuclearRT (Source)",
+    L"NuclearRT (Source + Windows (Debug))",
+    L"NuclearRT (Source + Windows (Release))"
 };
 
 LPCWSTR BUILD_FILTERS[] = {
+    L"CMake config|CMakeLists.txt||",
+    L"CMake config|CMakeLists.txt||",
     L"CMake config|CMakeLists.txt||"
 };
 
 LPCWSTR SELECTOR_TITLES[] = {
-    L"Save as NuclearRT (Source)"
+    L"Save as NuclearRT (Source)",
+    L"Save as NuclearRT (Source + Windows (Debug))",
+    L"Save as NuclearRT (Source + Windows (Release))"
 };
 
 LPCWSTR DEFAULT_EXTENSIONS[] = {
+    L".txt",
+    L".txt",
     L".txt"
 };
 
@@ -61,7 +69,7 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 // Return the number of build types added by the dll
 int WINAPI GetNumberOfBuildTypes()
 {
-	return 1;
+    return 3;
 }
 
 // Return the name of a given build type
@@ -125,7 +133,7 @@ BOOL WINAPI Build (LPCWSTR pTargetPathname, LPCWSTR pCCNPathname, int idx, DWORD
     siStartupInfo.cb = sizeof(siStartupInfo);
 
     wchar_t commandline[MAX_PATH * 2 + 2];
-    swprintf_s(commandline, L" \"%s\" \"%s\"", pCCNPathname, pTargetPathname);
+    swprintf_s(commandline, L"-idx %d \"%s\" \"%s\"", idx, pCCNPathname, pTargetPathname);
 
     wchar_t szAppPath[MAX_PATH];
     std::wstring strAppDirectory;

@@ -34,10 +34,9 @@ namespace NuclearRTExporter
 				return;
 			}
 
-			Log("Starting in auto-export mode...");
-
 			Log($"CCN Path: {settings.CcnPath}");
 			Log($"Output Path: {settings.OutputPath}");
+			Log($"Build Type: {settings.BuildType}");
 
 			// Start export automatically
 			_ = Task.Run(async () =>
@@ -45,7 +44,7 @@ namespace NuclearRTExporter
 				await Task.Delay(500); // Brief delay to ensure UI is ready
 				await Dispatcher.UIThread.InvokeAsync(async () =>
 							{
-								await StartExport(settings.CcnPath, settings.OutputPath);
+								await StartExport(settings);
 							});
 
 				if (exportSuccess)
@@ -60,11 +59,11 @@ namespace NuclearRTExporter
 			logTextBlock = this.FindControl<TextBlock>("LogTextBlock");
 		}
 
-		private async Task StartExport(string ccnPath, string outputPath)
+		private async Task StartExport(ExportSettings settings)
 		{
 			try
 			{
-				await Task.Run(() => RunExport(ccnPath, outputPath));
+				await Task.Run(() => RunExport(settings));
 			}
 			catch (Exception ex)
 			{
@@ -72,10 +71,10 @@ namespace NuclearRTExporter
 			}
 		}
 
-		private void RunExport(string ccnPath, string outputPath)
+		private void RunExport(ExportSettings settings)
 		{
 			NuclearRTExporter exporter = new NuclearRTExporter(Log);
-			exportSuccess = exporter.Run(ccnPath, outputPath);
+			exportSuccess = exporter.Run(settings);
 		}
 
 		public void Log(string message)
