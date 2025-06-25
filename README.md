@@ -2,6 +2,9 @@
 
 NuclearRT is a fast, open-source, cross-platform C++ runtime for Clickteam Fusion 2.5.
 
+> [!CAUTION]
+> This project is still in development and is not ready for general use.
+
 ## Features
 - Faster than the default runtime.
 - Provides 64-bit support
@@ -22,11 +25,7 @@ NuclearRT is a fast, open-source, cross-platform C++ runtime for Clickteam Fusio
 
 ## Usage
 
-1. Download and install the latest release from the [releases page](https://github.com/shishkabob27/nuclearrt/releases).
-1. Open your Clickteam Fusion 2.5 application.
-2. Set build type to `NuclearRT (Source)`
-3. Build the application. This will convert the application to C++.
-4. Run `build.bat` in the output directory to compile the application.
+Release builds are still not ready. You can build the application manually by following the instructions in the [Development](#development) section.
 
 ## Development
 
