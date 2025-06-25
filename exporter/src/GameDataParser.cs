@@ -1,4 +1,5 @@
 using CTFAK.FileReaders;
+using CTFAK.Utils;
 using System.Drawing;
 
 public class GameDataParser
@@ -16,11 +17,10 @@ public class GameDataParser
 		//image bank
 		if (gameData.Images.Items.Count > 0)
 		{
+			Logger.Log($"Exporting {gameData.Images.Items.Count} images");
 			Directory.CreateDirectory(outputPath + "/assets/images");
-			int i = 0;
 			foreach (var img in gameData.Images.Items)
 			{
-				//this.Log($"Exporting image {i++}/{gameData.Images.Items.Count}");
 				img.Value.bitmap.Save($"{outputPath}/assets/images/{img.Key}.png");
 			}
 		}
@@ -28,16 +28,35 @@ public class GameDataParser
 		//sounds
 		if (gameData.Sounds.Items.Count > 0)
 		{
+			Logger.Log($"Exporting {gameData.Sounds.Items.Count} sounds");
 			Directory.CreateDirectory(outputPath + "/assets/sounds");
-			int i = 0;
 			foreach (var sound in gameData.Sounds.Items)
 			{
-				//this.Log($"Exporting sound {i++}/{gameData.Sounds.Items.Count}");
 				string name = sound.Name.Replace("\0", string.Empty);
 				File.WriteAllBytes($"{outputPath}/assets/sounds/{name}.wav", sound.Data);
 			}
 		}
 
-		//this.Log("Resources extracted successfully!");
+		//fonts
+		if (gameData.Fonts.Items.Count > 0)
+		{
+			Logger.Log($"Exporting {gameData.Fonts.Items.Count} fonts");
+			Directory.CreateDirectory(outputPath + "/assets/fonts");
+
+			foreach (var font in gameData.Fonts.Items)
+			{
+				//look through windows fonts folder and find the font
+				var fontsFolder = new DirectoryInfo(Environment.GetFolderPath(Environment.SpecialFolder.Fonts));
+				FileInfo[] fontFiles = fontsFolder.GetFiles("*.ttf");
+				foreach (var fontFile in fontFiles)
+				{
+					if (fontFile.Name.StartsWith(font.Value.FaceName.Replace("\0", string.Empty), StringComparison.OrdinalIgnoreCase))
+					{
+						File.WriteAllBytes($"{outputPath}/assets/fonts/{font.Value.FaceName.Replace("\0", string.Empty)}.ttf", File.ReadAllBytes(fontFile.FullName));
+						break;
+					}
+				}
+			}
+		}
 	}
 }
