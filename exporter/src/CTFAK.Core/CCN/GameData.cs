@@ -53,9 +53,9 @@ namespace CTFAK.CCN
 
 		public ChunkOffsets chunkOffsets;
 
-		public FontBank Fonts;
-		public SoundBank Sounds;
-		public MusicBank Music;
+		public FontBank Fonts = new FontBank();
+		public SoundBank Sounds = new SoundBank();
+		public MusicBank Music = new MusicBank();
 		public ImageBank Images = new ImageBank();
 
 		public Dictionary<int, ObjectInfo> frameitems = new Dictionary<int, ObjectInfo>();
