@@ -1060,19 +1060,23 @@ public class Exporter
 									}
 									else // Relative position from object
 									{
-										eventFunctions.AppendLine("{");
-										eventFunctions.AppendLine($"auto parent = *{GetSelector((int)position.ObjectInfoParent)}->begin();");
-										eventFunctions.AppendLine($"SetScroll({position.X} + parent->X, {position.Y} + parent->Y, parent->Layer);");
+										eventFunctions.AppendLine($"for (ObjectIterator it(*{GetSelector((int)position.ObjectInfoParent)}); !it.end(); ++it) {{");
+										eventFunctions.AppendLine($"    auto parent = *it;");
+										eventFunctions.AppendLine($"    SetScroll({position.X} + parent->X, {position.Y} + parent->Y, parent->Layer);");
 										eventFunctions.AppendLine("}");
 									}
 									break;
 								case 8: // Center Display at X
-									act.ObjectInfoList = -1; // TODO: im doing this because or else it will write it as an "SetScrollX(instance->X)" rather than "SetScrollX(player_selector->begin()->X)"
-									eventFunctions.AppendLine($"SetScrollX({ConvertExpression((ExpressionParameter)act.Items[0].Loader, act)});");
+									eventFunctions.AppendLine($"for (ObjectIterator it(*{GetSelector(act.ObjectInfo)}); !it.end(); ++it) {{");
+									eventFunctions.AppendLine($"    auto instance = *it;");
+									eventFunctions.AppendLine($"    SetScrollX(instance->X);");
+									eventFunctions.AppendLine("}");
 									break;
 								case 9: // Center Display at Y
-									act.ObjectInfoList = -1; // TODO: im doing this because or else it will write it as an "SetScrollX(instance->X)" rather than "SetScrollX(player_selector->begin()->X)"
-									eventFunctions.AppendLine($"SetScrollY({ConvertExpression((ExpressionParameter)act.Items[0].Loader, act)});");
+									eventFunctions.AppendLine($"for (ObjectIterator it(*{GetSelector(act.ObjectInfo)}); !it.end(); ++it) {{");
+									eventFunctions.AppendLine($"    auto instance = *it;");
+									eventFunctions.AppendLine($"    SetScrollY(instance->Y);");
+									eventFunctions.AppendLine("}");
 									break;
 							}
 							break;
