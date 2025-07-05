@@ -1,6 +1,6 @@
 using CTFAK.CCN.Chunks.Frame;
 
-public class AlwaysAction : ActionBase
+public class AlwaysCondition : ConditionBase
 {
 	public override int ObjectType { get; set; } = -1;
 	public override int Num { get; set; } = -1;

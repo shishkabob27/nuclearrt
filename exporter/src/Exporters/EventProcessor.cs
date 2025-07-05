@@ -73,11 +73,22 @@ public class EventProcessor
 					return instance?.ObjectType == condition.ObjectType && instance?.Num == condition.Num;
 				});
 
-				if (acBaseType == null) continue;
+				if (acBaseType == null)
+				{
+					result.AppendLine($"//Condition ({condition.ObjectType}, {condition.Num}) not found");
+					result.AppendLine($"goto {nextLabel};");
+					continue;
+				}
+
+				Dictionary<string, string> parameters = new Dictionary<string, string>()
+				{
+					{ "eventIndex", j.ToString() },
+					{ "frameIndex", frameIndex.ToString() }
+				};
 
 				var instance = Activator.CreateInstance(acBaseType) as ConditionBase;
 				string ifStatement = (condition.OtherFlags & 1) == 0 ? "if (!" : "if (";
-				result.AppendLine(instance?.Build(condition, new Dictionary<string, string>(), ifStatement, nextLabel));
+				result.AppendLine(instance?.Build(condition, parameters, ifStatement, nextLabel));
 			}
 
 			result.AppendLine($"event_{j}_actions:;");
@@ -91,10 +102,20 @@ public class EventProcessor
 					return instance?.ObjectType == action.ObjectType && instance?.Num == action.Num;
 				});
 
-				if (acBaseType == null) continue;
+				if (acBaseType == null)
+				{
+					result.AppendLine($"//Action ({action.ObjectType}, {action.Num}) not found");
+					continue;
+				}
+
+				Dictionary<string, string> parameters = new Dictionary<string, string>()
+				{
+					{ "eventIndex", j.ToString() },
+					{ "frameIndex", frameIndex.ToString() }
+				};
 
 				var instance = Activator.CreateInstance(acBaseType) as ActionBase;
-				result.AppendLine(instance?.Build(action, new Dictionary<string, string>(), "", ""));
+				result.AppendLine(instance?.Build(action, parameters, "", ""));
 			}
 
 			result.AppendLine($"event_{j}_end:;");
