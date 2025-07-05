@@ -1,5 +1,6 @@
 using System.Reflection;
 using System.Text;
+using CTFAK.CCN.Chunks.Frame;
 using CTFAK.MMFParser.EXE.Loaders.Events.Parameters;
 
 public class EventProcessor
@@ -62,6 +63,18 @@ public class EventProcessor
 
 			result.AppendLine($"void GeneratedFrame{frameIndex}::Event_{j}()");
 			result.AppendLine("{");
+
+			//Get all relevant object infos for this event
+			//TODO: instead of reseting all selectors at the beginning of the event, reset them only if they are used in this event
+			List<Tuple<int, string>> relevantObjectInfos = new List<Tuple<int, string>>();
+			foreach (var cond in evt.Conditions) relevantObjectInfos.AddRange(GetRelevantObjectInfos(cond, frameIndex));
+			foreach (var act in evt.Actions) relevantObjectInfos.AddRange(GetRelevantObjectInfos(act, frameIndex));
+			relevantObjectInfos = relevantObjectInfos.Distinct().ToList();
+
+			foreach (var obj in relevantObjectInfos)
+			{
+				result.AppendLine($"{StringUtils.SanitizeObjectName(obj.Item2)}_{obj.Item1}_selector->Reset();");
+			}
 
 			string nextLabel = $"event_{j}_end";
 			foreach (var condition in evt.Conditions)
@@ -126,6 +139,82 @@ public class EventProcessor
 
 		return result.ToString();
 	}
+
+	//returns a list of all OIs used in this event condition or action
+	List<Tuple<int, string>> GetRelevantObjectInfos(EventBase eventBase, int frameIndex)
+	{
+		List<Tuple<int, string>> relevantObjectInfos = new List<Tuple<int, string>>();
+
+		int objectInfo = -1;
+		string objectName = "";
+
+		if (eventBase.ObjectType > 0)
+		{
+			objectInfo = eventBase.ObjectInfo;
+		}
+
+		foreach (var expression in eventBase.Items)
+		{
+			if (expression.Loader is ExpressionParameter)
+			{
+				foreach (var exp in (expression.Loader as ExpressionParameter).Items)
+				{
+					if (exp.ObjectType > 0)
+					{
+						objectInfo = exp.ObjectInfo;
+					}
+				}
+			}
+			else if (expression.Loader is Position)
+			{
+				if ((expression.Loader as Position).ObjectInfoParent != 65535)
+				{
+					objectInfo = (int)(expression.Loader as Position).ObjectInfoParent;
+				}
+			}
+			else if (expression.Loader is ParamObject)
+			{
+				objectInfo = (expression.Loader as ParamObject).ObjectInfo;
+			}
+		}
+
+		int systemQualifier = 0;
+		int objectType = 0;
+
+		foreach (var evtObj in _exporter.MfaData.Frames[frameIndex].Events.Objects)
+		{
+			if (evtObj.Handle == objectInfo)
+			{
+				objectName = evtObj.Name;
+				objectType = evtObj.ObjectType;
+				systemQualifier = evtObj.SystemQualifier;
+
+				//Find object name in ccn frame
+				foreach (var ccnObj in _exporter.GameData.Frames[frameIndex].objects)
+				{
+					if (objectName == _exporter.GameData.frameitems[(int)ccnObj.objectInfo].name)
+					{
+						objectInfo = ccnObj.objectInfo;
+						break;
+					}
+				}
+				break;
+			}
+		}
+
+		if (systemQualifier != 0)
+		{
+			objectName = Utilities.GetQualifierName(systemQualifier, objectType - 1);
+			objectInfo = short.MaxValue + systemQualifier + 1;
+		}
+
+		if (objectInfo == -1) return new List<Tuple<int, string>>();
+
+		if (!relevantObjectInfos.Any(x => x.Item1 == objectInfo)) relevantObjectInfos.Add(new Tuple<int, string>(objectInfo, objectName));
+
+		return relevantObjectInfos;
+	}
+
 
 	public string BuildEventIncludes(int frameIndex)
 	{
