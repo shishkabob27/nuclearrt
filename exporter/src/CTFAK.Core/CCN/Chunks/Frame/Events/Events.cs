@@ -321,6 +321,11 @@ else
 		{
 			throw new NotImplementedException();
 		}
+
+		public bool IsOfType(ACBase acBase)
+		{
+			return ObjectType == acBase.ObjectType && Num == acBase.Num;
+		}
 	}
 
 	public class Condition : EventBase

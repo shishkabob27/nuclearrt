@@ -5,6 +5,8 @@ using CTFAK.EXE;
 
 public class Exporter
 {
+	public static Exporter Instance { get; private set; }
+
 	private readonly IFileReader _ccnReader;
 	private readonly IFileReader _mfaReader;
 	private readonly DirectoryInfo _runtimeBasePath;
@@ -25,6 +27,8 @@ public class Exporter
 
 	public Exporter(IFileReader ccnReader, IFileReader mfaReader, DirectoryInfo runtimeBasePath, DirectoryInfo outputPath)
 	{
+		Instance = this;
+
 		_ccnReader = ccnReader;
 		_mfaReader = mfaReader;
 		_runtimeBasePath = runtimeBasePath;

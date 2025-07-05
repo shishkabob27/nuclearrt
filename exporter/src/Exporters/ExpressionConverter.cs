@@ -13,7 +13,7 @@ public class ExpressionConverter
 		_exporter = exporter;
 	}
 
-	public string ConvertExpression(ExpressionParameter expressions, EventBase eventBase = null)
+	public static string ConvertExpression(ExpressionParameter expressions, EventBase eventBase = null)
 	{
 		//TODO: refactor this
 
@@ -256,7 +256,7 @@ public class ExpressionConverter
 		return result;
 	}
 
-	public string GetComparisonSymbol(short comparison)
+	public static string GetComparisonSymbol(short comparison)
 	{
 		switch (comparison)
 		{
@@ -270,7 +270,7 @@ public class ExpressionConverter
 		}
 	}
 
-	public string GetOppositeComparison(short comparison)
+	public static string GetOppositeComparison(short comparison)
 	{
 		switch (comparison)
 		{
@@ -284,19 +284,19 @@ public class ExpressionConverter
 		}
 	}
 
-	private string GetSelector(int objectInfo)
+	public static string GetSelector(int objectInfo)
 	{
 		var obj = GetObject(objectInfo);
 		return $"{StringUtils.SanitizeObjectName(obj.Item2)}_{obj.Item1}_selector";
 	}
 
-	private Tuple<int, string> GetObject(int objectInfo)
+	public static Tuple<int, string> GetObject(int objectInfo)
 	{
 		string objectName = "";
 		int objectType = 0;
 		int systemQualifier = 0;
 
-		foreach (var evtObj in _exporter.MfaData.Frames[_exporter.CurrentFrame].Events.Objects)
+		foreach (var evtObj in Exporter.Instance.MfaData.Frames[Exporter.Instance.CurrentFrame].Events.Objects)
 		{
 			if (evtObj.Handle == objectInfo)
 			{
@@ -305,9 +305,9 @@ public class ExpressionConverter
 				systemQualifier = evtObj.SystemQualifier;
 
 				//Find object name in ccn frame
-				foreach (var ccnObj in _exporter.GameData.Frames[_exporter.CurrentFrame].objects)
+				foreach (var ccnObj in Exporter.Instance.GameData.Frames[Exporter.Instance.CurrentFrame].objects)
 				{
-					if (objectName == _exporter.GameData.frameitems[(int)ccnObj.objectInfo].name)
+					if (objectName == Exporter.Instance.GameData.frameitems[(int)ccnObj.objectInfo].name)
 					{
 						objectInfo = ccnObj.objectInfo;
 						break;
