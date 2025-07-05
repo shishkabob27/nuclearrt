@@ -1,4 +1,5 @@
 using System.Text;
+using CTFAK.Utils;
 
 public static class StringUtils
 {
@@ -61,6 +62,12 @@ public static class StringUtils
 
 	public static string SanitizeObjectName(string input)
 	{
+		if (string.IsNullOrEmpty(input))
+		{
+			Logger.Log($"SanitizeObjectName: input is null or empty");
+			return "";
+		}
+
 		// if the first character is a number, add an underscore
 		if (char.IsDigit(input[0]))
 		{
