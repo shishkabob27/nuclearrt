@@ -40,15 +40,6 @@ public class EventProcessor
 				continue;
 			}
 
-			//Check if there is an on loop condition, if yes, don't include it in the main event update loop
-			foreach (var cond in evt.Conditions)
-			{
-				if (cond.ObjectType == -1 && cond.Num == -16)
-				{
-					continue;
-				}
-			}
-
 			//only add event to normal event loop if it doesn't have a loop condition
 			if (DoesEventHaveLoop(evt) == null) result.Append($"{eventName}();\n");
 		}
