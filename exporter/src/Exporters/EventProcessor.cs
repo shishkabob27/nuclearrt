@@ -59,21 +59,20 @@ public class EventProcessor
 			result.AppendLine($"void GeneratedFrame{frameIndex}::Event_{j}()");
 			result.AppendLine("{");
 
-			//Get all relevant object infos for this event
-			//TODO: instead of reseting all selectors at the beginning of the event, reset them only if they are used in this event
-			List<Tuple<int, string>> relevantObjectInfos = new List<Tuple<int, string>>();
-			foreach (var cond in evt.Conditions) relevantObjectInfos.AddRange(GetRelevantObjectInfos(cond, frameIndex));
-			foreach (var act in evt.Actions) relevantObjectInfos.AddRange(GetRelevantObjectInfos(act, frameIndex));
-			relevantObjectInfos = relevantObjectInfos.Distinct().ToList();
-
-			foreach (var obj in relevantObjectInfos)
-			{
-				result.AppendLine($"{StringUtils.SanitizeObjectName(obj.Item2)}_{obj.Item1}_selector->Reset();");
-			}
-
 			string nextLabel = $"event_{j}_end";
+
+			List<Tuple<int, string>> usedSelectors = new List<Tuple<int, string>>(); // if a selector has already been reset during this event, don't reset it again
+
 			foreach (var condition in evt.Conditions)
 			{
+				//reset any selectors used in this condition if it wasn't reset in a previous condition
+				foreach (var obj in GetRelevantObjectInfos(condition, frameIndex).Distinct().ToList())
+				{
+					if (usedSelectors.Any(x => x.Item1 == obj.Item1)) continue;
+					usedSelectors.Add(obj);
+					result.AppendLine($"{StringUtils.SanitizeObjectName(obj.Item2)}_{obj.Item1}_selector->Reset();");
+				}
+
 				var acBaseTypes = Assembly.GetExecutingAssembly().GetTypes().Where(t => t.IsSubclassOf(typeof(ConditionBase))).ToList();
 				var acBaseType = acBaseTypes.FirstOrDefault(t =>
 				{
@@ -103,6 +102,14 @@ public class EventProcessor
 
 			foreach (var action in evt.Actions)
 			{
+				//reset any selectors used in this action if it wasn't reset in a previous action
+				foreach (var obj in GetRelevantObjectInfos(action, frameIndex).Distinct().ToList())
+				{
+					if (usedSelectors.Any(x => x.Item1 == obj.Item1)) continue;
+					usedSelectors.Add(obj);
+					result.AppendLine($"{StringUtils.SanitizeObjectName(obj.Item2)}_{obj.Item1}_selector->Reset();");
+				}
+
 				var acBaseTypes = Assembly.GetExecutingAssembly().GetTypes().Where(t => t.IsSubclassOf(typeof(ActionBase))).ToList();
 				var acBaseType = acBaseTypes.FirstOrDefault(t =>
 				{
