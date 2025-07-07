@@ -27,3 +27,13 @@ public class YComparisonCondition : XComparisonCondition
 {
 	public override int Num { get; set; } = -16;
 }
+
+public class CounterXComparisonCondition : XComparisonCondition
+{
+	public override int ObjectType { get; set; } = 7;
+}
+
+public class CounterYComparisonCondition : YComparisonCondition
+{
+	public override int ObjectType { get; set; } = 7;
+}
