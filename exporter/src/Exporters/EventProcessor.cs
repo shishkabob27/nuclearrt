@@ -1,6 +1,8 @@
 using System.Reflection;
 using System.Text;
+using Avalonia.Animation.Easings;
 using CTFAK.CCN.Chunks.Frame;
+using CTFAK.MMFParser.EXE.Loaders.Events.Expressions;
 using CTFAK.MMFParser.EXE.Loaders.Events.Parameters;
 
 public class EventProcessor
@@ -15,6 +17,7 @@ public class EventProcessor
 	public string BuildEventUpdateLoop(int frameIndex)
 	{
 		var result = new StringBuilder();
+
 		for (int j = 0; j < _exporter.MfaData.Frames[frameIndex].Events.Items.Count; j++)
 		{
 			var evt = _exporter.MfaData.Frames[frameIndex].Events.Items[j];
@@ -46,7 +49,8 @@ public class EventProcessor
 				}
 			}
 
-			result.Append($"{eventName}();\n");
+			//only add event to normal event loop if it doesn't have a loop condition
+			if (DoesEventHaveLoop(evt) == null) result.Append($"{eventName}();\n");
 		}
 		return result.ToString();
 	}
@@ -135,6 +139,33 @@ public class EventProcessor
 
 			result.AppendLine("}");
 			result.AppendLine("");
+		}
+
+		//Create any loop functions
+		foreach (var loopName in GetAllLoopNames(frameIndex))
+		{
+			result.AppendLine($"void GeneratedFrame{frameIndex}::{loopName}_loop()");
+			result.AppendLine("{");
+
+			//go through all events and find events that should be called in this loop
+			for (int j = 0; j < _exporter.MfaData.Frames[frameIndex].Events.Items.Count; j++)
+			{
+				var evt = _exporter.MfaData.Frames[frameIndex].Events.Items[j];
+
+				foreach (var condition in evt.Conditions)
+				{
+					if (!condition.IsOfType(new LoopCondition())) continue;
+
+					string loopNameSanitized = StringUtils.SanitizeObjectName((((condition.Items[0].Loader as ExpressionParameter).Items[0].Loader as StringExp).Value.ToString()));
+					if (loopNameSanitized == loopName)
+					{
+						//TODO: Check if group is active?
+						result.AppendLine($"\tEvent_{j}();");
+					}
+				}
+			}
+
+			result.AppendLine("}");
 		}
 
 		return result.ToString();
@@ -232,9 +263,47 @@ public class EventProcessor
 		return result.ToString();
 	}
 
+	public List<string> GetAllLoopNames(int frameIndex)
+	{
+		List<string> loopNames = new();
+
+		foreach (var evt in _exporter.MfaData.Frames[frameIndex].Events.Items)
+		{
+			string? loopName = DoesEventHaveLoop(evt);
+			if (loopName != null)
+			{
+				loopNames.Add(StringUtils.SanitizeObjectName(loopName));
+			}
+		}
+
+		return loopNames.Distinct().ToList();
+	}
+
+	//returns the loop name if the event has a loop condition, otherwise returns null
+	string? DoesEventHaveLoop(EventGroup evtGroup)
+	{
+		foreach (var condition in evtGroup.Conditions)
+		{
+			if (condition.IsOfType(new LoopCondition())) return ((condition.Items[0]?.Loader as ExpressionParameter)?.Items[0]?.Loader as StringExp)?.Value.ToString() ?? "";
+		}
+
+		return null;
+	}
+
 	public string BuildLoopIncludes(int frameIndex)
 	{
-		return "";
+		StringBuilder result = new();
+
+		List<string> loopNames = GetAllLoopNames(frameIndex);
+
+		foreach (var loopName in loopNames)
+		{
+			result.AppendLine($"bool loop_{loopName}_running = false;");
+			result.AppendLine($"int loop_{loopName}_index = 0;");
+			result.AppendLine($"void {loopName}_loop();");
+		}
+
+		return result.ToString();
 	}
 
 	public string BuildRunOnceCondition(int frameIndex)
