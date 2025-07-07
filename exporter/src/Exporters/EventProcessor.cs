@@ -282,6 +282,16 @@ public class EventProcessor
 		return null;
 	}
 
+	bool DoesEventHaveRunOnce(EventGroup evtGroup)
+	{
+		foreach (var condition in evtGroup.Conditions)
+		{
+			if (condition.IsOfType(new RunOnceCondition())) return true;
+		}
+
+		return false;
+	}
+
 	public string BuildLoopIncludes(int frameIndex)
 	{
 		StringBuilder result = new();
@@ -300,7 +310,15 @@ public class EventProcessor
 
 	public string BuildRunOnceCondition(int frameIndex)
 	{
-		return "";
+		StringBuilder result = new();
+
+		for (int i = 0; i < _exporter.MfaData.Frames[frameIndex].Events.Items.Count; i++)
+		{
+			var evt = _exporter.MfaData.Frames[frameIndex].Events.Items[i];
+			if (DoesEventHaveRunOnce(evt)) result.AppendLine($"bool event_{i}_run_once = false;");
+		}
+
+		return result.ToString();
 	}
 
 	public string BuildOneActionLoop(int frameIndex)
