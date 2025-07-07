@@ -1,6 +1,5 @@
 using System.Reflection;
 using System.Text;
-using Avalonia.Animation.Easings;
 using CTFAK.CCN.Chunks.Frame;
 using CTFAK.MMFParser.EXE.Loaders.Events.Expressions;
 using CTFAK.MMFParser.EXE.Loaders.Events.Parameters;
@@ -174,12 +173,11 @@ public class EventProcessor
 	{
 		List<Tuple<int, string>> relevantObjectInfos = new List<Tuple<int, string>>();
 
-		int objectInfo = -1;
-		string objectName = "";
+		List<int> objectInfos = new List<int>();
 
 		if (eventBase.ObjectType > 0)
 		{
-			objectInfo = eventBase.ObjectInfo;
+			objectInfos.Add(eventBase.ObjectInfo);
 		}
 
 		foreach (var expression in eventBase.Items)
@@ -190,7 +188,7 @@ public class EventProcessor
 				{
 					if (exp.ObjectType > 0)
 					{
-						objectInfo = exp.ObjectInfo;
+						objectInfos.Add(exp.ObjectInfo);
 					}
 				}
 			}
@@ -198,50 +196,46 @@ public class EventProcessor
 			{
 				if ((expression.Loader as Position).ObjectInfoParent != 65535)
 				{
-					objectInfo = (int)(expression.Loader as Position).ObjectInfoParent;
+					objectInfos.Add((int)(expression.Loader as Position).ObjectInfoParent);
 				}
 			}
 			else if (expression.Loader is ParamObject)
 			{
-				objectInfo = (expression.Loader as ParamObject).ObjectInfo;
+				objectInfos.Add((expression.Loader as ParamObject).ObjectInfo);
 			}
 		}
 
-		int systemQualifier = 0;
-		int objectType = 0;
-
-		foreach (var evtObj in _exporter.MfaData.Frames[frameIndex].Events.Objects)
+		foreach (var objectInfo in objectInfos)
 		{
-			if (evtObj.Handle == objectInfo)
+			foreach (var evtObj in _exporter.MfaData.Frames[frameIndex].Events.Objects)
 			{
-				objectName = evtObj.Name;
-				objectType = evtObj.ObjectType;
-				systemQualifier = evtObj.SystemQualifier;
-
-				//Find object name in ccn frame
-				foreach (var ccnObj in _exporter.GameData.Frames[frameIndex].objects)
+				if (evtObj.Handle == objectInfo)
 				{
-					if (objectName == _exporter.GameData.frameitems[(int)ccnObj.objectInfo].name)
+					string objectName = evtObj.Name;
+					int objectType = evtObj.ObjectType;
+					int systemQualifier = evtObj.SystemQualifier;
+
+					if (systemQualifier != 0)
 					{
-						objectInfo = ccnObj.objectInfo;
+						relevantObjectInfos.Add(new Tuple<int, string>(short.MaxValue + systemQualifier + 1, Utilities.GetQualifierName(systemQualifier, objectType - 1)));
 						break;
 					}
+
+					//Find object name in ccn frame
+					foreach (var ccnObj in _exporter.GameData.Frames[frameIndex].objects)
+					{
+						if (objectName == _exporter.GameData.frameitems[(int)ccnObj.objectInfo].name)
+						{
+							relevantObjectInfos.Add(new Tuple<int, string>(ccnObj.objectInfo, objectName));
+							break;
+						}
+					}
+					break;
 				}
-				break;
 			}
 		}
 
-		if (systemQualifier != 0)
-		{
-			objectName = Utilities.GetQualifierName(systemQualifier, objectType - 1);
-			objectInfo = short.MaxValue + systemQualifier + 1;
-		}
-
-		if (objectInfo == -1) return new List<Tuple<int, string>>();
-
-		if (!relevantObjectInfos.Any(x => x.Item1 == objectInfo)) relevantObjectInfos.Add(new Tuple<int, string>(objectInfo, objectName));
-
-		return relevantObjectInfos;
+		return relevantObjectInfos.Distinct().ToList();
 	}
 
 
