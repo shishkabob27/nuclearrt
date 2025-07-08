@@ -6,14 +6,14 @@
         Height="600"
         MinWidth="600"
         MinHeight="400">
-  
+
   <Grid>
     <Grid.RowDefinitions>
       <RowDefinition Height="Auto"/>
       <RowDefinition Height="*"/>
       <RowDefinition Height="Auto"/>
     </Grid.RowDefinitions>
-    
+
     <!-- Logo -->
     <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Center" Margin="20">
       <Image Source="avares://exporter/res/logo.png" Width="400" Height="100" Margin="0,0,0,0" VerticalAlignment="Center"/>
@@ -21,13 +21,13 @@
 
     <!-- Log Output -->
     <Border Grid.Row="1" BorderBrush="Gray" BorderThickness="1" Margin="20,0,20,20">
-      <ScrollViewer>
+      <ScrollViewer Name="LogScrollViewer">
         <TextBlock Name="LogTextBlock"
-                   FontFamily="Consolas,monospace" 
-                   Background="Black" 
-                   Foreground="White" 
+                   FontFamily="Consolas,monospace"
+                   Background="Black"
+                   Foreground="White"
                    Padding="10"/>
       </ScrollViewer>
     </Border>
   </Grid>
-</Window> 
+</Window>

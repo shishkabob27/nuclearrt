@@ -11,6 +11,7 @@ namespace NuclearRTExporter
 	public partial class MainWindow : Window
 	{
 		private TextBlock? logTextBlock;
+		private ScrollViewer? logScrollViewer;
 
 		private bool exportSuccess = false;
 
@@ -57,6 +58,7 @@ namespace NuclearRTExporter
 		private void InitializeControls()
 		{
 			logTextBlock = this.FindControl<TextBlock>("LogTextBlock");
+			logScrollViewer = this.FindControl<ScrollViewer>("LogScrollViewer");
 		}
 
 		private async Task StartExport(ExportSettings settings)
@@ -81,11 +83,26 @@ namespace NuclearRTExporter
 		{
 			Dispatcher.UIThread.Post(() =>
 			{
-				if (logTextBlock != null)
+				if (logTextBlock != null && logScrollViewer != null)
 				{
+					bool wasAtBottom = Math.Abs(logScrollViewer.Offset.Y - logScrollViewer.ScrollBarMaximum.Y) < 1.0;
+
 					string timestamp = DateTime.Now.ToString("HH:mm:ss");
-					string newText = $"[{timestamp}] {message}\n{logTextBlock.Text}";
-					logTextBlock.Text = newText;
+					string newLogEntry = $"[{timestamp}] {message}";
+
+					if (string.IsNullOrEmpty(logTextBlock.Text))
+					{
+						logTextBlock.Text = newLogEntry;
+					}
+					else
+					{
+						logTextBlock.Text = $"{logTextBlock.Text}\n{newLogEntry}";
+					}
+
+					if (wasAtBottom)
+					{
+						logScrollViewer.ScrollToEnd();
+					}
 				}
 			});
 		}
