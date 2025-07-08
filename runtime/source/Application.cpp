@@ -8,7 +8,7 @@ void Application::Initialize()
 	appData->Initialize();
 	std::cout << "Initialized AppData" << std::endl;
 
-	backend = std::make_shared<SDL2Backend>();
+	backend = std::make_shared<SDL3Backend>();
 	backend->Initialize();
 	std::cout << "Initialized Backend: " << backend->GetName() << std::endl;
 

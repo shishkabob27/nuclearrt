@@ -1,65 +1,52 @@
-#include "SDL2Backend.h"
+#include "SDL3Backend.h"
 
 #include <iostream>
 
 #include "Application.h"
 #include "FontBank.h"
 
-#include <SDL.h>
-#include <SDL_image.h>
-#include <SDL_mixer.h>
-#include <SDL_ttf.h>
+#include <SDL3/SDL.h>
+#include <SDL3_image/SDL_image.h>
+#include <SDL3_ttf/SDL_ttf.h>
+#include <setjmp.h>
 
 #ifdef _DEBUG
 #include "DebugUI.h"
-#include <imgui_impl_sdl2.h>
+#include <imgui_impl_sdl3.h>
 #endif
 
-SDL2Backend::SDL2Backend() {
+SDL3Backend::SDL3Backend() {
 }
 
-SDL2Backend::~SDL2Backend() {
+SDL3Backend::~SDL3Backend() {
 	Deinitialize();
 }
 
-void SDL2Backend::Initialize() {
+void SDL3Backend::Initialize() {
 	int windowWidth = Application::Instance().GetAppData()->GetWindowWidth();
 	int windowHeight = Application::Instance().GetAppData()->GetWindowHeight();
 	std::string windowTitle = Application::Instance().GetAppData()->GetAppName();
 	
-	// Initialize SDL2
-	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_GAMECONTROLLER) != 0) {
+	
+	if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_GAMEPAD)) {
 		std::cerr << "SDL_Init Error: " << SDL_GetError() << std::endl;
 		return;
 	}
-	
-	// Initialize SDL2_image
-	if ((IMG_Init(IMG_INIT_PNG) & IMG_INIT_PNG) != IMG_INIT_PNG) {
-		std::cerr << "IMG_Init Error: " << IMG_GetError() << std::endl;
-		return;
-	}
 
-	// Initialize SDL2_mixer
-	if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0) {
-		std::cerr << "Mix_OpenAudio Error: " << Mix_GetError() << std::endl;
-		return;
-	}
-
-	// Initialize SDL2_ttf
-	if (TTF_Init() == -1) {
-		std::cerr << "TTF_Init Error: " << TTF_GetError() << std::endl;
+	if (!TTF_Init()) {
+		std::cerr << "TTF_Init Error: " << SDL_GetError() << std::endl;
 		return;
 	}
 
 	// Create the window
-	window = SDL_CreateWindow(windowTitle.c_str(), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, windowWidth, windowHeight, SDL_WINDOW_SHOWN);
+	window = SDL_CreateWindow(windowTitle.c_str(), windowWidth, windowHeight, 0);
 	if (window == nullptr) {
 		std::cerr << "SDL_CreateWindow Error: " << SDL_GetError() << std::endl;
 		return;
 	}
 
 	// Create the renderer
-	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+	renderer = SDL_CreateRenderer(window, nullptr);
 	if (renderer == nullptr) {
 		std::cerr << "SDL_CreateRenderer Error: " << SDL_GetError() << std::endl;
 		return;
@@ -138,7 +125,7 @@ void SDL2Backend::Initialize() {
 #endif
 }
 
-void SDL2Backend::Deinitialize()
+void SDL3Backend::Deinitialize()
 {
 #ifdef _DEBUG
 	DEBUG_UI.Shutdown();
@@ -155,44 +142,35 @@ void SDL2Backend::Deinitialize()
 		SDL_DestroyWindow(window);
 		window = nullptr;
 	}
-
-	// Quit SDL2_mixer
-	Mix_CloseAudio();
 	
-	// Quit SDL2_image
-	IMG_Quit();
-
-	// Quit SDL2_ttf
 	TTF_Quit();
-	
-	// Quit SDL2
 	SDL_Quit();
 }
 
-bool SDL2Backend::ShouldQuit()
+bool SDL3Backend::ShouldQuit()
 {
 	SDL_Event event;
 	while (SDL_PollEvent(&event)) {
 #ifdef _DEBUG
 		// Process ImGui events
 		if (DEBUG_UI.IsEnabled()) {
-			ImGui_ImplSDL2_ProcessEvent(&event);
+			ImGui_ImplSDL3_ProcessEvent(&event);
 		}
 		
 		// Toggle debug UI with F1 key
-		if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_F1 && event.key.repeat == 0) {
+		if (event.type == SDL_EVENT_KEY_DOWN && event.key.key == SDLK_F1 && event.key.repeat == 0) {
 			DEBUG_UI.ToggleEnabled();
 		}
 #endif
 
-		if (event.type == SDL_QUIT) {
+		if (event.type == SDL_EVENT_QUIT) {
 			return true;
 		}
 	}
 	return false;
 }
 
-std::string SDL2Backend::GetPlatformName()
+std::string SDL3Backend::GetPlatformName()
 {
 #if defined(PLATFORM_WINDOWS)
 	return "Windows";
@@ -205,7 +183,7 @@ std::string SDL2Backend::GetPlatformName()
 #endif
 }
 
-std::string SDL2Backend::GetResourcesPath()
+std::string SDL3Backend::GetResourcesPath()
 {
 	#if defined(PLATFORM_NX)
 	return "romfs:/";
@@ -214,9 +192,14 @@ std::string SDL2Backend::GetResourcesPath()
 	#endif
 }
 
-void SDL2Backend::BeginDrawing()
+void SDL3Backend::BeginDrawing()
 {
-	SDL_Colour borderColor = RGBToSDLColor(Application::Instance().GetAppData()->GetBorderColor());
+	if (renderer == nullptr) {
+		std::cerr << "BeginDrawing called with null renderer!" << std::endl;
+		return;
+	}
+	
+	SDL_Color borderColor = RGBToSDLColor(Application::Instance().GetAppData()->GetBorderColor());
 	SDL_SetRenderDrawColor(renderer, borderColor.r, borderColor.g, borderColor.b, borderColor.a);
 	SDL_RenderClear(renderer);
 
@@ -225,8 +208,13 @@ void SDL2Backend::BeginDrawing()
 #endif
 }
 
-void SDL2Backend::EndDrawing()
+void SDL3Backend::EndDrawing()
 {
+	if (renderer == nullptr) {
+		std::cerr << "EndDrawing called with null renderer!" << std::endl;
+		return;
+	}
+	
 #ifdef _DEBUG
 	DEBUG_UI.EndFrame();
 #endif
@@ -234,13 +222,13 @@ void SDL2Backend::EndDrawing()
 	SDL_RenderPresent(renderer);
 }
 
-void SDL2Backend::Clear(int color)
+void SDL3Backend::Clear(int color)
 {
 	SDL_SetRenderDrawColor(renderer, (color >> 16) & 0xFF, (color >> 8) & 0xFF, color & 0xFF, (color >> 24) & 0xFF);
 	SDL_RenderClear(renderer);
 }
 
-void SDL2Backend::LoadTexture(int id) {
+void SDL3Backend::LoadTexture(int id) {
 	std::string path = GetResourcesPath() + "images/" + std::to_string(id) + ".png";
 
 	//Check if texture already exists
@@ -250,21 +238,20 @@ void SDL2Backend::LoadTexture(int id) {
 
 	SDL_Surface* surface = IMG_Load(path.c_str());
 	if (surface == nullptr) {
-		std::cerr << "IMG_Load Error: " << IMG_GetError() << std::endl;
 		return;
 	}
 
 	SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
-	SDL_FreeSurface(surface);
+	SDL_DestroySurface(surface);
 	textures[id] = texture;
 }
 
-void SDL2Backend::UnloadTexture(int id) {
+void SDL3Backend::UnloadTexture(int id) {
 	SDL_DestroyTexture(textures[id]);
 	textures.erase(id);
 }
 
-void SDL2Backend::DrawTexture(int id, int x, int y, int offsetX, int offsetY, int angle, float scale, int color, char blendCoefficient, int effect, unsigned int effectParam)
+void SDL3Backend::DrawTexture(int id, int x, int y, int offsetX, int offsetY, int angle, float scale, int color, char blendCoefficient, int effect, unsigned int effectParam)
 {
 	SDL_Texture* texture = textures[id];
 	if (texture == nullptr) {
@@ -286,8 +273,8 @@ void SDL2Backend::DrawTexture(int id, int x, int y, int offsetX, int offsetY, in
 	
 	//get texture dimensions
 	int width, height;
-	SDL_QueryTexture(texture, nullptr, nullptr, &width, &height);
-	SDL_Rect rect = { x - offsetX, y - offsetY, width, height };
+	GetTextureDimensions(id, width, height);
+	SDL_FRect rect = { x - offsetX, y - offsetY, width, height };
 	
 	//Effects
 	switch (effect) {
@@ -303,7 +290,7 @@ void SDL2Backend::DrawTexture(int id, int x, int y, int offsetX, int offsetY, in
 			break;
 	}
 
-	SDL_RenderCopyEx(renderer, texture, nullptr, &rect, 360 - angle, new SDL_Point{ offsetX, offsetY }, SDL_FLIP_NONE);
+	SDL_RenderTextureRotated(renderer, texture, nullptr, &rect, 360 - angle, new SDL_FPoint{ static_cast<float>(offsetX), static_cast<float>(offsetY) }, SDL_FLIP_NONE);
 	
 	// Restore original texture properties
 	SDL_SetTextureColorMod(texture, origR, origG, origB);
@@ -311,7 +298,7 @@ void SDL2Backend::DrawTexture(int id, int x, int y, int offsetX, int offsetY, in
 	SDL_SetTextureBlendMode(texture, origBlendMode);
 }
 
-void SDL2Backend::DrawQuickBackdrop(int x, int y, int width, int height, std::shared_ptr<Shape> shape)
+void SDL3Backend::DrawQuickBackdrop(int x, int y, int width, int height, std::shared_ptr<Shape> shape)
 {
 	//TODO: Borders
 	//TODO: Ellipse masks
@@ -324,12 +311,12 @@ void SDL2Backend::DrawQuickBackdrop(int x, int y, int width, int height, std::sh
 		int y2 = shape->FlipY ? y : y + height;
 
 		//TODO: BorderSize
-		SDL_RenderDrawLine(renderer, x1, y1, x2, y2);
+		SDL_RenderLine(renderer, x1, y1, x2, y2);
 	}
 	else {
 		if (shape->FillType == 1) { // Solid Color
 			SDL_SetRenderDrawColor(renderer, (shape->Color1 >> 16) & 0xFF, (shape->Color1 >> 8) & 0xFF, shape->Color1 & 0xFF, SDL_ALPHA_OPAQUE);
-			SDL_Rect rect = { x, y, width, height };
+			SDL_FRect rect = { x, y, width, height };
 			SDL_RenderFillRect(renderer, &rect);
 		}
 		else if (shape->FillType == 2) { // Gradient
@@ -351,7 +338,7 @@ void SDL2Backend::DrawQuickBackdrop(int x, int y, int width, int height, std::sh
 					Uint8 b = static_cast<Uint8>(b1 + (b2 - b1) * ratio);
 					
 					SDL_SetRenderDrawColor(renderer, r, g, b, SDL_ALPHA_OPAQUE);
-					SDL_RenderDrawLine(renderer, x, y + i, x + width - 1, y + i);
+					SDL_RenderLine(renderer, x, y + i, x + width - 1, y + i);
 				}
 			} else {
 				// Horizontal gradient (left to right)
@@ -363,7 +350,7 @@ void SDL2Backend::DrawQuickBackdrop(int x, int y, int width, int height, std::sh
 					Uint8 b = static_cast<Uint8>(b1 + (b2 - b1) * ratio);
 					
 					SDL_SetRenderDrawColor(renderer, r, g, b, SDL_ALPHA_OPAQUE);
-					SDL_RenderDrawLine(renderer, x + i, y, x + i, y + height - 1);
+					SDL_RenderLine(renderer, x + i, y, x + i, y + height - 1);
 				}
 			}
 		}
@@ -374,7 +361,7 @@ void SDL2Backend::DrawQuickBackdrop(int x, int y, int width, int height, std::sh
 			}
 			
 			int textureWidth, textureHeight;
-			SDL_QueryTexture(texture, nullptr, nullptr, &textureWidth, &textureHeight);
+			GetTextureDimensions(shape->Image, textureWidth, textureHeight);
 			
 			// Tile the texture across the entire area
 			for (int tileY = y; tileY < y + height; tileY += textureHeight) {
@@ -383,35 +370,35 @@ void SDL2Backend::DrawQuickBackdrop(int x, int y, int width, int height, std::sh
 					int tileW = std::min(textureWidth, x + width - tileX);
 					int tileH = std::min(textureHeight, y + height - tileY);
 					
-					SDL_Rect destRect = { tileX, tileY, tileW, tileH };
-					SDL_Rect srcRect = { 0, 0, tileW, tileH };
-					SDL_RenderCopy(renderer, texture, &srcRect, &destRect);
+					SDL_FRect destRect = { tileX, tileY, tileW, tileH };
+					SDL_FRect srcRect = { 0, 0, tileW, tileH };
+					SDL_RenderTexture(renderer, texture, &srcRect, &destRect);
 				}
 			}
 		}
 	}
 }
 
-void SDL2Backend::DrawRectangle(int x, int y, int width, int height, int color)
+void SDL3Backend::DrawRectangle(int x, int y, int width, int height, int color)
 {
 	SDL_SetRenderDrawColor(renderer, (color >> 16) & 0xFF, (color >> 8) & 0xFF, color & 0xFF, (color >> 24) & 0xFF);
-	SDL_Rect rect = { x, y, width, height };
+	SDL_FRect rect = { x, y, width, height };
 	SDL_RenderFillRect(renderer, &rect);
 }
 
-void SDL2Backend::DrawLine(int x1, int y1, int x2, int y2, int color)
+void SDL3Backend::DrawLine(int x1, int y1, int x2, int y2, int color)
 {
 	SDL_SetRenderDrawColor(renderer, (color >> 16) & 0xFF, (color >> 8) & 0xFF, color & 0xFF, (color >> 24) & 0xFF);
-	SDL_RenderDrawLine(renderer, x1, y1, x2, y2);
+	SDL_RenderLine(renderer, x1, y1, x2, y2);
 }
 
-void SDL2Backend::DrawPixel(int x, int y, int color)
+void SDL3Backend::DrawPixel(int x, int y, int color)
 {
 	SDL_SetRenderDrawColor(renderer, (color >> 16) & 0xFF, (color >> 8) & 0xFF, color & 0xFF, (color >> 24) & 0xFF);
-	SDL_RenderDrawPoint(renderer, x, y);
+	SDL_RenderPoint(renderer, x, y);
 }
 
-void SDL2Backend::LoadFont(int id)
+void SDL3Backend::LoadFont(int id)
 {
 	//check if font already exists
 	if (fonts.find(id) != fonts.end()) {
@@ -429,7 +416,7 @@ void SDL2Backend::LoadFont(int id)
 	std::string path = GetResourcesPath() + "fonts/" + fontInfo->Name + ".ttf";
 	TTF_Font* font = TTF_OpenFont(path.c_str(), fontInfo->Height);
 	if (font == nullptr) {
-		std::cerr << "TTF_OpenFont Error: " << TTF_GetError() << std::endl;
+		std::cerr << "TTF_OpenFont Error: " << SDL_GetError() << std::endl;
 		return;
 	}
 	
@@ -453,13 +440,13 @@ void SDL2Backend::LoadFont(int id)
 	fonts[id] = font;
 }
 
-void SDL2Backend::UnloadFont(int id)
+void SDL3Backend::UnloadFont(int id)
 {
 	TTF_CloseFont(fonts[id]);
 	fonts.erase(id);
 }
 
-void SDL2Backend::DrawText(FontInfo* fontInfo, int x, int y, int color, const std::string& text)
+void SDL3Backend::DrawText(FontInfo* fontInfo, int x, int y, int color, const std::string& text)
 {
 	TTF_Font* font = fonts[fontInfo->Handle];
 	if (font == nullptr) {
@@ -482,71 +469,73 @@ void SDL2Backend::DrawText(FontInfo* fontInfo, int x, int y, int color, const st
 		return;
 	}
 
-	SDL_Surface* surface = TTF_RenderUTF8_Blended_Wrapped(font, modifiedText.c_str(), RGBToSDLColor(color), fontInfo->Width);
+	SDL_Surface* surface = TTF_RenderText_Blended_Wrapped(font, modifiedText.c_str(), 0, RGBToSDLColor(color), fontInfo->Width);
 	SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
-	SDL_Rect rect = { x, y, surface->w, surface->h };
-	SDL_RenderCopy(renderer, texture, nullptr, &rect);
-	SDL_FreeSurface(surface);
+	SDL_FRect rect = { x, y, surface->w, surface->h };
+	SDL_RenderTexture(renderer, texture, nullptr, &rect);
+	SDL_DestroySurface(surface);
 	SDL_DestroyTexture(texture);
 }
 
-const uint8_t* SDL2Backend::GetKeyboardState()
+const uint8_t* SDL3Backend::GetKeyboardState()
 {
 	//return the keyboard state in a new array which matches the Fusion key codes
-	const uint8_t* keyboardState = SDL_GetKeyboardState(nullptr);
+	const bool* keyboardState = SDL_GetKeyboardState(nullptr);
 	uint8_t* fusionKeyboardState = new uint8_t[256];
 	for (int i = 0; i < 256; i++)
 	{
-		fusionKeyboardState[i] = keyboardState[FusionToSDLKey(i)];
+		fusionKeyboardState[i] = keyboardState[FusionToSDLKey(i)] ? 1 : 0;
 	}
 	return fusionKeyboardState;
 }
 
-int SDL2Backend::GetMouseX()
+int SDL3Backend::GetMouseX()
 {
-	int x, windowX;
-	SDL_GetWindowPosition(window, &windowX, nullptr);
-	SDL_GetGlobalMouseState(&x, nullptr);
-	return x - windowX;
+	float x;
+	int windowX;
+	SDL_GetWindowPosition(window, &windowX, NULL);
+	SDL_GetGlobalMouseState(&x, NULL);
+	return static_cast<int>(x - windowX);
 }
 
-int SDL2Backend::GetMouseY()
+int SDL3Backend::GetMouseY()
 {
-	int y, windowY;
-	SDL_GetWindowPosition(window, nullptr, &windowY);
-	SDL_GetGlobalMouseState(nullptr, &y);
-	return y - windowY;
+	float y;
+	int windowY;
+	SDL_GetWindowPosition(window, NULL, &windowY);
+	SDL_GetGlobalMouseState(NULL, &y);
+	return static_cast<int>(y - windowY);
 }
 
-int SDL2Backend::GetMouseWheelMove()
+int SDL3Backend::GetMouseWheelMove()
 {
 	SDL_Event event;
 	while (SDL_PollEvent(&event)) {
-		if (event.type == SDL_MOUSEWHEEL) {
+		if (event.type == SDL_EVENT_MOUSE_WHEEL) {
 			return event.wheel.y;
 		}
 	}
 	return 0;
 }
 
-uint32_t SDL2Backend::GetMouseState()
+uint32_t SDL3Backend::GetMouseState()
 {
 	return SDL_GetMouseState(nullptr, nullptr);
 }
 
-void SDL2Backend::HideMouseCursor()
+void SDL3Backend::HideMouseCursor()
 {
-	SDL_ShowCursor(SDL_DISABLE);
+	SDL_HideCursor();
 }
 
-void SDL2Backend::ShowMouseCursor()
+void SDL3Backend::ShowMouseCursor()
 {
-	SDL_ShowCursor(SDL_ENABLE);
+	SDL_ShowCursor();
 }
 
-SDL_Colour SDL2Backend::RGBToSDLColor(int color)
+SDL_Color SDL3Backend::RGBToSDLColor(int color)
 {
-	return SDL_Colour{
+	return SDL_Color{
 		static_cast<Uint8>((color >> 16) & 0xFF),
 		static_cast<Uint8>((color >> 8) & 0xFF),
 		static_cast<Uint8>(color & 0xFF),
@@ -554,9 +543,9 @@ SDL_Colour SDL2Backend::RGBToSDLColor(int color)
 	};
 }
 
-SDL_Colour SDL2Backend::RGBAToSDLColor(int color)
+SDL_Color SDL3Backend::RGBAToSDLColor(int color)
 {
-	return SDL_Colour{
+	return SDL_Color{
 		static_cast<Uint8>((color >> 16) & 0xFF),
 		static_cast<Uint8>((color >> 8) & 0xFF),
 		static_cast<Uint8>(color & 0xFF),
@@ -564,7 +553,7 @@ SDL_Colour SDL2Backend::RGBAToSDLColor(int color)
 	};
 }
 
-int SDL2Backend::FusionToSDLKey(short key)
+int SDL3Backend::FusionToSDLKey(short key)
 {
 	switch (key)
 	{
@@ -761,81 +750,86 @@ int SDL2Backend::FusionToSDLKey(short key)
 	}
 }
 
-float SDL2Backend::GetTimeDelta()
+float SDL3Backend::GetTimeDelta()
 {
-    static Uint32 previousTicks = SDL_GetTicks();
-    Uint32 currentTicks = SDL_GetTicks();
-    float delta = (currentTicks - previousTicks) / 1000.0f;
-    previousTicks = currentTicks;
-    return delta;
+	static Uint32 previousTicks = SDL_GetTicks();
+	Uint32 currentTicks = SDL_GetTicks();
+	float delta = (currentTicks - previousTicks) / 1000.0f;
+	previousTicks = currentTicks;
+	return delta;
 }
 
-void SDL2Backend::Delay(unsigned int ms)
+void SDL3Backend::Delay(unsigned int ms)
 {
-    SDL_Delay(ms);
+	SDL_Delay(ms);
 }
 
-bool SDL2Backend::IsPixelTransparent(int textureId, int x, int y)
+bool SDL3Backend::IsPixelTransparent(int textureId, int x, int y)
 {
-    auto it = textures.find(textureId);
-    if (it == textures.end()) return true;
+	auto it = textures.find(textureId);
+	if (it == textures.end()) return true;
 
-    SDL_Texture* texture = it->second;
-    int width, height;
-    SDL_QueryTexture(texture, nullptr, nullptr, &width, &height);
+	SDL_Texture* texture = it->second;
+	int width, height;
+	GetTextureDimensions(textureId, width, height);
 
-    if (x < 0 || x >= width || y < 0 || y >= height) return true;
+	if (x < 0 || x >= width || y < 0 || y >= height) return true;
 
-    // Create a surface to read the texture data
-    SDL_Surface* surface = SDL_CreateRGBSurface(0, width, height, 32, 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000);
-    if (!surface) return true;
+	// Create a surface to read the texture data
+	SDL_Surface* surface = SDL_CreateSurface(width, height, SDL_GetPixelFormatForMasks(32, 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000));
+	if (!surface) return true;
 
-    // Create a temporary render target
-    SDL_Texture* tempTarget = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_TARGET, width, height);
-    if (!tempTarget) {
-        SDL_FreeSurface(surface);
-        return true;
-    }
+	// Create a temporary render target
+	SDL_Texture* tempTarget = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_TARGET, width, height);
+	if (!tempTarget) {
+		SDL_DestroySurface(surface);
+		return true;
+	}
 
-    // Save the current render target
-    SDL_Texture* currentTarget = SDL_GetRenderTarget(renderer);
+	// Save the current render target
+	SDL_Texture* currentTarget = SDL_GetRenderTarget(renderer);
 
-    // Set the temporary render target
-    SDL_SetRenderTarget(renderer, tempTarget);
+	// Set the temporary render target
+	SDL_SetRenderTarget(renderer, tempTarget);
 
-    // Copy the original texture to the temporary target
-    SDL_RenderCopy(renderer, texture, nullptr, nullptr);
+	// Copy the original texture to the temporary target
+	SDL_RenderTexture(renderer, texture, nullptr, nullptr);
 
-    // Read the pixels from the temporary target
-    SDL_RenderReadPixels(renderer, nullptr, SDL_PIXELFORMAT_ARGB8888, surface->pixels, surface->pitch);
+	// Read the pixels from the temporary target
+	SDL_Rect rect = { 0, 0, width, height };
+	SDL_Surface* surface2 = SDL_RenderReadPixels(renderer, &rect);
 
-    // Restore the original render target
-    SDL_SetRenderTarget(renderer, currentTarget);
+	// Restore the original render target
+	SDL_SetRenderTarget(renderer, currentTarget);
 
-    // Get the pixel data
-    Uint32* pixels = static_cast<Uint32*>(surface->pixels);
-    Uint32 pixel = pixels[y * width + x];
-    
-    // Check alpha channel
-    bool isTransparent = (pixel & 0xFF000000) == 0;
+	// Get the pixel data
+	Uint32* pixels = static_cast<Uint32*>(surface2->pixels);
+	Uint32 pixel = pixels[y * width + x];
+	
+	// Check alpha channel
+	bool isTransparent = (pixel & 0xFF000000) == 0;
 
-    // Clean up
-    SDL_DestroyTexture(tempTarget);
-    SDL_FreeSurface(surface);
+	// Clean up
+	SDL_DestroyTexture(tempTarget);
+	SDL_DestroySurface(surface);
+	SDL_DestroySurface(surface2);
 
-    return isTransparent;
+	return isTransparent;
 }
 
-void SDL2Backend::GetTextureDimensions(int textureId, int& width, int& height)
+void SDL3Backend::GetTextureDimensions(int textureId, int& width, int& height)
 {
-    auto it = textures.find(textureId);
-    if (it != textures.end())
-    {
-        SDL_QueryTexture(it->second, nullptr, nullptr, &width, &height);
-    }
-    else
-    {
-        width = 0;
-        height = 0;
-    }
+	auto it = textures.find(textureId);
+	if (it != textures.end())
+	{
+		float w, h;
+		SDL_GetTextureSize(it->second, &w, &h);
+		width = static_cast<int>(w);
+		height = static_cast<int>(h);
+	}
+	else
+	{
+		width = 0;
+		height = 0;
+	}
 }
