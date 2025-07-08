@@ -65,6 +65,10 @@ public class EventProcessor
 
 			string nextLabel = $"event_{j}_end";
 
+			int numberOfOrConditions = NumberOfOrConditions(evt);
+			int orConditionIndex = 0;
+			if (numberOfOrConditions > 0) nextLabel = $"event_{j}_or_{orConditionIndex}";
+
 			List<Tuple<int, string>> usedSelectors = new List<Tuple<int, string>>(); // if a selector has already been reset during this event, don't reset it again
 
 			foreach (var condition in evt.Conditions)
@@ -91,15 +95,17 @@ public class EventProcessor
 					continue;
 				}
 
-				Dictionary<string, string> parameters = new Dictionary<string, string>()
+				Dictionary<string, object> parameters = new Dictionary<string, object>()
 				{
-					{ "eventIndex", j.ToString() },
-					{ "frameIndex", frameIndex.ToString() }
+					{ "eventIndex", j },
+					{ "frameIndex", frameIndex },
+					{ "eventGroup", evt },
+					{ "numOfOrs", numberOfOrConditions }
 				};
 
 				var instance = Activator.CreateInstance(acBaseType) as ConditionBase;
 				string ifStatement = (condition.OtherFlags & 1) == 0 ? "if (!" : "if (";
-				result.AppendLine(instance?.Build(condition, parameters, ifStatement, nextLabel));
+				result.AppendLine(instance?.Build(condition, ref nextLabel, ref orConditionIndex, parameters, ifStatement));
 			}
 
 			result.AppendLine($"event_{j}_actions:;");
@@ -134,14 +140,16 @@ public class EventProcessor
 					continue;
 				}
 
-				Dictionary<string, string> parameters = new Dictionary<string, string>()
+				Dictionary<string, object> parameters = new Dictionary<string, object>()
 				{
-					{ "eventIndex", j.ToString() },
-					{ "frameIndex", frameIndex.ToString() }
+					{ "eventIndex", j },
+					{ "frameIndex", frameIndex },
+					{ "eventGroup", evt },
+					{ "numOfOrs", numberOfOrConditions }
 				};
 
 				var instance = Activator.CreateInstance(acBaseType) as ActionBase;
-				result.AppendLine(instance?.Build(action, parameters, "", ""));
+				result.AppendLine(instance?.Build(action, ref nextLabel, ref orConditionIndex, parameters, ""));
 			}
 
 			result.AppendLine($"event_{j}_end:;");
@@ -185,8 +193,20 @@ public class EventProcessor
 		return result.ToString();
 	}
 
+	public static List<Tuple<int, string>> GetRelevantObjectInfos(EventGroup eventGroup)
+	{
+		List<Tuple<int, string>> relevantObjectInfos = new List<Tuple<int, string>>();
+
+		foreach (var condition in eventGroup.Conditions)
+		{
+			relevantObjectInfos.AddRange(GetRelevantObjectInfos(condition, Exporter.Instance.CurrentFrame));
+		}
+
+		return relevantObjectInfos.Distinct().ToList();
+	}
+
 	//returns a list of all OIs used in this event condition or action
-	List<Tuple<int, string>> GetRelevantObjectInfos(EventBase eventBase, int frameIndex)
+	public static List<Tuple<int, string>> GetRelevantObjectInfos(EventBase eventBase, int frameIndex)
 	{
 		List<Tuple<int, string>> relevantObjectInfos = new List<Tuple<int, string>>();
 
@@ -224,7 +244,7 @@ public class EventProcessor
 
 		foreach (var objectInfo in objectInfos)
 		{
-			foreach (var evtObj in _exporter.MfaData.Frames[frameIndex].Events.Objects)
+			foreach (var evtObj in Exporter.Instance.MfaData.Frames[frameIndex].Events.Objects)
 			{
 				if (evtObj.Handle == objectInfo)
 				{
@@ -239,9 +259,9 @@ public class EventProcessor
 					}
 
 					//Find object name in ccn frame
-					foreach (var ccnObj in _exporter.GameData.Frames[frameIndex].objects)
+					foreach (var ccnObj in Exporter.Instance.GameData.Frames[frameIndex].objects)
 					{
-						if (objectName == _exporter.GameData.frameitems[(int)ccnObj.objectInfo].name)
+						if (objectName == Exporter.Instance.GameData.frameitems[(int)ccnObj.objectInfo].name)
 						{
 							relevantObjectInfos.Add(new Tuple<int, string>(ccnObj.objectInfo, objectName));
 							break;
@@ -307,6 +327,17 @@ public class EventProcessor
 		}
 
 		return false;
+	}
+
+	int NumberOfOrConditions(EventGroup evtGroup)
+	{
+		int count = 0;
+		foreach (var condition in evtGroup.Conditions)
+		{
+			if (condition.IsOfType(new OrLogicalCondition())) count++;
+		}
+
+		return count;
 	}
 
 	public string BuildLoopIncludes(int frameIndex)

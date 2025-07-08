@@ -6,7 +6,7 @@ public class ACBase
 	public virtual int Num { get; set; }
 
 	//if statement and next label are only used for conditions
-	public virtual string Build(EventBase eventBase, Dictionary<string, string>? parameters = null, string ifStatement = "if (", string nextLabel = "")
+	public virtual string Build(EventBase eventBase, ref string nextLabel, ref int orIndex, Dictionary<string, object>? parameters = null, string ifStatement = "if (")
 	{
 		return $"//{GetType().Name}";
 	}
