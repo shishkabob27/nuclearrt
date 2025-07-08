@@ -58,6 +58,11 @@ public class EventProcessor
 			result.AppendLine($"void GeneratedFrame{frameIndex}::Event_{j}()");
 			result.AppendLine("{");
 
+			if (DoesEventHaveOneActionLoop(evt))
+			{
+				result.AppendLine($"bool allConditionsMet = false;");
+			}
+
 			string nextLabel = $"event_{j}_end";
 
 			List<Tuple<int, string>> usedSelectors = new List<Tuple<int, string>>(); // if a selector has already been reset during this event, don't reset it again
@@ -99,6 +104,13 @@ public class EventProcessor
 
 			result.AppendLine($"event_{j}_actions:;");
 
+			if (DoesEventHaveOneActionLoop(evt))
+			{
+				result.AppendLine($"allConditionsMet = true;");
+				result.AppendLine($"if (event_{j}_actions_executed_last_frame) goto event_{j}_end;");
+				result.AppendLine($"event_{j}_actions_executed_last_frame = true;");
+			}
+
 			foreach (var action in evt.Actions)
 			{
 				//reset any selectors used in this action if it wasn't reset in a previous action
@@ -133,6 +145,11 @@ public class EventProcessor
 			}
 
 			result.AppendLine($"event_{j}_end:;");
+
+			if (DoesEventHaveOneActionLoop(evt))
+			{
+				result.AppendLine($"if (!allConditionsMet) event_{j}_actions_executed_last_frame = false;");
+			}
 
 			result.AppendLine("}");
 			result.AppendLine("");
@@ -321,8 +338,26 @@ public class EventProcessor
 		return result.ToString();
 	}
 
+	public bool DoesEventHaveOneActionLoop(EventGroup evtGroup)
+	{
+		foreach (var condition in evtGroup.Conditions)
+		{
+			if (condition.IsOfType(new OneActionLoopCondition())) return true;
+		}
+
+		return false;
+	}
+
 	public string BuildOneActionLoop(int frameIndex)
 	{
-		return "";
+		StringBuilder result = new();
+
+		for (int i = 0; i < _exporter.MfaData.Frames[frameIndex].Events.Items.Count; i++)
+		{
+			var evt = _exporter.MfaData.Frames[frameIndex].Events.Items[i];
+			if (DoesEventHaveOneActionLoop(evt)) result.AppendLine($"bool event_{i}_actions_executed_last_frame = false;");
+		}
+
+		return result.ToString();
 	}
 }
