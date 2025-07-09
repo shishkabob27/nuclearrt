@@ -142,7 +142,7 @@ namespace CTFAK.MFA
 		public AppMenu Menu;
 		private int windowMenuIndex;
 		public Dictionary<Int32, Int32> menuImages;
-		public byte[] GlobalEvents;
+		public MFAEvents GlobalEvents;
 		public int GraphicMode;
 		public int IcoCount;
 		public int QualCount;
@@ -245,15 +245,17 @@ namespace CTFAK.MFA
 				menuImages[id] = reader.ReadInt32();
 			}
 
-
 			GlobalValues = new MFAValueList();
 			GlobalValues.Read(reader);
+
 			GlobalStrings = new MFAValueList();
 			GlobalStrings.Read(reader);
-			GlobalEvents = reader.ReadBytes(reader.ReadInt32());
+
+			Logger.Log("Reading Global Events");
+			GlobalEvents = new MFAEvents();
+			GlobalEvents.Read(reader);
+
 			GraphicMode = reader.ReadInt32();
-
-
 
 			IcoCount = reader.ReadInt32();
 			IconImages = new List<int>();

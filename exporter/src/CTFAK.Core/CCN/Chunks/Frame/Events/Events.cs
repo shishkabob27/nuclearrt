@@ -117,41 +117,12 @@ namespace CTFAK.CCN.Chunks.Frame
 			NumberOfConditions = reader.ReadByte();
 			NumberOfActions = reader.ReadByte();
 			Flags = reader.ReadUInt16();
-			//if (Settings.Old)
-			//{
-			IsRestricted = reader.ReadInt16(); //For MFA
-			RestrictCpt = reader.ReadInt16();
-			Identifier = reader.ReadInt16();
-			Undo = reader.ReadInt16();
-			/*}
-else
-{
-	if (Settings.Build >= 284)
-	{
-		if (isMFA || Settings.Android && Settings.Build == 287)
-		{
-			IsRestricted = reader.ReadInt16(); //For MFA
-			RestrictCpt = reader.ReadInt16();
-			Identifier = reader.ReadInt16();
-			Undo = reader.ReadInt16();
-		}
-		else
-		{
-			var Line = reader.ReadInt16();
-			IsRestricted = reader.ReadInt32();
-			RestrictCpt = reader.ReadInt32();
-		}
-	}
-	else
-	{
-		IsRestricted = reader.ReadInt16();
-		RestrictCpt = reader.ReadInt16();
-		Identifier = reader.ReadInt16();
-		Undo = reader.ReadInt16();
-	}
-}*/
 
-			// Logger.Log($"Cond: {NumberOfConditions},Act: {NumberOfActions}");
+			IsRestricted = reader.ReadInt16(); //For MFA
+			RestrictCpt = reader.ReadInt16();
+			Identifier = reader.ReadInt16();
+			Undo = reader.ReadInt16();
+
 			for (int i = 0; i < NumberOfConditions; i++)
 			{
 				var item = new Condition();
@@ -269,8 +240,8 @@ else
 				}
 				else Actions.Add(item);
 			}
+
 			reader.Seek(currentPosition + (Size * -1));
-			// Logger.Log($"COND:{NumberOfConditions}, ACT: {NumberOfActions}");
 		}
 	}
 
