@@ -357,53 +357,65 @@ std::vector<unsigned int> Frame::GetFontsUsed()
 void Frame::CreateInstance(short x, short y, unsigned int layer, unsigned int objectInfoHandle, short angle, ObjectInstance *parentInstance)
 {
 	auto objectInfo = ObjectFactory::Instance().GetObjectInfo(objectInfoHandle);
-	if (objectInfo) {
-		int handle = ObjectInstances.size() + 1; //TODO: verify if this is correct
-		if (parentInstance) {
-			x += parentInstance->X;
-			y += parentInstance->Y;
-			layer = parentInstance->Layer;
-		}
+	if (!objectInfo)
+	{
+		std::cout << "Unable to create instance: " << objectInfoHandle << std::endl;
+		return;
+	}
 
-		auto instance = ObjectFactory::Instance().CreateInstance(handle, objectInfoHandle, x, y, layer, 0);
-		if (instance) {
-			instance->SetAngle(angle);
-			ObjectInstances.push_back(instance);
-			
-			//TODO: move this to a separate function
-			// Load any textures needed for this instance
-			std::vector<unsigned int> texturesToLoad;
-			
-			// For backdrops
-			if (objectInfo->Type == 1) {
-				auto backdropProps = std::dynamic_pointer_cast<BackdropProperties>(objectInfo->Properties);
-				if (backdropProps) {
-					texturesToLoad.push_back(backdropProps->Image);
-				}
+	//get max unique handle
+	unsigned int maxHandle = 0;
+	for (auto& instance : ObjectInstances)
+	{
+		maxHandle = std::max(maxHandle, instance->Handle);
+	}
+
+	unsigned int handle = maxHandle + 1;
+
+	if (parentInstance) {
+		x += parentInstance->X;
+		y += parentInstance->Y;
+		layer = parentInstance->Layer;
+	}
+
+	auto instance = ObjectFactory::Instance().CreateInstance(handle, objectInfoHandle, x, y, layer, 0);
+	if (instance) {
+		instance->SetAngle(angle);
+		ObjectInstances.push_back(instance);
+		
+		//TODO: move this to a separate function
+		// Load any textures needed for this instance
+		std::vector<unsigned int> texturesToLoad;
+		
+		// For backdrops
+		if (objectInfo->Type == 1) {
+			auto backdropProps = std::dynamic_pointer_cast<BackdropProperties>(objectInfo->Properties);
+			if (backdropProps) {
+				texturesToLoad.push_back(backdropProps->Image);
 			}
-			// For common objects with animations
-			else if (objectInfo->Type == 2) {
-				auto properties = std::dynamic_pointer_cast<CommonProperties>(objectInfo->Properties);
-				if (properties && properties->oAnimations) {
-					auto images = properties->oAnimations->GetImagesUsed();
-					texturesToLoad.insert(texturesToLoad.end(), images.begin(), images.end());
-				}
+		}
+		// For common objects with animations
+		else if (objectInfo->Type == 2) {
+			auto properties = std::dynamic_pointer_cast<CommonProperties>(objectInfo->Properties);
+			if (properties && properties->oAnimations) {
+				auto images = properties->oAnimations->GetImagesUsed();
+				texturesToLoad.insert(texturesToLoad.end(), images.begin(), images.end());
 			}
-			// For counter objects (score, lives, counter)
-			else if (objectInfo->Type == 5 || objectInfo->Type == 6 || objectInfo->Type == 7) {
-				auto properties = std::dynamic_pointer_cast<CommonProperties>(objectInfo->Properties);
-				if (properties && properties->oCounter) {
-					texturesToLoad.insert(texturesToLoad.end(), 
-						properties->oCounter->Frames.begin(), 
-						properties->oCounter->Frames.end());
-				}
+		}
+		// For counter objects (score, lives, counter)
+		else if (objectInfo->Type == 5 || objectInfo->Type == 6 || objectInfo->Type == 7) {
+			auto properties = std::dynamic_pointer_cast<CommonProperties>(objectInfo->Properties);
+			if (properties && properties->oCounter) {
+				texturesToLoad.insert(texturesToLoad.end(), 
+					properties->oCounter->Frames.begin(), 
+					properties->oCounter->Frames.end());
 			}
-			
-			// Load all the required textures
-			auto backend = Application::Instance().GetBackend();
-			for (unsigned int textureId : texturesToLoad) {
-				backend->LoadTexture(textureId);
-			}
+		}
+		
+		// Load all the required textures
+		auto backend = Application::Instance().GetBackend();
+		for (unsigned int textureId : texturesToLoad) {
+			backend->LoadTexture(textureId);
 		}
 	}
 }
