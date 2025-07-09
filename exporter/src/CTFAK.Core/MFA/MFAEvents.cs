@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using CTFAK.CCN.Chunks;
 using CTFAK.CCN.Chunks.Frame;
 using CTFAK.Memory;
@@ -47,25 +48,24 @@ namespace CTFAK.MFA
 		public byte[] _cache;
 		public bool _ifMFA;
 
-
-
-
-
 		public override void Read(ByteReader reader)
 		{
+			uint size = reader.ReadUInt32();
+			long endOffset = reader.Tell() + size;
+			if (size == 0)
+				return;
 
-			Version = reader.ReadUInt16();
-			FrameType = reader.ReadUInt16();
 			Items = new List<EventGroup>();
 
 			while (true)
 			{
-
 				string name = reader.ReadAscii(4);
-				if (name == EventData)
+
+				if (name == EventData || name == "STVE")
 				{
 					EventDataLen = reader.ReadUInt32();
 					uint end = (uint)(reader.Tell() + EventDataLen);
+
 					while (true)
 					{
 						EventGroup evGrp = new EventGroup();
@@ -73,9 +73,16 @@ namespace CTFAK.MFA
 						evGrp.Read(reader);
 						Items.Add(evGrp);
 						if (reader.Tell() >= end) break;
+
+						//MFA global events have 2 bytes of padding at the end
+						if (reader.Tell() == end - 2)
+						{
+							reader.Skip(2);
+							break;
+						}
 					}
 				}
-				else if (name == CommentData)
+				else if (name == CommentData || name == "SMER")
 				{
 					Comments = new List<Comment>(reader.ReadInt32());
 					for (int i = 0; i < Comments.Capacity; i++)
@@ -96,7 +103,7 @@ namespace CTFAK.MFA
 						Items.Add(eventGroup);
 					}
 				}
-				else if (name == ObjectData)
+				else if (name == ObjectData || name == "SJBO")
 				{
 					Objects = new List<EventObject>();
 					uint len = reader.ReadUInt32();
@@ -171,9 +178,9 @@ namespace CTFAK.MFA
 					EventLine = reader.ReadUInt32();
 					EventLineY = reader.ReadUInt32();
 				}
-				else if (name == UnknownEventData)
+				else if (name == UnknownEventData || name == "TYAL")
 				{
-					reader.Skip(12);
+					reader.Skip(reader.ReadInt32());
 				}
 				else if (name == EventEnd)
 				{
@@ -210,7 +217,7 @@ namespace CTFAK.MFA
 		public uint ItemHandle;
 		public uint InstanceHandle;
 		public string Code;
-		public string IconBuffer;
+		public byte[] IconBuffer;
 		public ushort SystemQualifier;
 
 		public override void Read(ByteReader reader)
@@ -232,7 +239,7 @@ namespace CTFAK.MFA
 				//Logger.Log("Code: " + Code);
 				if (Code == "OIC2")//IconBufferCode
 				{
-					IconBuffer = reader.AutoReadUnicode();
+					IconBuffer = reader.ReadBytes(reader.ReadInt32());
 				}
 			}
 			if (ObjectType == 3) //SystemItemType

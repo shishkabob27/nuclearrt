@@ -786,7 +786,7 @@ bool Frame::IsColliding(ObjectInstance *instance, int x, int y)
 			float pointY = targetY - drawY;
 			
 			// Rotate the point in the opposite direction
-			float radians = instance->GetAngle() * (M_PI / 180.0f);
+			float radians = instance->GetAngle() * (SDL_PI_F / 180.0f);
 			float cosA = cos(radians);
 			float sinA = sin(radians);
 			
@@ -884,7 +884,7 @@ void Frame::RotatePoints(int& x1, int& y1, int& x2, int& y2, int& x3, int& y3, i
 void Frame::RotatePoint(int& x, int& y, float angle)
 {
 	// Convert to radians
-	float radians = angle * (M_PI / 180.0f);
+	float radians = angle * (SDL_PI_F / 180.0f);
 
 	// Rotate point around origin
 	float xNew = x * cos(radians) - y * sin(radians);

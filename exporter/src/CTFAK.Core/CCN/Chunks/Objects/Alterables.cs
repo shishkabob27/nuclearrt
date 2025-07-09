@@ -9,7 +9,7 @@ namespace CTFAK.CCN.Chunks.Objects
 	public class AlterableValues : ChunkLoader
 	{
 		public List<int> Items = new List<int>();
-		public BitDict Flags = new BitDict(new string[]{});
+		public BitDict Flags = new BitDict(new string[] { });
 
 		public override void Read(ByteReader reader)
 		{

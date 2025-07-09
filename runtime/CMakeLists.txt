@@ -14,11 +14,52 @@ endif()
 # Add cmake modules path
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
 
-# Find SDL2 package using our custom FindSDL2.cmake module
-find_package(SDL2 REQUIRED)
-find_package(SDL2_image REQUIRED)
-find_package(SDL2_mixer REQUIRED)
-find_package(SDL2_ttf REQUIRED)
+#SDL3
+include(FetchContent)
+function(include_dependency libName gitURL gitTag)
+    # setup the declare
+    FetchContent_Declare(${libName}
+            GIT_REPOSITORY ${gitURL}
+            GIT_TAG        ${gitTag}
+            GIT_SHALLOW    FALSE
+            GIT_PROGRESS   TRUE
+    )
+
+    FetchContent_MakeAvailable(${libName})
+endfunction()
+
+find_package(SDL3 QUIET)
+if (NOT SDL3_FOUND)
+    message(STATUS "Getting SDL3 from Github")
+    include_dependency(SDL3 https://github.com/libsdl-org/SDL.git release-3.2.16)
+else()
+    message(STATUS "Using local SDL3")
+endif()
+
+set(SDLIMAGE_VENDORED ON)
+set(SDLIMAGE_AVIF OFF)
+set(SDLIMAGE_BMP OFF)
+set(SDLIMAGE_JPEG OFF)
+set(SDLIMAGE_WEBP OFF)
+set(SDLIMAGE_TIF OFF)
+
+find_package(SDL3_image QUIET)
+if (NOT SDL3_image_FOUND)
+    message(STATUS "Getting SDL3_image from Github")
+    include_dependency(SDL3_image https://github.com/libsdl-org/SDL_image.git release-3.2.4)
+else()
+    message(STATUS "Using local SDL3_image")
+endif()
+
+set(SDLTTF_VENDORED ON)
+
+find_package(SDL3_ttf QUIET)
+if (NOT SDL3_ttf_FOUND)
+    message(STATUS "Getting SDL3_ttf from Github")
+    include_dependency(SDL3_ttf https://github.com/libsdl-org/SDL_ttf.git release-3.2.2)
+else()
+    message(STATUS "Using local SDL3_ttf")
+endif()
 
 # Handle platform-specific settings
 if(WIN32)
@@ -45,17 +86,13 @@ set(IMGUI_SOURCES
     ${IMGUI_PATH}/imgui_draw.cpp
     ${IMGUI_PATH}/imgui_tables.cpp
     ${IMGUI_PATH}/imgui_widgets.cpp
-    ${IMGUI_PATH}/backends/imgui_impl_sdl2.cpp
-    ${IMGUI_PATH}/backends/imgui_impl_sdlrenderer2.cpp
+    ${IMGUI_PATH}/backends/imgui_impl_sdl3.cpp
+    ${IMGUI_PATH}/backends/imgui_impl_sdlrenderer3.cpp
 )
 
 # Include directories
 include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/include
-    ${SDL2_INCLUDE_DIR}
-    ${SDL2_IMAGE_INCLUDE_DIR}
-    ${SDL2_MIXER_INCLUDE_DIR}
-    ${SDL2_TTF_INCLUDE_DIR}
     ${IMGUI_PATH}
     ${IMGUI_PATH}/backends
 )
@@ -67,12 +104,15 @@ file(GLOB_RECURSE HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/include/*.h")
 # Create executable
 add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS} ${IMGUI_SOURCES})
 
-# Link libraries
+target_include_directories(${PROJECT_NAME} PRIVATE ${SDL3_INCLUDE_DIRS})
+target_include_directories(${PROJECT_NAME} PRIVATE ${SDL3_image_INCLUDE_DIRS})
+target_include_directories(${PROJECT_NAME} PRIVATE ${SDL3_ttf_INCLUDE_DIRS})
+
+# Link libraries using SDL3 targets
 target_link_libraries(${PROJECT_NAME} PRIVATE 
-    ${SDL2_LIBRARY}
-    ${SDL2_IMAGE_LIBRARY}
-    ${SDL2_MIXER_LIBRARY}
-    ${SDL2_TTF_LIBRARY}
+    SDL3::SDL3
+    SDL3_image::SDL3_image
+    SDL3_ttf::SDL3_ttf
 )
 
 # Set output directory
@@ -112,12 +152,7 @@ install(TARGETS ${PROJECT_NAME}
 
 # Additional platform-specific linking
 if(WIN32)
-    # Windows may need additional libraries
     target_link_libraries(${PROJECT_NAME} PRIVATE winmm)
-elseif(APPLE)
-    # macOS specific frameworks if needed
-    # Note: Cocoa framework is already included by our FindSDL2.cmake module
 elseif(UNIX AND NOT APPLE)
-    # Linux may need additional libraries
     target_link_libraries(${PROJECT_NAME} PRIVATE X11 GL m pthread)
 endif()

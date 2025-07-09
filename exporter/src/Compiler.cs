@@ -26,6 +26,11 @@ public class Compiler
 				CTFAK.Utils.Logger.Log(e.Data);
 			};
 
+			cmakeProcess.ErrorDataReceived += (sender, e) =>
+			{
+				CTFAK.Utils.Logger.Log(e.Data);
+			};
+
 			cmakeProcess.BeginOutputReadLine();
 			cmakeProcess.BeginErrorReadLine();
 			cmakeProcess.WaitForExit();
@@ -44,7 +49,13 @@ public class Compiler
 			buildInfo.RedirectStandardOutput = true;
 			buildInfo.RedirectStandardError = true;
 			Process buildProcess = Process.Start(buildInfo);
+
 			buildProcess.OutputDataReceived += (sender, e) =>
+			{
+				CTFAK.Utils.Logger.Log(e.Data);
+			};
+
+			buildProcess.ErrorDataReceived += (sender, e) =>
 			{
 				CTFAK.Utils.Logger.Log(e.Data);
 			};
