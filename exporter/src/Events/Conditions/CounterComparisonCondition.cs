@@ -18,6 +18,8 @@ public class CounterComparisonCondition : ConditionBase
 		result.AppendLine($"    if (value->GetValue() {ExpressionConverter.GetOppositeComparison(((ExpressionParameter)eventBase.Items[0].Loader).Comparsion)} {ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[0].Loader, eventBase)}) it.deselect();");
 		result.AppendLine("}");
 
+		result.AppendLine($"if ({GetSelector(eventBase.ObjectInfo)}->Count() == 0) goto {nextLabel};");
+
 		return result.ToString();
 	}
 }
