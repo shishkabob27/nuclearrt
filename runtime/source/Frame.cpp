@@ -4,7 +4,7 @@
 #include "CommonProperties.h"
 #include "ImageBank.h"
 #include "FontBank.h"
-#include <typeinfo>
+#include <math.h>
 
 void Frame::Initialize()
 {
