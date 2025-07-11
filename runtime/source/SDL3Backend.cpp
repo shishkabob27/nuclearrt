@@ -283,10 +283,12 @@ void SDL3Backend::DrawTexture(int id, int x, int y, int offsetX, int offsetY, in
 			SDL_SetTextureAlphaMod(texture, 255 - blendCoefficient);
 			break;
 		case 1: // Semi-Transparent:
-			SDL_SetTextureAlphaMod(texture, effectParam);
+			SDL_SetTextureColorMod(texture, 255, 255, 255);
+			SDL_SetTextureAlphaMod(texture, 255 - (effectParam * 2));
 			break;
 		case 9: // Additive
 			SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_ADD);
+			SDL_SetTextureAlphaMod(texture, 255 - (blendCoefficient));
 			break;
 	}
 
