@@ -222,6 +222,13 @@ public class ExpressionConverter
 			{
 				result += "0"; // TODO
 			}
+			else if (expression.ObjectType > 0 && expression.Num == 27) // Alpha Coefficient
+			{
+				if (expression.ObjectInfo == eventBase.ObjectInfo && expression.ObjectInfoList == eventBase.ObjectInfoList)
+					result += "instance->OI->BlendCoefficient";
+				else
+					result += $"(*{GetSelector(expression.ObjectInfo)}->begin())->OI->BlendCoefficient";
+			}
 			else if (expression.ObjectType > 0 && expression.Num == 46)
 			{
 				result += "instance->InstanceValue";
