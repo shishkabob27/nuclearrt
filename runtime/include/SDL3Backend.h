@@ -73,6 +73,7 @@ private:
 	std::unordered_map<int, SDL_Texture*> textures;
 
 	std::unordered_map<int, TTF_Font*> fonts;
+	std::unordered_map<int, std::shared_ptr<std::vector<uint8_t>>> fontBuffers;
 
 	int FusionToSDLKey(short key);
 }; 

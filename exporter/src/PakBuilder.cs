@@ -23,6 +23,36 @@ public class PakBuilder
 			entries.Add(entry);
 		}
 
+		//fonts
+		//TODO: this is bad, redo this
+		var fontsFolder = new DirectoryInfo(Environment.GetFolderPath(Environment.SpecialFolder.Fonts));
+		FileInfo[] fontFiles = fontsFolder.GetFiles("*.ttf");
+		foreach (var font in gameData.Fonts.Items)
+		{
+			var entry = new PakEntry { Type = PakAssetType.Font, ID = font.Handle };
+			string fontName = font.Value.FaceName.Replace("\0", string.Empty);
+
+			bool found = false;
+			foreach (var fontFile in fontFiles)
+			{
+				if (fontFile.Name.StartsWith(fontName, StringComparison.OrdinalIgnoreCase))
+				{
+					entry.Data = File.ReadAllBytes(fontFile.FullName);
+					entry.Size = (uint)entry.Data.Length;
+					found = true;
+					break;
+				}
+			}
+
+			if (!found)
+			{
+				Console.WriteLine($"Font {fontName} not found");
+				continue;
+			}
+
+			entries.Add(entry);
+		}
+
 		int offset = 4 + 4 + entries.Count * 13; // magic + count + entry table
 		foreach (var entry in entries)
 		{

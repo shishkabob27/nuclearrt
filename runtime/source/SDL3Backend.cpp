@@ -9,7 +9,6 @@
 #include <SDL3/SDL.h>
 #include <SDL3_image/SDL_image.h>
 #include <SDL3_ttf/SDL_ttf.h>
-#include <setjmp.h>
 
 #ifdef _DEBUG
 #include "DebugUI.h"
@@ -424,11 +423,21 @@ void SDL3Backend::LoadFont(int id)
 		return;
 	}
 
-	//open font
-	std::string path = GetAssetsFileName() + fontInfo->Name;
-	TTF_Font* font = TTF_OpenFont(path.c_str(), fontInfo->Height);
-	if (font == nullptr) {
-		std::cerr << "TTF_OpenFont Error: " << SDL_GetError() << std::endl;
+	std::shared_ptr<std::vector<uint8_t>> buffer = std::make_shared<std::vector<uint8_t>>(pakFile.GetFontData(id));
+	if (buffer->empty()) {
+		std::cerr << "PakFile::GetFontData Error: " << "Font with id " << id << " not found" << std::endl;
+		return;
+	}
+
+	SDL_IOStream* stream = SDL_IOFromMem(buffer->data(), buffer->size());
+	if (!stream) {
+        std::cerr << "SDL_IOFromMem Error: " << SDL_GetError() << std::endl;
+        return;
+    }
+
+	TTF_Font* font = TTF_OpenFontIO(stream, true, static_cast<float>(fontInfo->Height));
+	if (!font) {
+		std::cerr << "TTF_OpenFontIO Error: " << SDL_GetError() << std::endl;
 		return;
 	}
 	
@@ -450,16 +459,22 @@ void SDL3Backend::LoadFont(int id)
 	TTF_SetFontStyle(font, renderFlags);
 
 	fonts[id] = font;
+	fontBuffers[id] = buffer;
 }
 
 void SDL3Backend::UnloadFont(int id)
 {
 	TTF_CloseFont(fonts[id]);
 	fonts.erase(id);
+	fontBuffers.erase(id);
 }
 
 void SDL3Backend::DrawText(FontInfo* fontInfo, int x, int y, int color, const std::string& text)
 {
+	if (fonts.find(fontInfo->Handle) == fonts.end()) {
+		return;
+	}
+
 	TTF_Font* font = fonts[fontInfo->Handle];
 	if (font == nullptr) {
 		return;
