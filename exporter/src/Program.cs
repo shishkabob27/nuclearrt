@@ -131,10 +131,10 @@ namespace NuclearRTExporter
 				Exporter exporter = new Exporter(ccnReader, mfaReader, runtimeBaseDir, outputDir);
 				exporter.Export();
 
-				// Extract the resources from the game data
+				// Extract the resources from the game data and write them to a pak file
 				Log("Extracting resources...");
-				GameDataParser gameDataParser = new GameDataParser();
-				gameDataParser.Parse(ccnReader, outputDir);
+				PakBuilder pakBuilder = new PakBuilder();
+				pakBuilder.Build(ccnReader, outputDir);
 
 				// Compile the project
 				Log("Compiling project...");

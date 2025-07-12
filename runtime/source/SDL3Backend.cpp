@@ -4,11 +4,11 @@
 
 #include "Application.h"
 #include "FontBank.h"
+#include "PakFile.h"
 
 #include <SDL3/SDL.h>
 #include <SDL3_image/SDL_image.h>
 #include <SDL3_ttf/SDL_ttf.h>
-#include <setjmp.h>
 
 #ifdef _DEBUG
 #include "DebugUI.h"
@@ -52,12 +52,18 @@ void SDL3Backend::Initialize() {
 		return;
 	}
 
+	//load assets
+	if (!pakFile.Load(GetAssetsFileName())) {
+		std::cerr << "PakFile::Load Error: " << "Failed to load assets file" << std::endl;
+		return;
+	}
+
 #ifdef _DEBUG
 	DEBUG_UI.Initialize(window, renderer);
 	
 	DEBUG_UI.AddWindow(Application::Instance().GetAppData()->GetAppName(), [this]() {
 		ImGui::Text("Platform: %s", GetPlatformName().c_str());
-		ImGui::Text("Resources Path: %s", GetResourcesPath().c_str());
+		ImGui::Text("Assets File: %s", GetAssetsFileName().c_str());
 		
 		if(ImGui::CollapsingHeader("Global Variables")) {
 			if (ImGui::CollapsingHeader("Values")) {
@@ -183,13 +189,9 @@ std::string SDL3Backend::GetPlatformName()
 #endif
 }
 
-std::string SDL3Backend::GetResourcesPath()
+std::string SDL3Backend::GetAssetsFileName()
 {
-	#if defined(PLATFORM_NX)
-	return "romfs:/";
-	#else
-	return "assets/";
-	#endif
+	return "assets.pak";
 }
 
 void SDL3Backend::BeginDrawing()
@@ -229,20 +231,27 @@ void SDL3Backend::Clear(int color)
 }
 
 void SDL3Backend::LoadTexture(int id) {
-	std::string path = GetResourcesPath() + "images/" + std::to_string(id) + ".png";
 
-	//Check if texture already exists
+	//Check if texture is already loaded
 	if (textures.find(id) != textures.end()) {
 		return;
 	}
 
-	SDL_Surface* surface = IMG_Load(path.c_str());
-	if (surface == nullptr) {
+	//load texture from pak file
+	std::vector<uint8_t> data = pakFile.GetImageData(id);
+	if (data.empty()) {
+		std::cerr << "PakFile::GetImageData Error: " << "Image with id " << id << " not found" << std::endl;
 		return;
 	}
 
-	SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
-	SDL_DestroySurface(surface);
+	//create surface from data
+	SDL_IOStream* stream = SDL_IOFromMem(data.data(), data.size());
+	SDL_Texture* texture = IMG_LoadTexture_IO(renderer, stream, true);
+	if (texture == nullptr) {
+		std::cerr << "IMG_LoadTexture_IO Error: " << SDL_GetError() << std::endl;
+		return;
+	}
+
 	textures[id] = texture;
 }
 
@@ -414,11 +423,21 @@ void SDL3Backend::LoadFont(int id)
 		return;
 	}
 
-	//open font
-	std::string path = GetResourcesPath() + "fonts/" + fontInfo->Name + ".ttf";
-	TTF_Font* font = TTF_OpenFont(path.c_str(), fontInfo->Height);
-	if (font == nullptr) {
-		std::cerr << "TTF_OpenFont Error: " << SDL_GetError() << std::endl;
+	std::shared_ptr<std::vector<uint8_t>> buffer = std::make_shared<std::vector<uint8_t>>(pakFile.GetFontData(id));
+	if (buffer->empty()) {
+		std::cerr << "PakFile::GetFontData Error: " << "Font with id " << id << " not found" << std::endl;
+		return;
+	}
+
+	SDL_IOStream* stream = SDL_IOFromMem(buffer->data(), buffer->size());
+	if (!stream) {
+        std::cerr << "SDL_IOFromMem Error: " << SDL_GetError() << std::endl;
+        return;
+    }
+
+	TTF_Font* font = TTF_OpenFontIO(stream, true, static_cast<float>(fontInfo->Height));
+	if (!font) {
+		std::cerr << "TTF_OpenFontIO Error: " << SDL_GetError() << std::endl;
 		return;
 	}
 	
@@ -440,16 +459,22 @@ void SDL3Backend::LoadFont(int id)
 	TTF_SetFontStyle(font, renderFlags);
 
 	fonts[id] = font;
+	fontBuffers[id] = buffer;
 }
 
 void SDL3Backend::UnloadFont(int id)
 {
 	TTF_CloseFont(fonts[id]);
 	fonts.erase(id);
+	fontBuffers.erase(id);
 }
 
 void SDL3Backend::DrawText(FontInfo* fontInfo, int x, int y, int color, const std::string& text)
 {
+	if (fonts.find(fontInfo->Handle) == fonts.end()) {
+		return;
+	}
+
 	TTF_Font* font = fonts[fontInfo->Handle];
 	if (font == nullptr) {
 		return;

@@ -23,7 +23,7 @@ public:
 	bool ShouldQuit() override;
 
 	std::string GetPlatformName() override;
-	std::string GetResourcesPath() override;
+	std::string GetAssetsFileName() override;
 
 	void BeginDrawing() override;
 	void EndDrawing() override;
@@ -73,6 +73,7 @@ private:
 	std::unordered_map<int, SDL_Texture*> textures;
 
 	std::unordered_map<int, TTF_Font*> fonts;
+	std::unordered_map<int, std::shared_ptr<std::vector<uint8_t>>> fontBuffers;
 
 	int FusionToSDLKey(short key);
 }; 

@@ -2,8 +2,10 @@
 
 #include <string>
 #include <cstdint>
+
 #include "FontBank.h"
 #include "Shape.h"
+#include "PakFile.h"
 
 class Backend {
 public:
@@ -18,7 +20,7 @@ public:
 	virtual bool ShouldQuit() { return false; }
 
 	virtual std::string GetPlatformName() { return "Unknown"; }
-	virtual std::string GetResourcesPath() { return ""; }
+	virtual std::string GetAssetsFileName() { return ""; }
 
 	virtual unsigned int GetTicks() { return 0; }
 	virtual float GetTimeDelta() { return 0.0f; }
@@ -52,4 +54,7 @@ public:
 
 	virtual bool IsPixelTransparent(int textureId, int x, int y) { return true; }
 	virtual void GetTextureDimensions(int textureId, int& width, int& height) { width = 0; height = 0; }
+
+protected:
+	PakFile pakFile;
 }; 
