@@ -329,6 +329,10 @@ std::vector<unsigned int> Frame::GetImagesUsed()
 		}
 	}
 
+	//erase any duplicates
+	std::sort(imagesUsed.begin(), imagesUsed.end());
+	imagesUsed.erase(std::unique(imagesUsed.begin(), imagesUsed.end()), imagesUsed.end());
+
 	return imagesUsed;
 }
 
@@ -350,6 +354,10 @@ std::vector<unsigned int> Frame::GetFontsUsed()
 			}
 		}
 	}
+
+	//erase any duplicates
+	std::sort(fontsUsed.begin(), fontsUsed.end());
+	fontsUsed.erase(std::unique(fontsUsed.begin(), fontsUsed.end()), fontsUsed.end());
 
 	return fontsUsed;
 }
