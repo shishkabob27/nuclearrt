@@ -23,7 +23,7 @@ public:
 	bool ShouldQuit() override;
 
 	std::string GetPlatformName() override;
-	std::string GetResourcesPath() override;
+	std::string GetAssetsFileName() override;
 
 	void BeginDrawing() override;
 	void EndDrawing() override;

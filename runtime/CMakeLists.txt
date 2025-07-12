@@ -120,29 +120,29 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
 )
 
-# Copy assets to build directory
-set(ASSETS_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/assets")
+# Copy assets.pak to build directory
+set(ASSETS_SOURCE_FILE "${CMAKE_CURRENT_SOURCE_DIR}/assets.pak")
 
 # Set assets destination based on platform
 if(MSVC)
     # For Visual Studio builds, account for Debug/Release subdirectories
-    set(ASSETS_DEST_DIR "${CMAKE_BINARY_DIR}/bin/$<CONFIG>/assets")
+    set(ASSETS_DEST_FILE "${CMAKE_BINARY_DIR}/bin/$<CONFIG>/assets.pak")
 else()
-    set(ASSETS_DEST_DIR "${CMAKE_BINARY_DIR}/bin/assets")
+    set(ASSETS_DEST_FILE "${CMAKE_BINARY_DIR}/bin/assets.pak")
 endif()
 
-# Check if assets directory exists and copy it
-if(EXISTS ${ASSETS_SOURCE_DIR})
+# Check if assets.pak exists and copy it
+if(EXISTS ${ASSETS_SOURCE_FILE})
     # Create a custom command to copy assets after build
     add_custom_command(
         TARGET ${PROJECT_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-        ${ASSETS_SOURCE_DIR} ${ASSETS_DEST_DIR}
-        COMMENT "Copying assets to build directory"
+        COMMAND ${CMAKE_COMMAND} -E copy
+        ${ASSETS_SOURCE_FILE} ${ASSETS_DEST_FILE}
+        COMMENT "Copying assets.pak to build directory"
     )
-    message(STATUS "Assets will be copied from ${ASSETS_SOURCE_DIR} to ${ASSETS_DEST_DIR}")
+    message(STATUS "assets.pak will be copied from ${ASSETS_SOURCE_FILE} to ${ASSETS_DEST_FILE}")
 else()
-    message(WARNING "Assets directory not found at ${ASSETS_SOURCE_DIR}")
+    message(WARNING "assets.pak not found at ${ASSETS_SOURCE_FILE}")
 endif()
 
 # Install target
