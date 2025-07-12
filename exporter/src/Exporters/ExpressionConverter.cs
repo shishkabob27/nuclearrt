@@ -1,5 +1,6 @@
 using System.Text;
 using CTFAK.CCN.Chunks.Frame;
+using CTFAK.MFA;
 using CTFAK.MMFParser.EXE.Loaders.Events.Parameters;
 using CTFAK.MMFParser.EXE.Loaders.Events.Expressions;
 using CTFAK.Utils;
@@ -291,19 +292,29 @@ public class ExpressionConverter
 		}
 	}
 
-	public static string GetSelector(int objectInfo)
+	public static string GetSelector(int objectInfo, bool isGlobal = false)
 	{
-		var obj = GetObject(objectInfo);
+		var obj = GetObject(objectInfo, isGlobal);
 		return $"{StringUtils.SanitizeObjectName(obj.Item2)}_{obj.Item1}_selector";
 	}
 
-	public static Tuple<int, string> GetObject(int objectInfo)
+	public static Tuple<int, string> GetObject(int objectInfo, bool isGlobal = false)
 	{
 		string objectName = "";
 		int objectType = 0;
 		int systemQualifier = 0;
 
-		foreach (var evtObj in Exporter.Instance.MfaData.Frames[Exporter.Instance.CurrentFrame].Events.Objects)
+		List<EventObject> eventObjects;
+		if (isGlobal)
+		{
+			eventObjects = Exporter.Instance.MfaData.GlobalEvents.Objects;
+		}
+		else
+		{
+			eventObjects = Exporter.Instance.MfaData.Frames[Exporter.Instance.CurrentFrame].Events.Objects;
+		}
+
+		foreach (var evtObj in eventObjects)
 		{
 			if (evtObj.Handle == objectInfo)
 			{

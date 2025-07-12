@@ -74,6 +74,9 @@ public class FrameExporter : BaseExporter
 		frameCpp = frameCpp.Replace("{{ OBJECT_INSTANCES }}", BuildObjectInstances(frame));
 		frameCpp = frameCpp.Replace("{{ OBJECT_SELECTORS_INIT }}", BuildObjectSelectorsInit(frame));
 		frameCpp = frameCpp.Replace("{{ GROUP_ACTIVE }}", BuildGroupActive(frameIndex));
+
+		_eventProcessor.PreProcessFrame(frameIndex);
+
 		frameCpp = frameCpp.Replace("{{ EVENT_UPDATE_LOOP }}", _eventProcessor.BuildEventUpdateLoop(frameIndex));
 		frameCpp = frameCpp.Replace("{{ EVENT_FUNCTIONS }}", _eventProcessor.BuildEventFunctions(frameIndex));
 

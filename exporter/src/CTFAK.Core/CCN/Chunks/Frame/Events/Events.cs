@@ -110,6 +110,8 @@ namespace CTFAK.CCN.Chunks.Frame
 		public byte NumberOfActions;
 		public bool isMFA = false;
 
+		public bool IsGlobal { get; set; } = false;
+
 		public override void Read(ByteReader reader)
 		{
 			var currentPosition = reader.Tell();
