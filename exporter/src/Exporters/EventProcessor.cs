@@ -1,8 +1,10 @@
 using System.Reflection;
 using System.Text;
 using CTFAK.CCN.Chunks.Frame;
+using CTFAK.MFA;
 using CTFAK.MMFParser.EXE.Loaders.Events.Expressions;
 using CTFAK.MMFParser.EXE.Loaders.Events.Parameters;
+using CTFAK.Utils;
 
 public class EventProcessor
 {
@@ -74,7 +76,7 @@ public class EventProcessor
 			foreach (var condition in evt.Conditions)
 			{
 				//reset any selectors used in this condition if it wasn't reset in a previous condition
-				foreach (var obj in GetRelevantObjectInfos(condition, frameIndex).Distinct().ToList())
+				foreach (var obj in GetRelevantObjectInfos(condition, frameIndex, evt.IsGlobal).Item2.Distinct().ToList())
 				{
 					if (usedSelectors.Any(x => x.Item1 == obj.Item1)) continue;
 					usedSelectors.Add(obj);
@@ -104,6 +106,7 @@ public class EventProcessor
 				};
 
 				var instance = Activator.CreateInstance(acBaseType) as ConditionBase;
+				instance.IsGlobal = evt.IsGlobal;
 				string ifStatement = (condition.OtherFlags & 1) == 0 ? "if (!" : "if (";
 				result.AppendLine(instance?.Build(condition, ref nextLabel, ref orConditionIndex, parameters, ifStatement));
 			}
@@ -120,7 +123,7 @@ public class EventProcessor
 			foreach (var action in evt.Actions)
 			{
 				//reset any selectors used in this action if it wasn't reset in a previous action
-				foreach (var obj in GetRelevantObjectInfos(action, frameIndex).Distinct().ToList())
+				foreach (var obj in GetRelevantObjectInfos(action, frameIndex, evt.IsGlobal).Item2.Distinct().ToList())
 				{
 					if (usedSelectors.Any(x => x.Item1 == obj.Item1)) continue;
 					usedSelectors.Add(obj);
@@ -149,6 +152,7 @@ public class EventProcessor
 				};
 
 				var instance = Activator.CreateInstance(acBaseType) as ActionBase;
+				instance.IsGlobal = evt.IsGlobal;
 				result.AppendLine(instance?.Build(action, ref nextLabel, ref orConditionIndex, parameters, ""));
 			}
 
@@ -199,15 +203,17 @@ public class EventProcessor
 
 		foreach (var condition in eventGroup.Conditions)
 		{
-			relevantObjectInfos.AddRange(GetRelevantObjectInfos(condition, Exporter.Instance.CurrentFrame));
+			relevantObjectInfos.AddRange(GetRelevantObjectInfos(condition, Exporter.Instance.CurrentFrame, eventGroup.IsGlobal).Item2);
 		}
 
 		return relevantObjectInfos.Distinct().ToList();
 	}
 
-	//returns a list of all OIs used in this event condition or action
-	public static List<Tuple<int, string>> GetRelevantObjectInfos(EventBase eventBase, int frameIndex)
+	//TODO: this is a mess
+	//returns expected number of OIs and a list of all OIs used in this event condition or action
+	public static Tuple<int, List<Tuple<int, string>>> GetRelevantObjectInfos(EventBase eventBase, int frameIndex, bool isGlobal = false)
 	{
+		int count = 0;
 		List<Tuple<int, string>> relevantObjectInfos = new List<Tuple<int, string>>();
 
 		List<int> objectInfos = new List<int>();
@@ -215,6 +221,7 @@ public class EventProcessor
 		if (eventBase.ObjectType > 0)
 		{
 			objectInfos.Add(eventBase.ObjectInfo);
+			count++;
 		}
 
 		foreach (var expression in eventBase.Items)
@@ -226,6 +233,7 @@ public class EventProcessor
 					if (exp.ObjectType > 0)
 					{
 						objectInfos.Add(exp.ObjectInfo);
+						count++;
 					}
 				}
 			}
@@ -234,17 +242,25 @@ public class EventProcessor
 				if ((expression.Loader as Position).ObjectInfoParent != 65535)
 				{
 					objectInfos.Add((int)(expression.Loader as Position).ObjectInfoParent);
+					count++;
 				}
 			}
 			else if (expression.Loader is ParamObject)
 			{
 				objectInfos.Add((expression.Loader as ParamObject).ObjectInfo);
+				count++;
 			}
 		}
 
 		foreach (var objectInfo in objectInfos)
 		{
-			foreach (var evtObj in Exporter.Instance.MfaData.Frames[frameIndex].Events.Objects)
+			List<EventObject> eventObjects = new List<EventObject>();
+			if (isGlobal)
+				eventObjects = Exporter.Instance.MfaData.GlobalEvents.Objects;
+			else
+				eventObjects = Exporter.Instance.MfaData.Frames[frameIndex].Events.Objects;
+
+			foreach (var evtObj in eventObjects)
 			{
 				if (evtObj.Handle == objectInfo)
 				{
@@ -272,7 +288,7 @@ public class EventProcessor
 			}
 		}
 
-		return relevantObjectInfos.Distinct().ToList();
+		return new Tuple<int, List<Tuple<int, string>>>(count, relevantObjectInfos.Distinct().ToList());
 	}
 
 
@@ -390,5 +406,30 @@ public class EventProcessor
 		}
 
 		return result.ToString();
+	}
+
+	//Adds global events to the frame
+	public void PreProcessFrame(int frameIndex)
+	{
+		var frame = _exporter.MfaData.Frames[frameIndex];
+
+		foreach (var evt in _exporter.MfaData.GlobalEvents.Items)
+		{
+			//check if this event has an object not present in the current frame, if so, don't add the event to the frame
+			bool shouldSkipEvent = false;
+			foreach (var condition in evt.Conditions)
+			{
+				if (GetRelevantObjectInfos(condition, frameIndex, true).Item1 != GetRelevantObjectInfos(condition, frameIndex, true).Item2.Count) // some objects are not present in the current frame
+				{
+					shouldSkipEvent = true;
+					break;
+				}
+			}
+
+			if (shouldSkipEvent) continue;
+
+			evt.IsGlobal = true;
+			frame.Events.Items.Add(evt);
+		}
 	}
 }

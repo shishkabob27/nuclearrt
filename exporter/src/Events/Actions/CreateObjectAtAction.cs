@@ -15,9 +15,9 @@ public class CreateObjectAtAction : ActionBase
 		string X = ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[1].Loader, eventBase);
 		string Y = ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[2].Loader, eventBase);
 		string layer = ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[3].Loader, eventBase);
-		result.AppendLine($"CreateInstance({X}, {Y}, ({layer}) - 1, {ExpressionConverter.GetObject(obj.ObjectInfo).Item1}, 0);");
+		result.AppendLine($"CreateInstance({X}, {Y}, ({layer}) - 1, {ExpressionConverter.GetObject(obj.ObjectInfo, IsGlobal).Item1}, 0);");
 		//add to selector
-		result.AppendLine($"{ExpressionConverter.GetSelector(obj.ObjectInfo)}->AddExternalInstance(ObjectInstances.back());");
+		result.AppendLine($"{GetSelector(obj.ObjectInfo)}->AddExternalInstance(ObjectInstances.back());");
 
 		return result.ToString();
 	}

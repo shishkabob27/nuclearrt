@@ -18,7 +18,7 @@ public class CreateObjectAction : ActionBase
 		{
 			result.AppendLine($"auto parent = *{GetSelector((int)create.Position.ObjectInfoParent)}->begin();");
 		}
-		result.AppendLine($"CreateInstance({create.Position.X}, {create.Position.Y}, {create.Position.Layer}, {ExpressionConverter.GetObject(create.ObjectInfo).Item1}, {create.Position.Angle}, {(create.Position.ObjectInfoParent != ushort.MaxValue ? "parent.get()" : "nullptr")});");
+		result.AppendLine($"CreateInstance({create.Position.X}, {create.Position.Y}, {create.Position.Layer}, {ExpressionConverter.GetObject(create.ObjectInfo, IsGlobal).Item1}, {create.Position.Angle}, {(create.Position.ObjectInfoParent != ushort.MaxValue ? "parent.get()" : "nullptr")});");
 		//add to selector
 		result.AppendLine($"{GetSelector(create.ObjectInfo)}->AddExternalInstance(ObjectInstances.back());");
 		result.AppendLine("}");
