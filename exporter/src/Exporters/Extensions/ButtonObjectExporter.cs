@@ -1,6 +1,7 @@
 using CTFAK.Memory;
 using CTFAK.CCN.Chunks.Frame;
 using System.Text;
+using CTFAK.Utils;
 
 public class ButtonObjectExporter : ExtensionExporter
 {
@@ -14,9 +15,12 @@ public class ButtonObjectExporter : ExtensionExporter
 
 		short Width = reader.ReadInt16();
 		short Height = reader.ReadInt16();
-		//TODO: all the other stuff
 
-		return CreateExtension($"{Width}, {Height}");
+		short Type = reader.ReadInt16();
+		reader.ReadInt16();
+		short Flags = reader.ReadInt16();
+
+		return CreateExtension($"{Width}, {Height}, {Type}, {Flags}");
 	}
 
 	public override string ExportCondition(EventBase eventBase, int conditionNum, ref string nextLabel, ref int orIndex, Dictionary<string, object>? parameters = null, string ifStatement = "if (", bool isGlobal = false)
@@ -49,6 +53,20 @@ public class ButtonObjectExporter : ExtensionExporter
 
 		switch (actionNum)
 		{
+			case 81: // Show button
+				result.AppendLine($"for (ObjectIterator it(*{ExpressionConverter.GetSelector(eventBase.ObjectInfo, isGlobal)}); !it.end(); ++it) {{");
+				result.AppendLine($"    auto instance = *it;");
+				result.AppendLine($"    auto buttonExt = {GetExtensionInstanceLoop()};");
+				result.AppendLine($"    buttonExt->SetShown(true);");
+				result.AppendLine("}");
+				break;
+			case 82: // Hide button
+				result.AppendLine($"for (ObjectIterator it(*{ExpressionConverter.GetSelector(eventBase.ObjectInfo, isGlobal)}); !it.end(); ++it) {{");
+				result.AppendLine($"    auto instance = *it;");
+				result.AppendLine($"    auto buttonExt = {GetExtensionInstanceLoop()};");
+				result.AppendLine($"    buttonExt->SetShown(false);");
+				result.AppendLine("}");
+				break;
 			case 83: // Enable button
 				result.AppendLine($"for (ObjectIterator it(*{ExpressionConverter.GetSelector(eventBase.ObjectInfo, isGlobal)}); !it.end(); ++it) {{");
 				result.AppendLine($"    auto instance = *it;");
