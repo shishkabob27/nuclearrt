@@ -2,6 +2,10 @@
 #include "FrameFactory.h"
 #include "Frame.h"
 
+#ifdef NUCLEAR_BACKEND_SDL3
+#include "SDL3Backend.h"
+#endif
+
 Application::Application() = default;
 Application::~Application() = default;
 
@@ -11,7 +15,12 @@ void Application::Initialize()
 	appData->Initialize();
 	std::cout << "Initialized AppData" << std::endl;
 
-	backend = std::make_shared<SDL3Backend>();
+	#ifdef NUCLEAR_BACKEND_SDL3
+		backend = std::make_shared<SDL3Backend>();
+	#else
+		backend = std::make_shared<Backend>();
+	#endif
+
 	backend->Initialize();
 	std::cout << "Initialized Backend: " << backend->GetName() << std::endl;
 

@@ -61,15 +61,13 @@ else()
     message(STATUS "Using local SDL3_ttf")
 endif()
 
-# Handle platform-specific settings
+add_compile_definitions(NUCLEAR_BACKEND_SDL3)
+
 if(WIN32)
-    # Windows-specific settings
     add_compile_definitions(PLATFORM_WINDOWS)
 elseif(APPLE)
-    # macOS-specific settings
     add_compile_definitions(PLATFORM_MACOS)
 elseif(UNIX AND NOT APPLE)
-    # Linux-specific settings
     add_compile_definitions(PLATFORM_LINUX)
 endif()
 

@@ -1,5 +1,7 @@
 #pragma once
 
+#ifdef NUCLEAR_BACKEND_SDL3
+
 #include "Backend.h"
 #include <unordered_map>
 
@@ -78,3 +80,4 @@ private:
 
 	int FusionToSDLKey(short key);
 }; 
+#endif

@@ -1,3 +1,5 @@
+#ifdef NUCLEAR_BACKEND_SDL3
+
 #include "SDL3Backend.h"
 
 #include <iostream>
@@ -868,3 +870,4 @@ void SDL3Backend::GetTextureDimensions(int textureId, int& width, int& height)
 		height = 0;
 	}
 }
+#endif
