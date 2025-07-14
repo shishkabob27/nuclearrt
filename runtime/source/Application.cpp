@@ -2,6 +2,9 @@
 #include "FrameFactory.h"
 #include "Frame.h"
 
+Application::Application() = default;
+Application::~Application() = default;
+
 void Application::Initialize()
 {
 	appData = std::make_shared<AppData>();

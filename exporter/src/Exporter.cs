@@ -18,6 +18,7 @@ public class Exporter
 	private readonly FontBankExporter _fontBankExporter;
 	private readonly FrameExporter _frameExporter;
 	private readonly ProjectFileExporter _projectFileExporter;
+	private readonly ExtensionFolderExporter _extensionFolderExporter;
 
 	public GameData GameData => _ccnReader.getGameData();
 	public MFAData MfaData => (_mfaReader as MFAFileReader).mfa;
@@ -40,6 +41,7 @@ public class Exporter
 		_fontBankExporter = new FontBankExporter(this);
 		_frameExporter = new FrameExporter(this);
 		_projectFileExporter = new ProjectFileExporter(this);
+		_extensionFolderExporter = new ExtensionFolderExporter(this);
 	}
 
 	public void Export()
@@ -48,6 +50,7 @@ public class Exporter
 		FileUtils.CopyFilesRecursively(RuntimeBasePath.FullName, OutputPath.FullName);
 
 		_projectFileExporter.Export();
+		_extensionFolderExporter.Export();
 		_appDataExporter.Export();
 		_objectInfoExporter.Export();
 		_imageBankExporter.Export();

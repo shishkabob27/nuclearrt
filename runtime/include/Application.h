@@ -11,9 +11,10 @@
 
 #include "AppData.h"
 #include "SDL3Backend.h"
-#include "Frame.h"
 #include "GameState.h"
 #include "Input.h"
+
+class Frame;
 
 class Application
 {
@@ -51,7 +52,8 @@ public:
 	short Random(short max);
 	short RandomRange(short min, short max);
 
-	Application() = default;
+	Application();
+	~Application();
 	Application(const Application&) = delete;
 	Application& operator=(const Application&) = delete;
 

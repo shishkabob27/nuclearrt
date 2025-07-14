@@ -24,6 +24,8 @@ void GeneratedFrame{{ FRAME_INDEX }}::Initialize() {
 	{{ OBJECT_SELECTORS_INIT }}
 
 	{{ GROUP_ACTIVE }}
+
+	Frame::PostInitialize();
 }
 
 void GeneratedFrame{{ FRAME_INDEX }}::Update() {

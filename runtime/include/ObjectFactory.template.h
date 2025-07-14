@@ -8,6 +8,8 @@
 #include "QuickBackdropProperties.h"
 #include "CommonProperties.h"
 
+{{ EXTENSION_INCLUDES }}
+
 class ObjectFactory {
 public:
     static ObjectFactory& Instance() {

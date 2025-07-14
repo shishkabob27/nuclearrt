@@ -4,10 +4,26 @@
 #include "CommonProperties.h"
 #include "ImageBank.h"
 #include "FontBank.h"
+#include "Extension.h"
 #include <math.h>
 
 void Frame::Initialize()
 {
+}
+
+void Frame::PostInitialize()
+{
+	for (auto& instance : ObjectInstances)
+	{
+		if (instance->OI->Type >= 32) // Extension
+		{
+			auto properties = std::dynamic_pointer_cast<CommonProperties>(instance->OI->Properties);
+			if (properties && properties->oExtension) {
+				properties->oExtension->SetInstance(instance.get());
+				properties->oExtension->Initialize();
+			}
+		}
+	}
 }
 
 void Frame::Update()
@@ -15,9 +31,9 @@ void Frame::Update()
 	float deltaTime = Application::Instance().GetBackend()->GetTimeDelta();
 	GameTimer.Update(deltaTime);
 
-	//Animation update
 	for (auto& instance : ObjectInstances)
 	{
+		//Animation update
 		if (instance->OI->Type == 2) // Common object with possible animation
 		{
 			auto properties = std::dynamic_pointer_cast<CommonProperties>(instance->OI->Properties);
@@ -26,12 +42,19 @@ void Frame::Update()
 				properties->oAnimations->Update(deltaTime);
 			}
 		}
+		else if (instance->OI->Type >= 32) // Extension
+		{
+			auto properties = std::dynamic_pointer_cast<CommonProperties>(instance->OI->Properties);
+			if (properties && properties->oExtension)
+			{
+				properties->oExtension->Update(deltaTime);
+			}
+		}
 	}
 }
 
 void Frame::Draw()
 {
-	//Clear background
 	Application::Instance().GetBackend()->Clear(BackgroundColor);
 
 	for (unsigned int i = 0; i < Layers.size(); i++)
@@ -187,6 +210,14 @@ void Frame::DrawLayer(Layer& layer, unsigned int index)
 				int scrollXOffset = scrollX * layer.XCoefficient;
 				int scrollYOffset = scrollY * layer.YCoefficient;
 				Application::Instance().GetBackend()->DrawQuickBackdrop(instance->X - scrollXOffset, instance->Y - scrollYOffset, properties->Width, properties->Height, properties->oShape);
+			}
+		}
+		else if (instance->OI->Type >= 32) // Extension
+		{
+			auto properties = std::dynamic_pointer_cast<CommonProperties>(instance->OI->Properties);
+			if (properties && properties->oExtension)
+			{
+				properties->oExtension->Draw();
 			}
 		}
 	}
