@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "Application.h"
+#include "Frame.h"
 #include "FontBank.h"
 #include "PakFile.h"
 
@@ -395,6 +396,13 @@ void SDL3Backend::DrawRectangle(int x, int y, int width, int height, int color)
 	SDL_SetRenderDrawColor(renderer, (color >> 16) & 0xFF, (color >> 8) & 0xFF, color & 0xFF, (color >> 24) & 0xFF);
 	SDL_FRect rect = { x, y, width, height };
 	SDL_RenderFillRect(renderer, &rect);
+}
+
+void SDL3Backend::DrawRectangleLines(int x, int y, int width, int height, int color)
+{
+	SDL_SetRenderDrawColor(renderer, (color >> 16) & 0xFF, (color >> 8) & 0xFF, color & 0xFF, (color >> 24) & 0xFF);
+	SDL_FRect rect = { x, y, width, height };
+	SDL_RenderRect(renderer, &rect);
 }
 
 void SDL3Backend::DrawLine(int x1, int y1, int x2, int y2, int color)

@@ -41,6 +41,7 @@ public:
 	}
 
 	virtual void Initialize();
+	void PostInitialize();
 	virtual void Update();
 	virtual void Draw();
 

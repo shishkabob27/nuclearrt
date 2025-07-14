@@ -1,5 +1,7 @@
 using System.Text;
 using CTFAK.CCN.Chunks.Objects;
+using CTFAK.MFA.MFAObjectLoaders;
+using CTFAK.Utils;
 
 public class ObjectInfoExporter : BaseExporter
 {
@@ -75,6 +77,7 @@ public class ObjectInfoExporter : BaseExporter
 		result.Append(BuildValue(common));
 		result.Append(BuildCounter(common));
 		result.Append(BuildParagraphs(common));
+		result.Append(BuildExtension(common));
 
 		return result.ToString();
 	}
@@ -319,5 +322,26 @@ public class ObjectInfoExporter : BaseExporter
 		result.Append(")");
 
 		return result.ToString();
+	}
+
+	private string BuildExtension(ObjectCommon common)
+	{
+		if (common.ExtensionOffset > 0 && common.ExtensionData != null && common.ExtensionData.Length > 0)
+		{
+			string extensionName = common.Identifier;
+
+			ExtensionExporter extension = ExtensionExporterRegistry.GetExporter(extensionName);
+			if (extension == null)
+			{
+				Logger.Log($"Extension {extensionName} not found");
+				return ", nullptr";
+			}
+
+			return $", {extension.ExportExtension(common.ExtensionData)}";
+		}
+		else
+		{
+			return ", nullptr";
+		}
 	}
 }
