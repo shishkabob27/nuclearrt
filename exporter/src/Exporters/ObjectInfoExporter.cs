@@ -22,6 +22,22 @@ public class ObjectInfoExporter : BaseExporter
 
 		SaveFile(Path.Combine(OutputPath.FullName, "source", "ObjectFactory.cpp"), objectInfoList);
 		File.Delete(Path.Combine(OutputPath.FullName, "source", "ObjectFactory.template.cpp"));
+
+		//get all includes from used extensions
+		var extensionIncludes = new StringBuilder();
+		var extensionFolderExporter = new ExtensionFolderExporter(_exporter);
+		var extensionClassNames = extensionFolderExporter.GetAllExtensionClassNames();
+
+		foreach (var extension in extensionClassNames)
+		{
+			extensionIncludes.Append($"#include \"{extension}.h\"\n");
+		}
+
+		var objectFactoryIncludePath = Path.Combine(OutputPath.FullName, "include", "ObjectFactory.template.h");
+		var objectFactoryInclude = File.ReadAllText(objectFactoryIncludePath);
+		objectFactoryInclude = objectFactoryInclude.Replace("{{ EXTENSION_INCLUDES }}", extensionIncludes.ToString());
+		SaveFile(Path.Combine(OutputPath.FullName, "include", "ObjectFactory.h"), objectFactoryInclude);
+		File.Delete(objectFactoryIncludePath);
 	}
 
 	private string BuildObjectInfoCase(ObjectInfo objectInfo)
@@ -326,7 +342,7 @@ public class ObjectInfoExporter : BaseExporter
 
 	private string BuildExtension(ObjectCommon common)
 	{
-		if (common.ExtensionOffset > 0 && common.ExtensionData != null && common.ExtensionData.Length > 0)
+		if (common.ExtensionOffset > 0 && common.ExtensionData != null)
 		{
 			string extensionName = common.Identifier;
 

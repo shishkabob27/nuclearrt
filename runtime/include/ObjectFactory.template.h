@@ -8,8 +8,7 @@
 #include "QuickBackdropProperties.h"
 #include "CommonProperties.h"
 
-#include "ButtonObjectExtension.h"
-#include "IniExtension.h"
+{{ EXTENSION_INCLUDES }}
 
 class ObjectFactory {
 public:
