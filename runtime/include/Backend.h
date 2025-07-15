@@ -36,6 +36,7 @@ public:
 	virtual void DrawQuickBackdrop(int x, int y, int width, int height, std::shared_ptr<Shape> shape) {}
 
 	virtual void DrawRectangle(int x, int y, int width, int height, int color) {}
+	virtual void DrawRectangleLines(int x, int y, int width, int height, int color) {}
 	virtual void DrawLine(int x1, int y1, int x2, int y2, int color) {}
 	virtual void DrawPixel(int x, int y, int color) {}
 

@@ -242,6 +242,18 @@ public class ExpressionConverter
 					result += $"std::dynamic_pointer_cast<CommonProperties>((*({selector}->begin()))->OI->Properties)->oValue->GetValue()";
 				}
 			}
+			else if (expression.ObjectType >= 32)
+			{
+				var exporter = ExtensionExporterRegistry.GetExporterByObjectInfo(expression.ObjectInfo, Exporter.Instance.CurrentFrame);
+
+				if (exporter == null)
+				{
+					Logger.Log($"Extension exporter not found for ObjectInfo {expression.ObjectInfo}");
+					return "0";
+				}
+
+				result += exporter.ExportExpression(expression, eventBase);
+			}
 			else if (expression.ObjectType > 0 && expression.Num == 83)
 			{
 				if (expression.ObjectType == 2) // Angle
@@ -251,10 +263,6 @@ public class ExpressionConverter
 					else
 						result += $"(*{GetSelector(expression.ObjectInfo)}->begin())->GetAngle()";
 				}
-			}
-			else if (expression.ObjectType > 32)
-			{
-				return "0"; // TODO
 			}
 			else
 			{
@@ -298,11 +306,15 @@ public class ExpressionConverter
 		return $"{StringUtils.SanitizeObjectName(obj.Item2)}_{obj.Item1}_selector";
 	}
 
-	public static Tuple<int, string> GetObject(int objectInfo, bool isGlobal = false)
+	public static Tuple<int, string, ObjectInstance> GetObject(int objectInfo, bool isGlobal = false, int frame = -1)
 	{
+		int FrameIndex = Exporter.Instance.CurrentFrame;
+		if (frame != -1) FrameIndex = frame;
+
 		string objectName = "";
 		int objectType = 0;
 		int systemQualifier = 0;
+		ObjectInstance objectInstance = null;
 
 		List<EventObject> eventObjects;
 		if (isGlobal)
@@ -311,7 +323,7 @@ public class ExpressionConverter
 		}
 		else
 		{
-			eventObjects = Exporter.Instance.MfaData.Frames[Exporter.Instance.CurrentFrame].Events.Objects;
+			eventObjects = Exporter.Instance.MfaData.Frames[FrameIndex].Events.Objects;
 		}
 
 		foreach (var evtObj in eventObjects)
@@ -323,11 +335,12 @@ public class ExpressionConverter
 				systemQualifier = evtObj.SystemQualifier;
 
 				//Find object name in ccn frame
-				foreach (var ccnObj in Exporter.Instance.GameData.Frames[Exporter.Instance.CurrentFrame].objects)
+				foreach (var ccnObj in Exporter.Instance.GameData.Frames[FrameIndex].objects)
 				{
 					if (objectName == Exporter.Instance.GameData.frameitems[(int)ccnObj.objectInfo].name)
 					{
 						objectInfo = ccnObj.objectInfo;
+						objectInstance = ccnObj;
 						break;
 					}
 				}
@@ -341,6 +354,6 @@ public class ExpressionConverter
 			objectInfo = short.MaxValue + systemQualifier + 1;
 		}
 
-		return new Tuple<int, string>(objectInfo, objectName);
+		return new Tuple<int, string, ObjectInstance>(objectInfo, objectName, objectInstance);
 	}
 }

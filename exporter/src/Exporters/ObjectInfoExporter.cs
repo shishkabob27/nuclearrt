@@ -1,5 +1,7 @@
 using System.Text;
 using CTFAK.CCN.Chunks.Objects;
+using CTFAK.MFA.MFAObjectLoaders;
+using CTFAK.Utils;
 
 public class ObjectInfoExporter : BaseExporter
 {
@@ -20,6 +22,22 @@ public class ObjectInfoExporter : BaseExporter
 
 		SaveFile(Path.Combine(OutputPath.FullName, "source", "ObjectFactory.cpp"), objectInfoList);
 		File.Delete(Path.Combine(OutputPath.FullName, "source", "ObjectFactory.template.cpp"));
+
+		//get all includes from used extensions
+		var extensionIncludes = new StringBuilder();
+		var extensionFolderExporter = new ExtensionFolderExporter(_exporter);
+		var extensionClassNames = extensionFolderExporter.GetAllExtensionClassNames();
+
+		foreach (var extension in extensionClassNames)
+		{
+			extensionIncludes.Append($"#include \"{extension}.h\"\n");
+		}
+
+		var objectFactoryIncludePath = Path.Combine(OutputPath.FullName, "include", "ObjectFactory.template.h");
+		var objectFactoryInclude = File.ReadAllText(objectFactoryIncludePath);
+		objectFactoryInclude = objectFactoryInclude.Replace("{{ EXTENSION_INCLUDES }}", extensionIncludes.ToString());
+		SaveFile(Path.Combine(OutputPath.FullName, "include", "ObjectFactory.h"), objectFactoryInclude);
+		File.Delete(objectFactoryIncludePath);
 	}
 
 	private string BuildObjectInfoCase(ObjectInfo objectInfo)
@@ -75,6 +93,7 @@ public class ObjectInfoExporter : BaseExporter
 		result.Append(BuildValue(common));
 		result.Append(BuildCounter(common));
 		result.Append(BuildParagraphs(common));
+		result.Append(BuildExtension(common));
 
 		return result.ToString();
 	}
@@ -319,5 +338,26 @@ public class ObjectInfoExporter : BaseExporter
 		result.Append(")");
 
 		return result.ToString();
+	}
+
+	private string BuildExtension(ObjectCommon common)
+	{
+		if (common.ExtensionOffset > 0 && common.ExtensionData != null)
+		{
+			string extensionName = common.Identifier;
+
+			ExtensionExporter extension = ExtensionExporterRegistry.GetExporter(extensionName);
+			if (extension == null)
+			{
+				Logger.Log($"Extension {extensionName} not found");
+				return ", nullptr";
+			}
+
+			return $", {extension.ExportExtension(common.ExtensionData)}";
+		}
+		else
+		{
+			return ", nullptr";
+		}
 	}
 }

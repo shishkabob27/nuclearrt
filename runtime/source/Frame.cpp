@@ -4,10 +4,28 @@
 #include "CommonProperties.h"
 #include "ImageBank.h"
 #include "FontBank.h"
+#include "Extension.h"
 #include <math.h>
+
+constexpr float PI = 3.14159265358979323846f;
 
 void Frame::Initialize()
 {
+}
+
+void Frame::PostInitialize()
+{
+	for (auto& instance : ObjectInstances)
+	{
+		if (instance->OI->Type >= 32) // Extension
+		{
+			auto properties = std::dynamic_pointer_cast<CommonProperties>(instance->OI->Properties);
+			if (properties && properties->oExtension) {
+				properties->oExtension->SetInstance(instance.get());
+				properties->oExtension->Initialize();
+			}
+		}
+	}
 }
 
 void Frame::Update()
@@ -15,9 +33,9 @@ void Frame::Update()
 	float deltaTime = Application::Instance().GetBackend()->GetTimeDelta();
 	GameTimer.Update(deltaTime);
 
-	//Animation update
 	for (auto& instance : ObjectInstances)
 	{
+		//Animation update
 		if (instance->OI->Type == 2) // Common object with possible animation
 		{
 			auto properties = std::dynamic_pointer_cast<CommonProperties>(instance->OI->Properties);
@@ -26,12 +44,19 @@ void Frame::Update()
 				properties->oAnimations->Update(deltaTime);
 			}
 		}
+		else if (instance->OI->Type >= 32) // Extension
+		{
+			auto properties = std::dynamic_pointer_cast<CommonProperties>(instance->OI->Properties);
+			if (properties && properties->oExtension)
+			{
+				properties->oExtension->Update(deltaTime);
+			}
+		}
 	}
 }
 
 void Frame::Draw()
 {
-	//Clear background
 	Application::Instance().GetBackend()->Clear(BackgroundColor);
 
 	for (unsigned int i = 0; i < Layers.size(); i++)
@@ -187,6 +212,14 @@ void Frame::DrawLayer(Layer& layer, unsigned int index)
 				int scrollXOffset = scrollX * layer.XCoefficient;
 				int scrollYOffset = scrollY * layer.YCoefficient;
 				Application::Instance().GetBackend()->DrawQuickBackdrop(instance->X - scrollXOffset, instance->Y - scrollYOffset, properties->Width, properties->Height, properties->oShape);
+			}
+		}
+		else if (instance->OI->Type >= 32) // Extension
+		{
+			auto properties = std::dynamic_pointer_cast<CommonProperties>(instance->OI->Properties);
+			if (properties && properties->oExtension)
+			{
+				properties->oExtension->Draw();
 			}
 		}
 	}
@@ -806,7 +839,7 @@ bool Frame::IsColliding(ObjectInstance *instance, int x, int y)
 			float pointY = targetY - drawY;
 			
 			// Rotate the point in the opposite direction
-			float radians = instance->GetAngle() * (SDL_PI_F / 180.0f);
+			float radians = instance->GetAngle() * (PI / 180.0f);
 			float cosA = cos(radians);
 			float sinA = sin(radians);
 			
@@ -904,7 +937,7 @@ void Frame::RotatePoints(int& x1, int& y1, int& x2, int& y2, int& x3, int& y3, i
 void Frame::RotatePoint(int& x, int& y, float angle)
 {
 	// Convert to radians
-	float radians = angle * (SDL_PI_F / 180.0f);
+	float radians = angle * (PI / 180.0f);
 
 	// Rotate point around origin
 	float xNew = x * cos(radians) - y * sin(radians);

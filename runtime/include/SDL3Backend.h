@@ -1,5 +1,7 @@
 #pragma once
 
+#ifdef NUCLEAR_BACKEND_SDL3
+
 #include "Backend.h"
 #include <unordered_map>
 
@@ -35,6 +37,7 @@ public:
 	void DrawQuickBackdrop(int x, int y, int width, int height, std::shared_ptr<Shape> shape) override;
 	
 	void DrawRectangle(int x, int y, int width, int height, int color) override;
+	void DrawRectangleLines(int x, int y, int width, int height, int color) override;
 	void DrawLine(int x1, int y1, int x2, int y2, int color) override;
 	void DrawPixel(int x, int y, int color) override;
 
@@ -77,3 +80,4 @@ private:
 
 	int FusionToSDLKey(short key);
 }; 
+#endif

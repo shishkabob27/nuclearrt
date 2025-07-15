@@ -90,6 +90,11 @@ public class EventProcessor
 					return instance?.ObjectType == condition.ObjectType && instance?.Num == condition.Num;
 				});
 
+				if (condition.ObjectType >= 32)
+				{
+					acBaseType = typeof(ExtensionConditionBase);
+				}
+
 				if (acBaseType == null)
 				{
 					result.AppendLine($"//Condition ({condition.ObjectType}, {condition.Num}) not found");
@@ -136,6 +141,11 @@ public class EventProcessor
 					var instance = Activator.CreateInstance(t) as ActionBase;
 					return instance?.ObjectType == action.ObjectType && instance?.Num == action.Num;
 				});
+
+				if (action.ObjectType >= 32)
+				{
+					acBaseType = typeof(ExtensionActionBase);
+				}
 
 				if (acBaseType == null)
 				{

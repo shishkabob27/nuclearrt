@@ -1,8 +1,11 @@
+#ifdef NUCLEAR_BACKEND_SDL3
+
 #include "SDL3Backend.h"
 
 #include <iostream>
 
 #include "Application.h"
+#include "Frame.h"
 #include "FontBank.h"
 #include "PakFile.h"
 
@@ -137,6 +140,19 @@ void SDL3Backend::Deinitialize()
 	DEBUG_UI.Shutdown();
 #endif
 
+	// cleanup textures
+	for (auto& pair : textures) {
+		SDL_DestroyTexture(pair.second);
+	}
+	textures.clear();
+
+	// cleanup fonts
+	for (auto& pair : fonts) {
+		TTF_CloseFont(pair.second);
+	}
+	fonts.clear();
+	fontBuffers.clear();
+
 	// Destroy the renderer
 	if (renderer != nullptr) {
 		SDL_DestroyRenderer(renderer);
@@ -256,8 +272,11 @@ void SDL3Backend::LoadTexture(int id) {
 }
 
 void SDL3Backend::UnloadTexture(int id) {
-	SDL_DestroyTexture(textures[id]);
-	textures.erase(id);
+	auto it = textures.find(id);
+	if (it != textures.end()) {
+		SDL_DestroyTexture(it->second);
+		textures.erase(it);
+	}
 }
 
 void SDL3Backend::DrawTexture(int id, int x, int y, int offsetX, int offsetY, int angle, float scale, int color, char blendCoefficient, int effect, unsigned int effectParam)
@@ -301,7 +320,8 @@ void SDL3Backend::DrawTexture(int id, int x, int y, int offsetX, int offsetY, in
 			break;
 	}
 
-	SDL_RenderTextureRotated(renderer, texture, nullptr, &rect, 360 - angle, new SDL_FPoint{ static_cast<float>(offsetX), static_cast<float>(offsetY) }, SDL_FLIP_NONE);
+	SDL_FPoint center{ static_cast<float>(offsetX), static_cast<float>(offsetY) };
+	SDL_RenderTextureRotated(renderer, texture, nullptr, &rect, 360 - angle, &center, SDL_FLIP_NONE);
 	
 	// Restore original texture properties
 	SDL_SetTextureColorMod(texture, origR, origG, origB);
@@ -397,6 +417,13 @@ void SDL3Backend::DrawRectangle(int x, int y, int width, int height, int color)
 	SDL_RenderFillRect(renderer, &rect);
 }
 
+void SDL3Backend::DrawRectangleLines(int x, int y, int width, int height, int color)
+{
+	SDL_SetRenderDrawColor(renderer, (color >> 16) & 0xFF, (color >> 8) & 0xFF, color & 0xFF, (color >> 24) & 0xFF);
+	SDL_FRect rect = { x, y, width, height };
+	SDL_RenderRect(renderer, &rect);
+}
+
 void SDL3Backend::DrawLine(int x1, int y1, int x2, int y2, int color)
 {
 	SDL_SetRenderDrawColor(renderer, (color >> 16) & 0xFF, (color >> 8) & 0xFF, color & 0xFF, (color >> 24) & 0xFF);
@@ -464,9 +491,12 @@ void SDL3Backend::LoadFont(int id)
 
 void SDL3Backend::UnloadFont(int id)
 {
-	TTF_CloseFont(fonts[id]);
-	fonts.erase(id);
-	fontBuffers.erase(id);
+	auto it = fonts.find(id);
+	if (it != fonts.end()) {
+		TTF_CloseFont(it->second);
+		fonts.erase(it);
+		fontBuffers.erase(id);
+	}
 }
 
 void SDL3Backend::DrawText(FontInfo* fontInfo, int x, int y, int color, const std::string& text)
@@ -860,3 +890,4 @@ void SDL3Backend::GetTextureDimensions(int textureId, int& width, int& height)
 		height = 0;
 	}
 }
+#endif
