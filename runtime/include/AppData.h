@@ -54,7 +54,12 @@ public:
 	void SetPlayerScores(const std::vector<int>& scores) { m_playerScores = scores; }
 	void SetScore(int playerIndex, int score) { m_playerScores[playerIndex] = score; }
 	void AddScore(int playerIndex, int score) { m_playerScores[playerIndex] += score; }
-	void SubtractScore(int playerIndex, int score) { m_playerScores[playerIndex] -= score; }
+	void SubtractScore(int playerIndex, int score) {
+		m_playerScores[playerIndex] -= score;
+		if (m_playerScores[playerIndex] < 0) {
+			m_playerScores[playerIndex] = 0;
+		}
+	}
 
 	std::vector<int>& GetPlayerLives() { return m_playerLives; }
 	void SetPlayerLives(const std::vector<int>& lives) { m_playerLives = lives; }
