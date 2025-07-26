@@ -26,7 +26,7 @@ public class IniExporter : ExtensionExporter
 
 	public override string ExportCondition(EventBase eventBase, int conditionNum, ref string nextLabel, ref int orIndex, Dictionary<string, object>? parameters = null, string ifStatement = "if (", bool isGlobal = false)
 	{
-		StringBuilder result = new StringBuilder();
+		StringBuilder result = new();
 
 		switch (conditionNum)
 		{
@@ -41,7 +41,7 @@ public class IniExporter : ExtensionExporter
 
 	public override string ExportAction(EventBase eventBase, int actionNum, ref string nextLabel, ref int orIndex, Dictionary<string, object>? parameters = null, bool isGlobal = false)
 	{
-		StringBuilder result = new StringBuilder();
+		StringBuilder result = new();
 
 		switch (actionNum)
 		{
@@ -53,6 +53,9 @@ public class IniExporter : ExtensionExporter
 				break;
 			case 82: // Set Value
 				result.AppendLine($"{GetExtensionInstance(eventBase.ObjectInfo)}->SetValue({ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[0].Loader, eventBase)});");
+				break;
+			case 86: // Set File Name
+				result.AppendLine($"{GetExtensionInstance(eventBase.ObjectInfo)}->SetFileName({ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[0].Loader, eventBase)});");
 				break;
 			case 87: // Set Value (Item)
 				result.AppendLine($"{GetExtensionInstance(eventBase.ObjectInfo)}->SetValue({ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[0].Loader, eventBase)}, {ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[1].Loader, eventBase)});");

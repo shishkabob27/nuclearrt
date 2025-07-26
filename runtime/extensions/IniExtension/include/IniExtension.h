@@ -13,6 +13,8 @@ public:
 
 	void Initialize() override;
 
+	void SetFileName(const std::string& name);
+
 	void SetCurrentGroup(const std::string& group);
 	void SetCurrentItem(const std::string& item);
 

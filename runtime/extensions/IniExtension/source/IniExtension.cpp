@@ -8,7 +8,12 @@ void IniExtension::Initialize()
 	CurrentGroup = "";
 	CurrentItem = "";
 
-	//TODO: write somewhere besides the current directory, appdata?
+	SetFileName(Name);
+}	
+
+void IniExtension::SetFileName(const std::string& name)
+{
+	Name = name;
 	std::filesystem::path path = Name;
 	iniFile = std::make_unique<mINI::INIFile>(path);
 	iniFile->read(ini);
