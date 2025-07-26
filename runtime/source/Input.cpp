@@ -1,5 +1,6 @@
 #include "Input.h"
 #include "Application.h"
+#include <cstring>
 
 void Input::Update()
 {

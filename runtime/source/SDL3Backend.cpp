@@ -302,7 +302,7 @@ void SDL3Backend::DrawTexture(int id, int x, int y, int offsetX, int offsetY, in
 	//get texture dimensions
 	int width, height;
 	GetTextureDimensions(id, width, height);
-	SDL_FRect rect = { x - offsetX, y - offsetY, width, height };
+	SDL_FRect rect = { static_cast<float>(x - offsetX), static_cast<float>(y - offsetY), static_cast<float>(width), static_cast<float>(height) };
 	
 	//Effects
 	switch (effect) {
@@ -347,7 +347,7 @@ void SDL3Backend::DrawQuickBackdrop(int x, int y, int width, int height, std::sh
 	else {
 		if (shape->FillType == 1) { // Solid Color
 			SDL_SetRenderDrawColor(renderer, (shape->Color1 >> 16) & 0xFF, (shape->Color1 >> 8) & 0xFF, shape->Color1 & 0xFF, SDL_ALPHA_OPAQUE);
-			SDL_FRect rect = { x, y, width, height };
+			SDL_FRect rect = { static_cast<float>(x), static_cast<float>(y), static_cast<float>(width), static_cast<float>(height) };
 			SDL_RenderFillRect(renderer, &rect);
 		}
 		else if (shape->FillType == 2) { // Gradient
@@ -401,8 +401,8 @@ void SDL3Backend::DrawQuickBackdrop(int x, int y, int width, int height, std::sh
 					int tileW = std::min(textureWidth, x + width - tileX);
 					int tileH = std::min(textureHeight, y + height - tileY);
 					
-					SDL_FRect destRect = { tileX, tileY, tileW, tileH };
-					SDL_FRect srcRect = { 0, 0, tileW, tileH };
+					SDL_FRect destRect = { static_cast<float>(tileX), static_cast<float>(tileY), static_cast<float>(tileW), static_cast<float>(tileH) };
+					SDL_FRect srcRect = { 0.0f, 0.0f, static_cast<float>(tileW), static_cast<float>(tileH) };
 					SDL_RenderTexture(renderer, texture, &srcRect, &destRect);
 				}
 			}
@@ -413,14 +413,14 @@ void SDL3Backend::DrawQuickBackdrop(int x, int y, int width, int height, std::sh
 void SDL3Backend::DrawRectangle(int x, int y, int width, int height, int color)
 {
 	SDL_SetRenderDrawColor(renderer, (color >> 16) & 0xFF, (color >> 8) & 0xFF, color & 0xFF, (color >> 24) & 0xFF);
-	SDL_FRect rect = { x, y, width, height };
+	SDL_FRect rect = { static_cast<float>(x), static_cast<float>(y), static_cast<float>(width), static_cast<float>(height) };
 	SDL_RenderFillRect(renderer, &rect);
 }
 
 void SDL3Backend::DrawRectangleLines(int x, int y, int width, int height, int color)
 {
 	SDL_SetRenderDrawColor(renderer, (color >> 16) & 0xFF, (color >> 8) & 0xFF, color & 0xFF, (color >> 24) & 0xFF);
-	SDL_FRect rect = { x, y, width, height };
+	SDL_FRect rect = { static_cast<float>(x), static_cast<float>(y), static_cast<float>(width), static_cast<float>(height) };
 	SDL_RenderRect(renderer, &rect);
 }
 
@@ -528,7 +528,7 @@ void SDL3Backend::DrawText(FontInfo* fontInfo, int x, int y, int color, const st
 
 	SDL_Surface* surface = TTF_RenderText_Blended_Wrapped(font, modifiedText.c_str(), 0, RGBToSDLColor(color), fontInfo->Width);
 	SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
-	SDL_FRect rect = { x, y, surface->w, surface->h };
+	SDL_FRect rect = { static_cast<float>(x), static_cast<float>(y), static_cast<float>(surface->w), static_cast<float>(surface->h) };
 	SDL_RenderTexture(renderer, texture, nullptr, &rect);
 	SDL_DestroySurface(surface);
 	SDL_DestroyTexture(texture);

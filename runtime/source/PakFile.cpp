@@ -1,6 +1,7 @@
 #include "PakFile.h"
 #include <string>
 #include <iostream>
+#include <cstring>
 
 bool PakFile::Load(const std::string& filename) {
     pakStream.open(filename, std::ios::binary);

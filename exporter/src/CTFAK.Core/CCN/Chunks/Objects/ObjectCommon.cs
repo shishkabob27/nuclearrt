@@ -208,6 +208,7 @@ namespace CTFAK.CCN.Chunks.Objects
 					case "TRÿÿ":
 					case "CNTR":
 					case "SCORE":
+					case "SCRE":
 					case "LIVE":
 					case "CN":
 					case "LIVES":

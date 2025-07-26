@@ -26,7 +26,7 @@ public class IniExporter : ExtensionExporter
 
 	public override string ExportCondition(EventBase eventBase, int conditionNum, ref string nextLabel, ref int orIndex, Dictionary<string, object>? parameters = null, string ifStatement = "if (", bool isGlobal = false)
 	{
-		StringBuilder result = new StringBuilder();
+		StringBuilder result = new();
 
 		switch (conditionNum)
 		{
@@ -41,7 +41,7 @@ public class IniExporter : ExtensionExporter
 
 	public override string ExportAction(EventBase eventBase, int actionNum, ref string nextLabel, ref int orIndex, Dictionary<string, object>? parameters = null, bool isGlobal = false)
 	{
-		StringBuilder result = new StringBuilder();
+		StringBuilder result = new();
 
 		switch (actionNum)
 		{
@@ -53,6 +53,19 @@ public class IniExporter : ExtensionExporter
 				break;
 			case 82: // Set Value
 				result.AppendLine($"{GetExtensionInstance(eventBase.ObjectInfo)}->SetValue({ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[0].Loader, eventBase)});");
+				break;
+			case 83: // Save Position
+				ParamObject paramObject = (ParamObject)eventBase.Items[0].Loader;
+				string objectSelector = ExpressionConverter.GetSelector(paramObject.ObjectInfo);
+				result.AppendLine($"{GetExtensionInstance(eventBase.ObjectInfo)}->SavePosition(&(**{objectSelector}->begin()));");
+				break;
+			case 84: // Load Position
+				ParamObject paramObject2 = (ParamObject)eventBase.Items[0].Loader;
+				string objectSelector2 = ExpressionConverter.GetSelector(paramObject2.ObjectInfo);
+				result.AppendLine($"{GetExtensionInstance(eventBase.ObjectInfo)}->LoadPosition(&(**{objectSelector2}->begin()));");
+				break;
+			case 86: // Set File Name
+				result.AppendLine($"{GetExtensionInstance(eventBase.ObjectInfo)}->SetFileName({ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[0].Loader, eventBase)});");
 				break;
 			case 87: // Set Value (Item)
 				result.AppendLine($"{GetExtensionInstance(eventBase.ObjectInfo)}->SetValue({ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[0].Loader, eventBase)}, {ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[1].Loader, eventBase)});");
@@ -68,6 +81,15 @@ public class IniExporter : ExtensionExporter
 				break;
 			case 90: // Set String (Group - Item)
 				result.AppendLine($"{GetExtensionInstance(eventBase.ObjectInfo)}->SetString({ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[0].Loader, eventBase)}, {ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[1].Loader, eventBase)}, {ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[2].Loader, eventBase)});");
+				break;
+			case 91: // Delete Item
+				result.AppendLine($"{GetExtensionInstance(eventBase.ObjectInfo)}->DeleteItem({ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[0].Loader, eventBase)});");
+				break;
+			case 92: // Delete Item (Group - Item)
+				result.AppendLine($"{GetExtensionInstance(eventBase.ObjectInfo)}->DeleteItem({ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[0].Loader, eventBase)}, {ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[1].Loader, eventBase)});");
+				break;
+			case 93: // Delete Group
+				result.AppendLine($"{GetExtensionInstance(eventBase.ObjectInfo)}->DeleteGroup({ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[0].Loader, eventBase)});");
 				break;
 			default:
 				result.AppendLine($"// Ini action {actionNum} not implemented");
