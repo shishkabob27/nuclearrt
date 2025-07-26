@@ -72,6 +72,15 @@ public class IniExporter : ExtensionExporter
 			case 90: // Set String (Group - Item)
 				result.AppendLine($"{GetExtensionInstance(eventBase.ObjectInfo)}->SetString({ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[0].Loader, eventBase)}, {ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[1].Loader, eventBase)}, {ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[2].Loader, eventBase)});");
 				break;
+			case 91: // Delete Item
+				result.AppendLine($"{GetExtensionInstance(eventBase.ObjectInfo)}->DeleteItem({ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[0].Loader, eventBase)});");
+				break;
+			case 92: // Delete Item (Group - Item)
+				result.AppendLine($"{GetExtensionInstance(eventBase.ObjectInfo)}->DeleteItem({ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[0].Loader, eventBase)}, {ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[1].Loader, eventBase)});");
+				break;
+			case 93: // Delete Group
+				result.AppendLine($"{GetExtensionInstance(eventBase.ObjectInfo)}->DeleteGroup({ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[0].Loader, eventBase)});");
+				break;
 			default:
 				result.AppendLine($"// Ini action {actionNum} not implemented");
 				break;

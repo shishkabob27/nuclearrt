@@ -33,6 +33,10 @@ public:
 	std::string GetString();
 	std::string GetString(const std::string& item);
 	std::string GetString(const std::string& group, const std::string& item);
+	
+	void DeleteGroup(const std::string& group);
+	void DeleteItem(const std::string& group, const std::string& item);
+	void DeleteItem(const std::string& item);
 private:
 	int Flags;
 	std::string Name;

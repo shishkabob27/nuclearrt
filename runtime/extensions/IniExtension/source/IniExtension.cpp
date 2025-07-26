@@ -97,3 +97,21 @@ std::string IniExtension::GetString(const std::string& group, const std::string&
 {
 	return ini[group][item];
 }
+
+void IniExtension::DeleteGroup(const std::string& group)
+{
+	ini.remove(group);
+	iniFile->write(ini);
+}
+
+void IniExtension::DeleteItem(const std::string& item)
+{
+	ini[CurrentGroup].remove(item);
+	iniFile->write(ini);
+}
+
+void IniExtension::DeleteItem(const std::string& group, const std::string& item)
+{
+	ini[group].remove(item);
+	iniFile->write(ini);
+}
