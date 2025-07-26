@@ -54,6 +54,16 @@ public class IniExporter : ExtensionExporter
 			case 82: // Set Value
 				result.AppendLine($"{GetExtensionInstance(eventBase.ObjectInfo)}->SetValue({ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[0].Loader, eventBase)});");
 				break;
+			case 83: // Save Position
+				ParamObject paramObject = (ParamObject)eventBase.Items[0].Loader;
+				string objectSelector = ExpressionConverter.GetSelector(paramObject.ObjectInfo);
+				result.AppendLine($"{GetExtensionInstance(eventBase.ObjectInfo)}->SavePosition(&(**{objectSelector}->begin()));");
+				break;
+			case 84: // Load Position
+				ParamObject paramObject2 = (ParamObject)eventBase.Items[0].Loader;
+				string objectSelector2 = ExpressionConverter.GetSelector(paramObject2.ObjectInfo);
+				result.AppendLine($"{GetExtensionInstance(eventBase.ObjectInfo)}->LoadPosition(&(**{objectSelector2}->begin()));");
+				break;
 			case 86: // Set File Name
 				result.AppendLine($"{GetExtensionInstance(eventBase.ObjectInfo)}->SetFileName({ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[0].Loader, eventBase)});");
 				break;

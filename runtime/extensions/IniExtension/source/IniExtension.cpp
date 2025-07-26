@@ -65,6 +65,29 @@ void IniExtension::SetString(const std::string& group, const std::string& item, 
 	iniFile->write(ini);
 }
 
+void IniExtension::SavePosition(ObjectInstance* object)
+{
+	std::string item = "pos." + object->OI->Name;
+	ini[CurrentGroup].set(item, std::to_string(object->X) + "," + std::to_string(object->Y));
+	iniFile->write(ini);
+}
+
+void IniExtension::LoadPosition(ObjectInstance* object)
+{
+	std::string item = "pos." + object->OI->Name;
+	std::string value = ini[CurrentGroup][item];
+	if (value.empty())
+	{
+		return;
+	}
+
+	std::string xValue = value.substr(0, value.find(','));
+	std::string yValue = value.substr(value.find(',') + 1);
+
+	object->X = std::stoi(xValue);
+	object->Y = std::stoi(yValue);
+}
+
 int IniExtension::GetValue()
 {
 	std::string value = ini[CurrentGroup][CurrentItem];

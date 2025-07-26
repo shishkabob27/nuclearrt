@@ -26,6 +26,9 @@ public:
 	void SetString(const std::string& item, const std::string& value);
 	void SetString(const std::string& group, const std::string& item, const std::string& value);
 
+	void SavePosition(ObjectInstance* object);
+	void LoadPosition(ObjectInstance* object);
+
 	int GetValue();
 	int GetValue(const std::string& item);
 	int GetValue(const std::string& group, const std::string& item);
