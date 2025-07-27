@@ -29,13 +29,13 @@ public:
 	int GetBorderColor() const { return m_borderColor; }
 	void SetBorderColor(int color) { m_borderColor = color; }
 
-	bool GetFitInside() const { return m_fitInside; }
+	bool& GetFitInside() { return m_fitInside; }
 	void SetFitInside(bool fit) { m_fitInside = fit; }
 
-	bool GetResizeDisplay() const { return m_resizeDisplay; }
+	bool& GetResizeDisplay() { return m_resizeDisplay; }
 	void SetResizeDisplay(bool resize) { m_resizeDisplay = resize; }
 
-	bool GetDontCenterFrame() const { return m_dontCenterFrame; }
+	bool& GetDontCenterFrame() { return m_dontCenterFrame; }
 	void SetDontCenterFrame(bool dontCenter) { m_dontCenterFrame = dontCenter; }
 
 	std::vector<int>& GetGlobalValues() { return m_globalValues; }

@@ -42,7 +42,8 @@ void SDL3Backend::Initialize() {
 	}
 
 	// Create the window
-	window = SDL_CreateWindow(windowTitle.c_str(), windowWidth, windowHeight, 0);
+	SDL_WindowFlags flags = SDL_WINDOW_RESIZABLE;
+	window = SDL_CreateWindow(windowTitle.c_str(), windowWidth, windowHeight, flags);
 	if (window == nullptr) {
 		std::cerr << "SDL_CreateWindow Error: " << SDL_GetError() << std::endl;
 		return;
@@ -52,6 +53,13 @@ void SDL3Backend::Initialize() {
 	renderer = SDL_CreateRenderer(window, nullptr);
 	if (renderer == nullptr) {
 		std::cerr << "SDL_CreateRenderer Error: " << SDL_GetError() << std::endl;
+		return;
+	}
+
+	// Create the render target texture
+	renderTarget = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_XRGB8888, SDL_TEXTUREACCESS_TARGET, windowWidth, windowHeight);
+	if (renderTarget == nullptr) {
+		std::cerr << "SDL_CreateTexture Error: " << SDL_GetError() << std::endl;
 		return;
 	}
 
@@ -67,6 +75,12 @@ void SDL3Backend::Initialize() {
 	DEBUG_UI.AddWindow(Application::Instance().GetAppData()->GetAppName(), [this]() {
 		ImGui::Text("Platform: %s", GetPlatformName().c_str());
 		ImGui::Text("Assets File: %s", GetAssetsFileName().c_str());
+
+		if (ImGui::CollapsingHeader("Window")) {
+			ImGui::Checkbox("Fit Inside", &Application::Instance().GetAppData()->GetFitInside());
+			ImGui::Checkbox("Resize Display", &Application::Instance().GetAppData()->GetResizeDisplay());
+			ImGui::Checkbox("Dont Center Frame", &Application::Instance().GetAppData()->GetDontCenterFrame());
+		}
 		
 		if(ImGui::CollapsingHeader("Global Variables")) {
 			if (ImGui::CollapsingHeader("Values")) {
@@ -153,6 +167,11 @@ void SDL3Backend::Deinitialize()
 	fonts.clear();
 	fontBuffers.clear();
 
+	if (renderTarget != nullptr) {
+		SDL_DestroyTexture(renderTarget);
+		renderTarget = nullptr;
+	}
+
 	// Destroy the renderer
 	if (renderer != nullptr) {
 		SDL_DestroyRenderer(renderer);
@@ -217,8 +236,10 @@ void SDL3Backend::BeginDrawing()
 		return;
 	}
 	
+	SDL_SetRenderTarget(renderer, renderTarget);
+	
 	SDL_Color borderColor = RGBToSDLColor(Application::Instance().GetAppData()->GetBorderColor());
-	SDL_SetRenderDrawColor(renderer, borderColor.r, borderColor.g, borderColor.b, borderColor.a);
+	SDL_SetRenderDrawColor(renderer, borderColor.r, borderColor.g, borderColor.b, SDL_ALPHA_OPAQUE);
 	SDL_RenderClear(renderer);
 
 #ifdef _DEBUG
@@ -232,7 +253,16 @@ void SDL3Backend::EndDrawing()
 		std::cerr << "EndDrawing called with null renderer!" << std::endl;
 		return;
 	}
+
+	SDL_SetRenderTarget(renderer, nullptr);
 	
+	SDL_Color borderColor = RGBToSDLColor(Application::Instance().GetAppData()->GetBorderColor());
+	SDL_SetRenderDrawColor(renderer, borderColor.r, borderColor.g, borderColor.b, SDL_ALPHA_OPAQUE);
+	SDL_RenderClear(renderer);
+	
+	SDL_FRect rect = CalculateRenderTargetRect();
+	SDL_RenderTexture(renderer, renderTarget, nullptr, &rect);
+
 #ifdef _DEBUG
 	DEBUG_UI.EndFrame();
 #endif
@@ -546,13 +576,55 @@ const uint8_t* SDL3Backend::GetKeyboardState()
 	return fusionKeyboardState;
 }
 
+SDL_FRect SDL3Backend::CalculateRenderTargetRect()
+{
+	// get actual current window size
+	int currentWindowWidth, currentWindowHeight;
+	SDL_GetWindowSize(window, &currentWindowWidth, &currentWindowHeight);
+	
+	// get app size
+	int renderTargetWidth = Application::Instance().GetAppData()->GetWindowWidth();
+	int renderTargetHeight = Application::Instance().GetAppData()->GetWindowHeight();
+
+	SDL_FRect rect = { 0.0f, 0.0f, static_cast<float>(renderTargetWidth), static_cast<float>(renderTargetHeight) };
+
+	if (Application::Instance().GetAppData()->GetResizeDisplay()) {
+		rect.w = static_cast<float>(currentWindowWidth);
+		rect.h = static_cast<float>(currentWindowHeight);
+
+		if (Application::Instance().GetAppData()->GetFitInside()) {
+			//keeps the aspect ratio of the application and fits inside the window while staying in the center
+			float aspectRatio = static_cast<float>(renderTargetWidth) / static_cast<float>(renderTargetHeight);
+			if (rect.w / rect.h > aspectRatio) {
+				rect.w = rect.h * aspectRatio;
+			}
+			else {
+				rect.h = rect.w / aspectRatio;
+			}
+			rect.x = static_cast<float>((currentWindowWidth - static_cast<int>(rect.w)) / 2);
+			rect.y = static_cast<float>((currentWindowHeight - static_cast<int>(rect.h)) / 2);
+		}
+	}
+	else if (!Application::Instance().GetAppData()->GetDontCenterFrame()) {
+		rect.x = static_cast<float>((currentWindowWidth - static_cast<int>(rect.w)) / 2);
+		rect.y = static_cast<float>((currentWindowHeight - static_cast<int>(rect.h)) / 2);
+	}
+	
+	return rect;
+}
+
 int SDL3Backend::GetMouseX()
 {
 	float x;
 	int windowX;
 	SDL_GetWindowPosition(window, &windowX, NULL);
 	SDL_GetGlobalMouseState(&x, NULL);
-	return static_cast<int>(x - windowX);
+	float mouseX = x - windowX;
+	
+	//get mouse position relative to render target
+	SDL_FRect rect = CalculateRenderTargetRect();
+	float relativeX = (mouseX - rect.x) * (Application::Instance().GetAppData()->GetWindowWidth() / rect.w);
+	return static_cast<int>(relativeX);
 }
 
 int SDL3Backend::GetMouseY()
@@ -561,7 +633,12 @@ int SDL3Backend::GetMouseY()
 	int windowY;
 	SDL_GetWindowPosition(window, NULL, &windowY);
 	SDL_GetGlobalMouseState(NULL, &y);
-	return static_cast<int>(y - windowY);
+	float mouseY = y - windowY;
+
+	//get mouse position relative to render target
+	SDL_FRect rect = CalculateRenderTargetRect();
+	float relativeY = (mouseY - rect.y) * (Application::Instance().GetAppData()->GetWindowHeight() / rect.h);
+	return static_cast<int>(relativeY);
 }
 
 int SDL3Backend::GetMouseWheelMove()
