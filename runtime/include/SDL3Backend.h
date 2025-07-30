@@ -69,7 +69,9 @@ public:
 private:
 	SDL_Window* window;
 	SDL_Renderer* renderer;
+	SDL_Texture* renderTarget;
 
+	SDL_FRect CalculateRenderTargetRect();
 	SDL_Color RGBToSDLColor(int color);
 	SDL_Color RGBAToSDLColor(int color);
 
