@@ -235,6 +235,15 @@ void SDL3Backend::BeginDrawing()
 		std::cerr << "BeginDrawing called with null renderer!" << std::endl;
 		return;
 	}
+
+	//resize render target if needed
+	int newWidth = std::min(Application::Instance().GetAppData()->GetWindowWidth(), Application::Instance().GetCurrentFrame()->Width);
+	int newHeight = std::min(Application::Instance().GetAppData()->GetWindowHeight(), Application::Instance().GetCurrentFrame()->Height);
+
+	if (newWidth != renderTarget->w || newHeight != renderTarget->h) {
+		SDL_DestroyTexture(renderTarget);
+		renderTarget = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_XRGB8888, SDL_TEXTUREACCESS_TARGET, newWidth, newHeight);
+	}
 	
 	SDL_SetRenderTarget(renderer, renderTarget);
 	
@@ -583,8 +592,8 @@ SDL_FRect SDL3Backend::CalculateRenderTargetRect()
 	SDL_GetWindowSize(window, &currentWindowWidth, &currentWindowHeight);
 	
 	// get app size
-	int renderTargetWidth = Application::Instance().GetAppData()->GetWindowWidth();
-	int renderTargetHeight = Application::Instance().GetAppData()->GetWindowHeight();
+	int renderTargetWidth = std::min(Application::Instance().GetAppData()->GetWindowWidth(), Application::Instance().GetCurrentFrame()->Width);
+	int renderTargetHeight = std::min(Application::Instance().GetAppData()->GetWindowHeight(), Application::Instance().GetCurrentFrame()->Height);
 
 	SDL_FRect rect = { 0.0f, 0.0f, static_cast<float>(renderTargetWidth), static_cast<float>(renderTargetHeight) };
 
@@ -623,7 +632,8 @@ int SDL3Backend::GetMouseX()
 	
 	//get mouse position relative to render target
 	SDL_FRect rect = CalculateRenderTargetRect();
-	float relativeX = (mouseX - rect.x) * (Application::Instance().GetAppData()->GetWindowWidth() / rect.w);
+	int windowWidth = std::min(Application::Instance().GetAppData()->GetWindowWidth(), Application::Instance().GetCurrentFrame()->Width);
+	float relativeX = (mouseX - rect.x) * (windowWidth / rect.w);
 	return static_cast<int>(relativeX);
 }
 
@@ -637,7 +647,8 @@ int SDL3Backend::GetMouseY()
 
 	//get mouse position relative to render target
 	SDL_FRect rect = CalculateRenderTargetRect();
-	float relativeY = (mouseY - rect.y) * (Application::Instance().GetAppData()->GetWindowHeight() / rect.h);
+	int windowHeight = std::min(Application::Instance().GetAppData()->GetWindowHeight(), Application::Instance().GetCurrentFrame()->Height);
+	float relativeY = (mouseY - rect.y) * (windowHeight / rect.h);
 	return static_cast<int>(relativeY);
 }
 
