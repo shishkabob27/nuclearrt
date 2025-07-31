@@ -65,7 +65,12 @@ public:
 	void SetPlayerLives(const std::vector<int>& lives) { m_playerLives = lives; }
 	void SetLives(int playerIndex, int lives) { m_playerLives[playerIndex] = lives; }
 	void AddLives(int playerIndex, int lives) { m_playerLives[playerIndex] += lives; }
-	void SubtractLives(int playerIndex, int lives) { m_playerLives[playerIndex] -= lives; }
+	void SubtractLives(int playerIndex, int lives) {
+		m_playerLives[playerIndex] -= lives;
+		if (m_playerLives[playerIndex] < 0) {
+			m_playerLives[playerIndex] = 0;
+		}
+	}
 
 private:
 	// Default values
