@@ -242,23 +242,18 @@ void Frame::DrawCounterNumbers(Counter &counter, int value, int x, int y)
 	//Fixed Size
 	if (counter.IntDigitCount > 0)
 	{
-		while (valueString.size() < counter.IntDigitCount)
+		if (counter.IntDigitCount > valueString.size()) //Add leading zeros
 		{
-			valueString = "0" + valueString;
-		}
-
-		int absCurrent = std::abs(value);
-
-		if (counter.IntDigitCount * 10 < absCurrent)
-		{
-			valueString = std::to_string(absCurrent);
-			int numDigits = valueString.size();
-			if (numDigits > counter.IntDigitCount)
+			while (valueString.size() < counter.IntDigitCount)
 			{
-				valueString = valueString.substr(valueString.size() - counter.IntDigitCount);
+				valueString = "0" + valueString;
 			}
 		}
-	}
+		else //Remove extra digits
+		{
+			valueString = valueString.substr(valueString.size() - counter.IntDigitCount);
+		}
+	}		
 
 	if (negative)
 	{
