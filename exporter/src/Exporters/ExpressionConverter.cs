@@ -106,6 +106,10 @@ public class ExpressionConverter
 			{
 				result += "Application::Instance().Random(";
 			}
+			else if (expression.ObjectType == -1 && expression.Num == 2) // Global Value
+			{
+				result += $"Application::Instance().GetAppData()->GetGlobalValue(";
+			}
 			else if (expression.ObjectType == -1 && expression.Num == 3)
 			{
 				result += $"\"{expression.Loader.ToString()}\"";
