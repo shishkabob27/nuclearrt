@@ -76,6 +76,18 @@ public:
 	int GetMouseX();
 	int GetMouseY();
 
+	int StringLength(std::string str) {
+		return (int)str.length();
+	}
+
+	std::string StringLeft(std::string str, int length) {
+		return str.substr(0, length);
+	}
+
+	std::string StringRight(std::string str, int length) {
+		return str.substr(str.length() - length);
+	}
+
 	//Collision detection
 	bool IsCollidingWithBackground(ObjectInstance* instance);
 	bool IsColliding(ObjectInstance* instance1, ObjectInstance* instance2);

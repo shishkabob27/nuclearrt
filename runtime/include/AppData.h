@@ -39,7 +39,48 @@ public:
 	void SetDontCenterFrame(bool dontCenter) { m_dontCenterFrame = dontCenter; }
 
 	std::vector<int>& GetGlobalValues() { return m_globalValues; }
+	int GetGlobalValue(int index) { // 1-indexed
+		if (index < 1 || index > m_globalValues.size()) {
+			return 0;
+		}
+		return m_globalValues[index - 1];
+	}
 	void SetGlobalValues(const std::vector<int>& values) { m_globalValues = values; }
+	void SetGlobalValue(int index, int value) { // 1-indexed
+		if (index < 1) {
+			return;
+		}
+
+		if (index > m_globalValues.size()) {
+			m_globalValues.resize(index, 0);
+		}
+
+		m_globalValues[index - 1] = value;
+	}
+
+	void AddGlobalValue(int index, int value) { // 1-indexed
+		if (index < 1) {
+			return;
+		}
+
+		if (index > m_globalValues.size()) {
+			m_globalValues.resize(index, 0);
+		}
+
+		m_globalValues[index - 1] += value;
+	}
+
+	void SubtractGlobalValue(int index, int value) { // 1-indexed
+		if (index < 1) {
+			return;
+		}
+
+		if (index > m_globalValues.size()) {
+			m_globalValues.resize(index, 0);
+		}
+
+		m_globalValues[index - 1] -= value;
+	}
 
 	std::vector<std::string>& GetGlobalStrings() { return m_globalStrings; }
 	void SetGlobalStrings(const std::vector<std::string>& strings) { m_globalStrings = strings; }

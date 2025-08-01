@@ -116,7 +116,7 @@ public class FrameExporter : BaseExporter
 			if (obj.parentType != 0) continue;
 			if (GameData.frameitems[(int)obj.objectInfo].properties is ObjectCommon common && common.Flags.GetFlag("DoNotCreateAtStart")) continue;
 
-			objectInstances.Append($"ObjectInstances.push_back(factory.CreateInstance({obj.handle}, {obj.objectInfo}, {obj.x}, {obj.y}, {obj.layer}, {obj.instance})); // {GameData.frameitems[(int)obj.objectInfo].name}\n");
+			objectInstances.Append($"ObjectInstances.push_back(factory.CreateInstance({obj.handle}, {obj.objectInfo}, {obj.x}, {obj.y}, {obj.layer}, {obj.instance})); // {SanitizeString(GameData.frameitems[(int)obj.objectInfo].name)}\n");
 		}
 		return objectInstances.ToString();
 	}

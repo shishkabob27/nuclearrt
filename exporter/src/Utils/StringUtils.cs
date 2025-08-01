@@ -73,6 +73,6 @@ public static class StringUtils
 		{
 			input = "_" + input;
 		}
-		return SanitizeString(input).Replace(" ", "_").Replace(".", "_").Replace("-", "_").Replace(":", "_").Replace(";", "_").Replace(",", "_").Replace("!", "_").Replace("?", "_").Replace("*", "_").Replace("/", "_").Replace("\\", "_").Replace("|", "_").Replace("`", "_").Replace("'", "_").Replace("\"", "_").Replace("'", "_").Replace("\"", "_").Replace("'", "_").Replace("\"", "_").Replace("&", "_");
+		return SanitizeString(input).Replace(" ", "_").Replace(".", "_").Replace("-", "_").Replace(":", "_").Replace(";", "_").Replace(",", "_").Replace("!", "_").Replace("?", "_").Replace("*", "_").Replace("/", "_").Replace("\\", "_").Replace("|", "_").Replace("`", "_").Replace("'", "_").Replace("\"", "_").Replace("'", "_").Replace("\"", "_").Replace("'", "_").Replace("\"", "_").Replace("&", "_").Replace("+", "_").Replace("(", "_").Replace(")", "_");
 	}
 }

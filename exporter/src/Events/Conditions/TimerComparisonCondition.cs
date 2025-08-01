@@ -8,7 +8,16 @@ public class TimerComparisonEveryCondition : ConditionBase
 
 	public override string Build(EventBase eventBase, ref string nextLabel, ref int orIndex, Dictionary<string, object>? parameters = null, string ifStatement = "if (")
 	{
-		return $"{ifStatement} (GameTimer.CheckEvent({parameters["eventIndex"]}, {((Time)eventBase.Items[0].Loader).Timer}, TimerEventType::Every))) goto {nextLabel};";
+		if (eventBase.Items[0].Loader is Time time)
+		{
+			return $"{ifStatement} (GameTimer.CheckEvent({parameters["eventIndex"]}, {time.Timer}, TimerEventType::Every))) goto {nextLabel};";
+		}
+		else if (eventBase.Items[0].Loader is Every every)
+		{
+			return $"{ifStatement} (GameTimer.CheckEvent({parameters["eventIndex"]}, {every.Compteur}, TimerEventType::Every))) goto {nextLabel};";
+		}
+
+		return $"//Unsupported timer type: {eventBase.Items[0].Loader.GetType()}";
 	}
 }
 
