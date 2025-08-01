@@ -1,5 +1,6 @@
 using CTFAK.CCN.Chunks;
 using CTFAK.Memory;
+using CTFAK.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,7 +18,7 @@ namespace CTFAK.MFA.MFAObjectLoaders
 		{
 			base.Read(reader);
 
-			if (reader.ReadByte() != 0)
+			if (reader.ReadByte() == 1)
 			{
 				var animationCount = reader.ReadUInt32();
 				for (int i = 0; i < animationCount; i++)
