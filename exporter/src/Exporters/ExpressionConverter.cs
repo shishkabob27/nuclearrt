@@ -130,6 +130,18 @@ public class ExpressionConverter
 			{
 				result += "\"\""; // TODO
 			}
+			else if (expression.ObjectType == -1 && expression.Num == 19) // String Left
+			{
+				result += "StringLeft(";
+			}
+			else if (expression.ObjectType == -1 && expression.Num == 20) // String Right
+			{
+				result += "StringRight(";
+			}
+			else if (expression.ObjectType == -1 && expression.Num == 22) // String Length
+			{
+				result += "StringLength(";
+			}
 			else if (expression.ObjectType == -1 && expression.Num == 23)
 			{
 				result += (expression.Loader as DoubleExp).FloatValue;
@@ -240,6 +252,16 @@ public class ExpressionConverter
 				{
 					string selector = GetSelector(expression.ObjectInfo);
 					result += $"std::dynamic_pointer_cast<CommonProperties>((*({selector}->begin()))->OI->Properties)->oValue->GetValue()";
+				}
+			}
+			else if (expression.ObjectType > 0 && expression.Num == 81)
+			{
+				if (expression.ObjectType == 3) // String
+				{
+					if (expression.ObjectInfo == eventBase.ObjectInfo && expression.ObjectInfoList == eventBase.ObjectInfoList)
+						result += "std::dynamic_pointer_cast<CommonProperties>(instance->OI->Properties)->oParagraphs->GetText()";
+					else
+						result += $"std::dynamic_pointer_cast<CommonProperties>((*{GetSelector(expression.ObjectInfo)}->begin())->OI->Properties)->oParagraphs->GetText()";
 				}
 			}
 			else if (expression.ObjectType >= 32)
