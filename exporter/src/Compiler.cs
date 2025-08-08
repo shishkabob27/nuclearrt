@@ -72,15 +72,15 @@ public class Compiler
 		}
 		else if (buildType == BuildType.Web)
 		{
-			DirectoryInfo buildDir = new DirectoryInfo(Path.Combine(outputPath.FullName, "build_web"));
+			DirectoryInfo buildDir = new DirectoryInfo(Path.Combine(outputPath.FullName, "build", "web"));
 			buildDir.Create();
 
 			CTFAK.Utils.Logger.Log($"Running CMake to generate the project files...");
 			ProcessStartInfo cmakeProjectInfo = new ProcessStartInfo(
 				"cmd.exe",
-				"/c emcmake cmake .. -DCMAKE_BUILD_TYPE=Release -G Ninja"
+				"/c emcmake cmake ../.. -DCMAKE_BUILD_TYPE=Release -G Ninja"
 			);
-			cmakeProjectInfo.WorkingDirectory = Path.Combine(outputPath.FullName, "build_web");
+			cmakeProjectInfo.WorkingDirectory = Path.Combine(outputPath.FullName, "build", "web");
 			cmakeProjectInfo.CreateNoWindow = true;
 			cmakeProjectInfo.UseShellExecute = false;
 			cmakeProjectInfo.RedirectStandardOutput = true;
@@ -112,7 +112,7 @@ public class Compiler
 				"cmd.exe",
 				"/c cmake --build . --config Release"
 			);
-			buildInfo.WorkingDirectory = Path.Combine(outputPath.FullName, "build_web");
+			buildInfo.WorkingDirectory = Path.Combine(outputPath.FullName, "build", "web");
 			buildInfo.CreateNoWindow = true;
 			buildInfo.UseShellExecute = false;
 			buildInfo.RedirectStandardOutput = true;

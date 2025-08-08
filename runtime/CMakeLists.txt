@@ -149,9 +149,7 @@ endif()
 set(ASSETS_SOURCE_FILE "${CMAKE_CURRENT_SOURCE_DIR}/assets.pak")
 
 # Set assets destination based on platform
-if(EMSCRIPTEN)
-    set(ASSETS_DEST_FILE "${CMAKE_BINARY_DIR}/web/assets.pak")
-elseif(MSVC)
+if(MSVC)
     set(ASSETS_DEST_FILE "${CMAKE_BINARY_DIR}/bin/$<CONFIG>/assets.pak")
 else()
     set(ASSETS_DEST_FILE "${CMAKE_BINARY_DIR}/bin/assets.pak")
