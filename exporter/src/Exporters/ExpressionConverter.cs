@@ -194,7 +194,7 @@ public class ExpressionConverter
 			}
 			else if (expression.ObjectType == 0 && expression.Num == 8) // Division
 			{
-				result += " /MathHelper::safeDivision/ ";
+				result += " /MathHelper::GetSafeDivision()/ ";
 			}
 			else if (expression.ObjectType > 0 && expression.Num == 1) // Y Position
 			{

@@ -6,6 +6,10 @@
 #include "SDL3Backend.h"
 #endif
 
+#ifdef PLATFORM_WEB
+#include <emscripten.h>
+#endif
+
 Application::Application() = default;
 Application::~Application() = default;
 
@@ -61,8 +65,17 @@ void Application::Shutdown()
 	backend->Deinitialize();
 }
 
+static void Loop()
+{
+	Application::Instance().Update();
+	Application::Instance().Draw();
+}
+
 void Application::Run()
 {
+#ifdef PLATFORM_WEB
+	emscripten_set_main_loop(Loop, appData->GetTargetFPS(), 1);
+#else
 	unsigned int frameStart;
 	int frameTime;
 	
@@ -73,8 +86,7 @@ void Application::Run()
 		
 		frameStart = backend->GetTicks();
 		
-		Update();
-		Draw();
+		Loop();
 		
 		frameTime = backend->GetTicks() - frameStart;
 		
@@ -83,6 +95,7 @@ void Application::Run()
 			backend->Delay(targetFrameTime - frameTime);
 		}
 	}
+#endif
 
 	Shutdown();
 }
@@ -174,6 +187,8 @@ void Application::RunState()
 {
 	switch (currentState)
 	{
+		case GameState::Running:
+			break;
 		case GameState::RestartApplication:
 			LoadFrame(0);
 			currentState = GameState::StartOfFrame;

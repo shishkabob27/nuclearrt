@@ -29,10 +29,12 @@
 LPCWSTR BUILD_NAMES[] = {
     L"NuclearRT (Source)",
     L"NuclearRT (Source + Windows (Debug))",
-    L"NuclearRT (Source + Windows (Release))"
+    L"NuclearRT (Source + Windows (Release))",
+    L"NuclearRT (Source + Web)"
 };
 
 LPCWSTR BUILD_FILTERS[] = {
+    L"CMake config|CMakeLists.txt||",
     L"CMake config|CMakeLists.txt||",
     L"CMake config|CMakeLists.txt||",
     L"CMake config|CMakeLists.txt||"
@@ -41,10 +43,12 @@ LPCWSTR BUILD_FILTERS[] = {
 LPCWSTR SELECTOR_TITLES[] = {
     L"Save as NuclearRT (Source)",
     L"Save as NuclearRT (Source + Windows (Debug))",
-    L"Save as NuclearRT (Source + Windows (Release))"
+    L"Save as NuclearRT (Source + Windows (Release))",
+    L"Save as NuclearRT (Source + Web)"
 };
 
 LPCWSTR DEFAULT_EXTENSIONS[] = {
+    L".txt",
     L".txt",
     L".txt",
     L".txt"
@@ -69,7 +73,7 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 // Return the number of build types added by the dll
 int WINAPI GetNumberOfBuildTypes()
 {
-    return 3;
+    return 4;
 }
 
 // Return the name of a given build type

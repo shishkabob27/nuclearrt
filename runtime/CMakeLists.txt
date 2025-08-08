@@ -7,14 +7,18 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # Platform-specific compiler flags
 if(MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4102")
-else()
+elseif(NOT EMSCRIPTEN)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wunused-label")
 endif()
 
 # Add cmake modules path
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
 
-#SDL3
+if (EMSCRIPTEN)
+  add_compile_options(-pthread)
+  add_link_options(-sMIN_WEBGL_VERSION=2 -sMAX_WEBGL_VERSION=2 -sALLOW_MEMORY_GROWTH=1 -sINITIAL_MEMORY=2gb -sMAXIMUM_MEMORY=2gb -sOFFSCREENCANVAS_SUPPORT=1 -sPTHREAD_POOL_SIZE_STRICT=0 -sFORCE_FILESYSTEM=1 -sWASMFS=1 -sEXIT_RUNTIME=1 -sUSE_HARFBUZZ=1)
+endif()
+
 include(FetchContent)
 function(include_dependency libName gitURL gitTag)
     # setup the declare
@@ -69,6 +73,8 @@ elseif(APPLE)
     add_compile_definitions(PLATFORM_MACOS)
 elseif(UNIX AND NOT APPLE)
     add_compile_definitions(PLATFORM_LINUX)
+elseif(EMSCRIPTEN)
+    add_compile_definitions(PLATFORM_WEB)
 endif()
 
 # Configure debug mode
@@ -77,22 +83,30 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 endif()
 
 # Dear ImGui setup
-set(IMGUI_PATH "${CMAKE_CURRENT_SOURCE_DIR}/libs/imgui")
-set(IMGUI_SOURCES
-    ${IMGUI_PATH}/imgui.cpp
-    ${IMGUI_PATH}/imgui_demo.cpp
-    ${IMGUI_PATH}/imgui_draw.cpp
-    ${IMGUI_PATH}/imgui_tables.cpp
-    ${IMGUI_PATH}/imgui_widgets.cpp
-    ${IMGUI_PATH}/backends/imgui_impl_sdl3.cpp
-    ${IMGUI_PATH}/backends/imgui_impl_sdlrenderer3.cpp
-)
+if(NOT EMSCRIPTEN)
+    set(IMGUI_PATH "${CMAKE_CURRENT_SOURCE_DIR}/libs/imgui")
+    set(IMGUI_SOURCES
+        ${IMGUI_PATH}/imgui.cpp
+        ${IMGUI_PATH}/imgui_demo.cpp
+        ${IMGUI_PATH}/imgui_draw.cpp
+        ${IMGUI_PATH}/imgui_tables.cpp
+        ${IMGUI_PATH}/imgui_widgets.cpp
+        ${IMGUI_PATH}/backends/imgui_impl_sdl3.cpp
+        ${IMGUI_PATH}/backends/imgui_impl_sdlrenderer3.cpp
+    )
+    
+    # Include directories for ImGui
+    include_directories(
+        ${IMGUI_PATH}
+        ${IMGUI_PATH}/backends
+    )
+else()
+    set(IMGUI_SOURCES "")
+endif()
 
 # Include directories
 include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/include
-    ${IMGUI_PATH}
-    ${IMGUI_PATH}/backends
 )
 
 # Automatically include all source and header files
@@ -102,35 +116,49 @@ file(GLOB_RECURSE HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/include/*.h")
 # Create executable
 add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS} ${IMGUI_SOURCES})
 
-target_include_directories(${PROJECT_NAME} PRIVATE ${SDL3_INCLUDE_DIRS})
-target_include_directories(${PROJECT_NAME} PRIVATE ${SDL3_image_INCLUDE_DIRS})
-target_include_directories(${PROJECT_NAME} PRIVATE ${SDL3_ttf_INCLUDE_DIRS})
+# Platform-specific linking
+if(NOT EMSCRIPTEN)
+    target_include_directories(${PROJECT_NAME} PRIVATE ${SDL3_INCLUDE_DIRS})
+    target_include_directories(${PROJECT_NAME} PRIVATE ${SDL3_image_INCLUDE_DIRS})
+    target_include_directories(${PROJECT_NAME} PRIVATE ${SDL3_ttf_INCLUDE_DIRS})
+endif()
 
-# Link libraries using SDL3 targets
 target_link_libraries(${PROJECT_NAME} PRIVATE 
     SDL3::SDL3
     SDL3_image::SDL3_image
     SDL3_ttf::SDL3_ttf
 )
 
-# Set output directory
-set_target_properties(${PROJECT_NAME} PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+target_link_libraries(${PROJECT_NAME} PUBLIC
+    SDL3::Headers
 )
+
+# Set output directory
+if(EMSCRIPTEN)
+    set_target_properties(${PROJECT_NAME} PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/web"
+    SUFFIX ".html"
+)
+else()
+    set_target_properties(${PROJECT_NAME} PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+    )
+endif()
 
 # Copy assets.pak to build directory
 set(ASSETS_SOURCE_FILE "${CMAKE_CURRENT_SOURCE_DIR}/assets.pak")
 
 # Set assets destination based on platform
-if(MSVC)
-    # For Visual Studio builds, account for Debug/Release subdirectories
+if(EMSCRIPTEN)
+    set(ASSETS_DEST_FILE "${CMAKE_BINARY_DIR}/web/assets.pak")
+elseif(MSVC)
     set(ASSETS_DEST_FILE "${CMAKE_BINARY_DIR}/bin/$<CONFIG>/assets.pak")
 else()
     set(ASSETS_DEST_FILE "${CMAKE_BINARY_DIR}/bin/assets.pak")
 endif()
 
 # Check if assets.pak exists and copy it
-if(EXISTS ${ASSETS_SOURCE_FILE})
+if(EXISTS ${ASSETS_SOURCE_FILE} AND NOT EMSCRIPTEN)
     # Create a custom command to copy assets after build
     add_custom_command(
         TARGET ${PROJECT_NAME} POST_BUILD
@@ -143,14 +171,18 @@ else()
     message(WARNING "assets.pak not found at ${ASSETS_SOURCE_FILE}")
 endif()
 
+if(EMSCRIPTEN)
+    target_link_options(${PROJECT_NAME} PRIVATE --embed-file ${ASSETS_SOURCE_FILE}@assets.pak)
+endif()
+
 # Install target
 install(TARGETS ${PROJECT_NAME}
     RUNTIME DESTINATION bin
 )
 
 # Additional platform-specific linking
-if(WIN32)
+if(WIN32 AND NOT EMSCRIPTEN)
     target_link_libraries(${PROJECT_NAME} PRIVATE winmm)
-elseif(UNIX AND NOT APPLE)
+elseif(UNIX AND NOT APPLE AND NOT EMSCRIPTEN)
     target_link_libraries(${PROJECT_NAME} PRIVATE X11 GL m pthread)
 endif()
