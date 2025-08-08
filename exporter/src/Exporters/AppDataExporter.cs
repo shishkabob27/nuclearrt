@@ -15,7 +15,7 @@ public class AppDataExporter : BaseExporter
 		appData = appData.Replace("{{ window_height }}", GameData.header.WindowHeight.ToString());
 		appData = appData.Replace("{{ target_fps }}", GameData.header.FrameRate.ToString());
 		appData = appData.Replace("{{ border_color }}", ColorToRGB(GameData.header.BorderColor).ToString());
-		appData = appData.Replace("{{ fit_inside }}", GameData.header.Flags.GetFlag("FitInside") ? "true" : "false");
+		appData = appData.Replace("{{ fit_inside }}", GameData.header.Flags.GetFlag("FitInsideBars") ? "true" : "false");
 		appData = appData.Replace("{{ resize_display }}", GameData.header.Flags.GetFlag("ResizeDisplay") ? "true" : "false");
 		appData = appData.Replace("{{ dont_center_frame }}", GameData.header.Flags.GetFlag("DontCenterFrame") ? "true" : "false");
 
