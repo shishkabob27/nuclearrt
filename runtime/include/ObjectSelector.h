@@ -18,8 +18,6 @@ public:
     using reference = std::shared_ptr<ObjectInstance>&;
     using const_reference = const std::shared_ptr<ObjectInstance>&;
     using size_type = size_t;
-
-    ObjectSelector() = default; // Used on frame initialization
     
     // Constructor that references an external collection
     ObjectSelector(const std::vector<std::shared_ptr<ObjectInstance>>& allInstances, unsigned int objectInfoId, bool isQualifier = false) // used after object creation

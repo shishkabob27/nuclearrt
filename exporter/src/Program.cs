@@ -155,14 +155,7 @@ namespace NuclearRTExporter
 		// Log a message to the console or UI
 		public void Log(string message)
 		{
-			if (logAction != null)
-			{
-				logAction(message);
-			}
-			else
-			{
-				Console.WriteLine(message);
-			}
+			CTFAK.Utils.Logger.Log(message);
 		}
 	}
 }

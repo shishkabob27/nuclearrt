@@ -18,10 +18,13 @@ NuclearRT is a fast, open-source, cross-platform C++ runtime for Clickteam Fusio
 - Windows
 - Linux
 - macOS
+- Web
 
 ## Requirements
 - Clickteam Fusion 2.5 R295.10 or higher
 - CMake 3.14 or higher
+- A C++ compiler, such as MSVC or GCC
+- Emscripten (for Web builds)
 
 ## Usage
 

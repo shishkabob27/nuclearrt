@@ -625,10 +625,15 @@ SDL_FRect SDL3Backend::CalculateRenderTargetRect()
 int SDL3Backend::GetMouseX()
 {
 	float x;
+#ifndef PLATFORM_WEB
 	int windowX;
 	SDL_GetWindowPosition(window, &windowX, NULL);
 	SDL_GetGlobalMouseState(&x, NULL);
 	float mouseX = x - windowX;
+#else
+	float mouseX;
+	SDL_GetMouseState(&mouseX, NULL);
+#endif
 	
 	//get mouse position relative to render target
 	SDL_FRect rect = CalculateRenderTargetRect();
@@ -640,10 +645,15 @@ int SDL3Backend::GetMouseX()
 int SDL3Backend::GetMouseY()
 {
 	float y;
+#ifndef PLATFORM_WEB
 	int windowY;
 	SDL_GetWindowPosition(window, NULL, &windowY);
 	SDL_GetGlobalMouseState(NULL, &y);
 	float mouseY = y - windowY;
+#else
+	float mouseY;
+	SDL_GetMouseState(NULL, &mouseY);
+#endif
 
 	//get mouse position relative to render target
 	SDL_FRect rect = CalculateRenderTargetRect();
