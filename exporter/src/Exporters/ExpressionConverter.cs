@@ -98,7 +98,7 @@ public class ExpressionConverter
 			{
 				ExpressionLoader loader = (ExpressionLoader)expression.Loader;
 
-				if (loader is StringExp) result += $"\"{(loader as StringExp).Value}\"";
+				if (loader is StringExp) result += $"std::string(\"{(loader as StringExp).Value}\")";
 				else if (loader is DoubleExp) result += (loader as DoubleExp).FloatValue;
 				else result += loader.Value.ToString();
 			}
@@ -228,6 +228,10 @@ public class ExpressionConverter
 				else
 					result += $"std::dynamic_pointer_cast<CommonProperties>((*{GetSelector(expression.ObjectInfo)}->begin())->OI->Properties)->oAnimations->GetCurrentSequenceIndex()";
 			}
+			else if (expression.ObjectType > 0 && expression.Num == 15) // Number of this Object
+			{
+				result += $"NumberOfThisObject({GetObject(expression.ObjectInfo).Item1})";
+			}
 			else if (expression.ObjectType > 0 && expression.Num == 16) // Alterable Value
 			{
 				if (expression.ObjectInfo == eventBase.ObjectInfo && expression.ObjectInfoList == eventBase.ObjectInfoList)
@@ -250,6 +254,18 @@ public class ExpressionConverter
 			{
 				result += "instance->InstanceValue";
 			}
+			else if (expression.ObjectType >= 32)
+			{
+				var exporter = ExtensionExporterRegistry.GetExporterByObjectInfo(expression.ObjectInfo, Exporter.Instance.CurrentFrame);
+
+				if (exporter == null)
+				{
+					Logger.Log($"Extension exporter not found for ObjectInfo {expression.ObjectInfo}");
+					return "0";
+				}
+
+				result += exporter.ExportExpression(expression, eventBase);
+			}
 			else if (expression.ObjectType > 0 && expression.Num == 80)
 			{
 				if (expression.ObjectType == 7) // Counter
@@ -268,17 +284,15 @@ public class ExpressionConverter
 						result += $"std::dynamic_pointer_cast<CommonProperties>((*{GetSelector(expression.ObjectInfo)}->begin())->OI->Properties)->oParagraphs->GetText()";
 				}
 			}
-			else if (expression.ObjectType >= 32)
+			else if (expression.ObjectType > 0 && expression.Num == 82)
 			{
-				var exporter = ExtensionExporterRegistry.GetExporterByObjectInfo(expression.ObjectInfo, Exporter.Instance.CurrentFrame);
-
-				if (exporter == null)
+				if (expression.ObjectType == 7) // Counter
 				{
-					Logger.Log($"Extension exporter not found for ObjectInfo {expression.ObjectInfo}");
-					return "0";
+					if (expression.ObjectInfo == eventBase.ObjectInfo && expression.ObjectInfoList == eventBase.ObjectInfoList)
+						result += $"std::dynamic_pointer_cast<CommonProperties>(instance->OI->Properties)->oValue->MaxValue";
+					else
+						result += $"std::dynamic_pointer_cast<CommonProperties>((*{GetSelector(expression.ObjectInfo)}->begin())->OI->Properties)->oValue->MaxValue";
 				}
-
-				result += exporter.ExportExpression(expression, eventBase);
 			}
 			else if (expression.ObjectType > 0 && expression.Num == 83)
 			{
