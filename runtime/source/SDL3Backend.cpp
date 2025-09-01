@@ -293,9 +293,9 @@ void SDL3Backend::LoadTexture(int id) {
 	}
 
 	//load texture from pak file
-	std::vector<uint8_t> data = pakFile.GetImageData(id);
+	std::vector<uint8_t> data = pakFile.GetData("images/" + std::to_string(id) + ".png");
 	if (data.empty()) {
-		std::cerr << "PakFile::GetImageData Error: " << "Image with id " << id << " not found" << std::endl;
+		std::cerr << "PakFile::GetData Error: " << "Image with id " << id << " not found" << std::endl;
 		return;
 	}
 
@@ -489,9 +489,9 @@ void SDL3Backend::LoadFont(int id)
 		return;
 	}
 
-	std::shared_ptr<std::vector<uint8_t>> buffer = std::make_shared<std::vector<uint8_t>>(pakFile.GetFontData(id));
+	std::shared_ptr<std::vector<uint8_t>> buffer = std::make_shared<std::vector<uint8_t>>(pakFile.GetData("fonts/" + std::to_string(id) + ".ttf"));
 	if (buffer->empty()) {
-		std::cerr << "PakFile::GetFontData Error: " << "Font with id " << id << " not found" << std::endl;
+		std::cerr << "PakFile::GetData Error: " << "Font with id " << id << " not found" << std::endl;
 		return;
 	}
 
