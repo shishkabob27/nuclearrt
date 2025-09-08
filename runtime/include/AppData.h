@@ -40,7 +40,7 @@ public:
 
 	std::vector<int>& GetGlobalValues() { return m_globalValues; }
 	int GetGlobalValue(int index) { // 1-indexed
-		if (index < 1 || index > m_globalValues.size()) {
+		if (index < 1 || index > static_cast<int>(m_globalValues.size())) {
 			return 0;
 		}
 		return m_globalValues[index - 1];
@@ -51,7 +51,7 @@ public:
 			return;
 		}
 
-		if (index > m_globalValues.size()) {
+		if (index > static_cast<int>(m_globalValues.size())) {
 			m_globalValues.resize(index, 0);
 		}
 
@@ -63,7 +63,7 @@ public:
 			return;
 		}
 
-		if (index > m_globalValues.size()) {
+		if (index > static_cast<int>(m_globalValues.size())) {
 			m_globalValues.resize(index, 0);
 		}
 
@@ -75,7 +75,7 @@ public:
 			return;
 		}
 
-		if (index > m_globalValues.size()) {
+		if (index > static_cast<int>(m_globalValues.size())) {
 			m_globalValues.resize(index, 0);
 		}
 

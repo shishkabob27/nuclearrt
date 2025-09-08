@@ -18,7 +18,6 @@ public class PakBuilder
 			using var imageStream = new MemoryStream();
 			image.Value.bitmap.Save(imageStream, System.Drawing.Imaging.ImageFormat.Png);
 			entry.Size = (uint)imageStream.Length;
-
 			entry.Data = imageStream.ToArray();
 			entries.Add(entry);
 		}
@@ -53,32 +52,48 @@ public class PakBuilder
 			entries.Add(entry);
 		}
 
-		int offset = 4 + 4 + entries.Count * 13; // magic + count + entry table
+		//calculate offsets
+		uint dataOffset = 12; // header size
 		foreach (var entry in entries)
 		{
-			entry.Offset = (uint)offset;
-			offset += (int)entry.Size;
+			entry.Offset = dataOffset;
+			dataOffset += entry.Size;
 		}
 
+		//create quake pak file
 		using var pak = File.Create(outputPath + "/assets.pak");
 		using var writer = new ByteWriter(pak);
 
-		//header
-		writer.WriteAscii("NRTP"); // magic (Nuclear RT PAK)
-		writer.WriteUInt32((uint)entries.Count);
+		//write header
+		writer.WriteAscii("PACK"); // magic
+		writer.WriteUInt32(dataOffset); // directory offset
+		writer.WriteUInt32((uint)(entries.Count * 64)); // directory size
 
-		//write entries
-		foreach (var entry in entries)
-		{
-			writer.WriteInt8((byte)entry.Type);
-			writer.WriteUInt32(entry.ID);
-			writer.WriteUInt32(entry.Offset);
-			writer.WriteUInt32(entry.Size);
-		}
-
+		//write file data
 		foreach (var entry in entries)
 		{
 			pak.Write(entry.Data, 0, (int)entry.Size);
+		}
+
+		//write directory
+		foreach (var entry in entries)
+		{
+			string fileName = entry.Type switch
+			{
+				PakAssetType.Image => $"images/{entry.ID}.png",
+				PakAssetType.Sound => $"sounds/{entry.ID}.wav",
+				PakAssetType.Font => $"fonts/{entry.ID}.ttf",
+				_ => $"binary/{entry.ID}.bin"
+			};
+
+			//pad filename to 56 bytes
+			byte[] fileNameBytes = System.Text.Encoding.ASCII.GetBytes(fileName);
+			byte[] paddedFileName = new byte[56];
+			Array.Copy(fileNameBytes, paddedFileName, Math.Min(fileNameBytes.Length, 56));
+			writer.WriteBytes(paddedFileName);
+
+			writer.WriteUInt32(entry.Offset);
+			writer.WriteUInt32(entry.Size);
 		}
 
 		pak.Flush();

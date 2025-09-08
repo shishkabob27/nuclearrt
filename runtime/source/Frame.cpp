@@ -225,6 +225,11 @@ void Frame::DrawLayer(Layer& layer, unsigned int index)
 	}
 }
 
+int Frame::NumberOfThisObject(unsigned int objectInfoHandle)
+{
+	return std::count_if(ObjectInstances.begin(), ObjectInstances.end(), [objectInfoHandle](const std::shared_ptr<ObjectInstance>& instance) { return instance->OI->Handle == objectInfoHandle; });
+}
+
 void Frame::DrawCounterNumbers(Counter &counter, int value, int x, int y)
 {
 	std::string valueString = std::to_string(value);

@@ -4,56 +4,87 @@
 #include <cstring>
 
 bool PakFile::Load(const std::string& filename) {
-    pakStream.open(filename, std::ios::binary);
-    if (!pakStream) return false;
+	pakStream.open(filename, std::ios::binary);
+	if (!pakStream) {
+		std::cerr << "Failed to open pak file: " << filename << std::endl;
+		return false;
+	}
 
-    char magic[4];
-    pakStream.read(magic, 4);
-    if (memcmp(magic, "NRTP", 4) != 0) return false;
+	// read header
+	char magic[4];
+	pakStream.read(magic, 4);
+	if (memcmp(magic, "PACK", 4) != 0) {
+		std::cerr << "Invalid pak file magic: " << std::string(magic, 4) << std::endl;
+		return false;
+	}
 
-    unsigned int entryCount;
-    pakStream.read(reinterpret_cast<char*>(&entryCount), 4);
+	unsigned int dirOffset, dirSize;
+	pakStream.read(reinterpret_cast<char*>(&dirOffset), 4);
+	pakStream.read(reinterpret_cast<char*>(&dirSize), 4);
 
-    for (unsigned int i = 0; i < entryCount; ++i) {
-        PakEntry entry;
-
-        pakStream.read(reinterpret_cast<char*>(&entry.type), 1);
-        pakStream.read(reinterpret_cast<char*>(&entry.id), 4);
-        pakStream.read(reinterpret_cast<char*>(&entry.offset), 4);
-        pakStream.read(reinterpret_cast<char*>(&entry.size), 4);
-
-        if (entry.type == PakAssetType::Image) {
-            imageEntries[entry.id] = entry;
-        }
-        else if (entry.type == PakAssetType::Font) {
-            fontEntries[entry.id] = entry;
-        }
-    }
-
-    return true;
+	// read directory
+	pakStream.seekg(dirOffset);
+	return ReadDirectory();
 }
 
-std::vector<uint8_t> PakFile::GetImageData(unsigned int id) {
-    auto it = imageEntries.find(id);
-    if (it == imageEntries.end()) return {};
+bool PakFile::ReadDirectory() {
+	unsigned int entryCount = 0;
+	
+	while (pakStream.good() && !pakStream.eof()) {
+		char filename[56];
+		pakStream.read(filename, 56);
+		
+		// check if we've reached the end
+		if (pakStream.eof()) break;
+		
+		// check if filename is all zeros (end of directory)
+		bool allZeros = true;
+		for (int i = 0; i < 56; i++) {
+			if (filename[i] != 0) {
+				allZeros = false;
+				break;
+			}
+		}
+		if (allZeros) break;
+		
+		// null-terminate the filename
+		filename[55] = '\0';
+		std::string name = std::string(filename);
+		
+		// trim null bytes
+		size_t nullPos = name.find('\0');
+		if (nullPos != std::string::npos) {
+			name = name.substr(0, nullPos);
+		}
+		
+		if (name.empty()) break;
 
-    const PakEntry& entry = it->second;
-    pakStream.seekg(entry.offset);
-
-    std::vector<uint8_t> data(entry.size);
-    pakStream.read(reinterpret_cast<char*>(data.data()), entry.size);
-
-    return data;
+		PakEntry entry;
+		entry.filename = name;
+		pakStream.read(reinterpret_cast<char*>(&entry.offset), 4);
+		pakStream.read(reinterpret_cast<char*>(&entry.size), 4);
+		
+		entries[name] = entry;
+		entryCount++;
+	}
+	
+	return true;
 }
 
-std::vector<uint8_t> PakFile::GetFontData(unsigned int id) {
-    auto it = fontEntries.find(id);
-    if (it == fontEntries.end()) return {};
+std::vector<uint8_t> PakFile::GetData(const std::string& filename) {
+	auto it = entries.find(filename);
+	if (it == entries.end()) {
+		std::cerr << "File not found in PAK: " << filename << std::endl;
+		return {};
+	}
 
-    const PakEntry& entry = it->second;
-    pakStream.seekg(entry.offset);
-
-    std::vector<uint8_t> data(entry.size);
-    pakStream.read(reinterpret_cast<char*>(data.data()), entry.size);
-    return data;
+	const PakEntry& entry = it->second;
+	
+	pakStream.clear();
+	pakStream.seekg(entry.offset);
+	
+	std::vector<uint8_t> data(entry.size);
+	pakStream.read(reinterpret_cast<char*>(data.data()), entry.size);
+	
+	return data;
 }

@@ -88,6 +88,8 @@ public:
 		return str.substr(str.length() - length);
 	}
 
+	int NumberOfThisObject(unsigned int objectInfoHandle);
+
 	//Collision detection
 	bool IsCollidingWithBackground(ObjectInstance* instance);
 	bool IsColliding(ObjectInstance* instance1, ObjectInstance* instance2);

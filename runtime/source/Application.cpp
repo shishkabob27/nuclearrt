@@ -6,6 +6,10 @@
 #include "SDL3Backend.h"
 #endif
 
+#ifdef NUCLEAR_BACKEND_SDL2
+#include "SDL2Backend.h"
+#endif
+
 #ifdef PLATFORM_WEB
 #include <emscripten.h>
 #endif
@@ -21,6 +25,8 @@ void Application::Initialize()
 
 	#ifdef NUCLEAR_BACKEND_SDL3
 		backend = std::make_shared<SDL3Backend>();
+	#elif NUCLEAR_BACKEND_SDL2
+		backend = std::make_shared<SDL2Backend>();
 	#else
 		backend = std::make_shared<Backend>();
 	#endif
