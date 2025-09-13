@@ -5,8 +5,8 @@
 #include "Backend.h"
 #include <unordered_map>
 
-#include <SDL.h>
-#include <SDL_ttf.h>
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_ttf.h>
 
 #ifdef _DEBUG
 #include "DebugUI.h"
@@ -57,7 +57,11 @@ public:
 	unsigned int GetTicks() override { return SDL_GetTicks(); }
 	float GetTimeDelta() override;
 	void Delay(unsigned int ms) override;
-
+	void SetTitle(const char* name) override;
+	void HideWindow() override;
+	void ShowWindow() override;
+	void ChangeWindowPosX(int x) override;
+	void ChangeWindowPosY(int y) override;
 	bool IsPixelTransparent(int textureId, int x, int y) override;
 	void GetTextureDimensions(int textureId, int& width, int& height) override;
 

@@ -503,3 +503,5 @@ runtime/build/switch/build
 #Plugin
 plugin/*.bld
 
+plugin/MMF2BuilderDll.vcxproj
+plugin/MMF2BuilderDll.vcxproj

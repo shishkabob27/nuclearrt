@@ -27,7 +27,21 @@ SDL2Backend::SDL2Backend() {
 SDL2Backend::~SDL2Backend() {
 	Deinitialize();
 }
-
+void SDL2Backend::HideWindow() {
+	SDL_HideWindow(window);
+}
+void SDL2Backend::ShowWindow() {
+	SDL_ShowWindow(window);
+}
+void SDL2Backend::SetTitle(std::string name) {
+	SDL_SetWindowTitle(window, name);
+}
+void SDL2Backend::ChangeWindowPosX(int x) {
+	SDL_SetWindowPosition(window, x, SDL_WINDOWPOS_UNDEFINED);
+}
+void SDL2Backend::ChangeWindowPosY(int y) {
+	SDL_SetWindowPosition(window, SDL_WINDOWPOS_UNDEFINED, y);
+}
 void SDL2Backend::Initialize() {
 	int windowWidth = Application::Instance().GetAppData()->GetWindowWidth();
 	int windowHeight = Application::Instance().GetAppData()->GetWindowHeight();

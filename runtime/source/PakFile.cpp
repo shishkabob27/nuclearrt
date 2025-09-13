@@ -1,4 +1,5 @@
 #include "PakFile.h"
+#include <cstdint>
 #include <string>
 #include <iostream>
 #include <cstring>

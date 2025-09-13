@@ -12,7 +12,8 @@ public static class ExtensionExporterRegistry
 	private static readonly List<ExtensionExporter> exporters = new List<ExtensionExporter>
 	{
 		new ButtonObjectExporter(),
-		new IniExporter()
+		new IniExporter(),
+		new WindowControlExporter()
 	};
 
 	public static ExtensionExporter GetExporter(string extensionName)

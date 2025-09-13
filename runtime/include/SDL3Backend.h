@@ -60,7 +60,11 @@ public:
 
 	bool IsPixelTransparent(int textureId, int x, int y) override;
 	void GetTextureDimensions(int textureId, int& width, int& height) override;
-
+	void SetTitle(const char* name) override;
+	void HideWindow() override;
+	void ShowWindow() override;
+	void ChangeWindowPosX(int x) override;
+	void ChangeWindowPosY(int y) override;
 #ifdef _DEBUG
 	void ToggleDebugUI() { DEBUG_UI.ToggleEnabled(); }
 	bool IsDebugUIEnabled() { return DEBUG_UI.IsEnabled(); }

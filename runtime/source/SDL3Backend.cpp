@@ -24,7 +24,21 @@ SDL3Backend::SDL3Backend() {
 SDL3Backend::~SDL3Backend() {
 	Deinitialize();
 }
-
+void SDL3Backend::HideWindow() {
+	SDL_HideWindow(window);
+}
+void SDL3Backend::ShowWindow() {
+	SDL_ShowWindow(window);
+}
+void SDL3Backend::ChangeWindowPosX(int x) {
+	SDL_SetWindowPosition(window, x, SDL_WINDOWPOS_UNDEFINED);
+}
+void SDL3Backend::ChangeWindowPosY(int y) {
+	SDL_SetWindowPosition(window, SDL_WINDOWPOS_UNDEFINED, y);
+}
+void SDL3Backend::SetTitle(const char* name) {
+	SDL_SetWindowTitle(window, name);
+}
 void SDL3Backend::Initialize() {
 	int windowWidth = Application::Instance().GetAppData()->GetWindowWidth();
 	int windowHeight = Application::Instance().GetAppData()->GetWindowHeight();
