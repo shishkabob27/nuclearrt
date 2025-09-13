@@ -12,13 +12,19 @@ public class ObjectInfoExporter : BaseExporter
 		var objectInfoListPath = Path.Combine(RuntimeBasePath.FullName, "source", "ObjectFactory.template.cpp");
 		var objectInfoList = File.ReadAllText(objectInfoListPath);
 
-		var objectInfos = new StringBuilder();
+		var objectInfosCases = new StringBuilder();
+		var objectInfoFunctionDefinitions = new StringBuilder();
+		var objectInfoFunctions = new StringBuilder();
 		foreach (var objectInfo in GameData.frameitems.Values)
 		{
-			objectInfos.Append(BuildObjectInfoCase(objectInfo));
+			objectInfoFunctionDefinitions.Append(BuildObjectInfoFunctionDefinition(objectInfo));
+			objectInfosCases.Append(BuildObjectInfoCase(objectInfo));
+			objectInfoFunctions.Append(BuildObjectInfoFunction(objectInfo));
 		}
 
-		objectInfoList = objectInfoList.Replace("{{ OBJECT_INFO_CASES }}", objectInfos.ToString());
+		objectInfoList = objectInfoList.Replace("{{ OBJECT_INFO_FUNCTIONS_DEFINITIONS }}", objectInfoFunctionDefinitions.ToString());
+		objectInfoList = objectInfoList.Replace("{{ OBJECT_INFO_FUNCTIONS }}", objectInfoFunctions.ToString());
+		objectInfoList = objectInfoList.Replace("{{ OBJECT_INFO_CASES }}", objectInfosCases.ToString());
 
 		SaveFile(Path.Combine(OutputPath.FullName, "source", "ObjectFactory.cpp"), objectInfoList);
 		File.Delete(Path.Combine(OutputPath.FullName, "source", "ObjectFactory.template.cpp"));
@@ -36,6 +42,7 @@ public class ObjectInfoExporter : BaseExporter
 		var objectFactoryIncludePath = Path.Combine(OutputPath.FullName, "include", "ObjectFactory.template.h");
 		var objectFactoryInclude = File.ReadAllText(objectFactoryIncludePath);
 		objectFactoryInclude = objectFactoryInclude.Replace("{{ EXTENSION_INCLUDES }}", extensionIncludes.ToString());
+		objectFactoryInclude = objectFactoryInclude.Replace("{{ OBJECT_INFO_FUNCTIONS_DEFINITIONS }}", objectInfoFunctionDefinitions.ToString());
 		SaveFile(Path.Combine(OutputPath.FullName, "include", "ObjectFactory.h"), objectFactoryInclude);
 		File.Delete(objectFactoryIncludePath);
 	}
@@ -43,9 +50,25 @@ public class ObjectInfoExporter : BaseExporter
 	private string BuildObjectInfoCase(ObjectInfo objectInfo)
 	{
 		var result = new StringBuilder();
-
 		result.Append($"case {objectInfo.handle}:\n");
-		result.Append($"return std::make_shared<ObjectInfo>({objectInfo.handle}, ");
+		result.Append($"return CreateObjectInfo_{objectInfo.handle}();\n");
+		return result.ToString();
+	}
+
+	private string BuildObjectInfoFunctionDefinition(ObjectInfo objectInfo)
+	{
+		var result = new StringBuilder();
+		result.Append($"std::shared_ptr<ObjectInfo> ObjectFactory::CreateObjectInfo_{objectInfo.handle}();\n");
+		return result.ToString();
+	}
+
+	private string BuildObjectInfoFunction(ObjectInfo objectInfo)
+	{
+		var result = new StringBuilder();
+
+		result.AppendLine($"std::shared_ptr<ObjectInfo> ObjectFactory::CreateObjectInfo_{objectInfo.handle}() {{");
+
+		result.Append($"\treturn std::make_shared<ObjectInfo>({objectInfo.handle}, ");
 		result.Append($"{objectInfo.ObjectType}, ");
 		result.Append($"std::string(\"{SanitizeString(objectInfo.name)}\"), ");
 		result.Append($"{ColorToRGB(objectInfo.rgbCoeff)}, ");
@@ -68,8 +91,8 @@ public class ObjectInfoExporter : BaseExporter
 		}
 
 		result.Append(")");
-		result.Append(");\n");
-		result.Append("break;\n");
+		result.AppendLine(");");
+		result.AppendLine("}");
 
 		return result.ToString();
 	}

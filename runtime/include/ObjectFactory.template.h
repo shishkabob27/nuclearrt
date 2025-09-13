@@ -30,4 +30,6 @@ public:
 private:
     ObjectFactory() = default;
     std::unordered_map<unsigned int, std::shared_ptr<ObjectInfo>> objectInfos;
+
+    {{ OBJECT_INFO_FUNCTIONS_DEFINITIONS }}
 }; 

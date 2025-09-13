@@ -6,3 +6,5 @@ std::shared_ptr<ObjectInfo> ObjectFactory::GetObjectInfo(unsigned int handle) {
     }
     return nullptr;
 }
+
+{{ OBJECT_INFO_FUNCTIONS }}
