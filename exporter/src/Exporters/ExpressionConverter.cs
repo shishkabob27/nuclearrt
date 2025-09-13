@@ -112,7 +112,7 @@ public class ExpressionConverter
 			}
 			else if (expression.ObjectType == -1 && expression.Num == 3)
 			{
-				result += $"std::string(\"{expression.Loader.ToString()}\")";
+				result += $"\"{expression.Loader.ToString()}\"";
 			}
 			else if (expression.ObjectType == -1 && expression.Num == 4) // Str$
 			{
