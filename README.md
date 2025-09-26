@@ -2,6 +2,8 @@
 
 NuclearRT is a fast, open-source, cross-platform C++ runtime for Clickteam Fusion 2.5.
 
+![NuclearRT Banner](assets/banner.png)
+
 > [!CAUTION]
 > This project is still in development and is not ready for general use.
 
