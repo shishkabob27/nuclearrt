@@ -21,7 +21,6 @@ public class PakBuilder
 			entry.Data = imageStream.ToArray();
 			entries.Add(entry);
 		}
-
 		//fonts
 		//TODO: this is bad, redo this
 		var fontsFolder = new DirectoryInfo(Environment.GetFolderPath(Environment.SpecialFolder.Fonts));

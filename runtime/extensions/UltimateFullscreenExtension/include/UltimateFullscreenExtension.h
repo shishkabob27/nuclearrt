@@ -1,13 +1,15 @@
 #pragma once
-
 #include "Application.h"
 #include "Extension.h"
 #include "ObjectInstance.h"
 #include <string>
-class WindowControlExtension : public Extension {
+
+class UltimateFullscreenExtension : public Extension {
 public:
-    WindowControlExtension(short flags);
+    bool isFullscreen;
+    void GoFullscreen();
+    void GoWindowed();
+    UltimateFullscreenExtension(short flags);
     void Initialize() override;
 	void Update(float deltaTime) override;
-    void SetWindowPosition(int param);
 };

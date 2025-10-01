@@ -48,6 +48,15 @@ public class WindowControlExporter : ExtensionExporter
 			case 81: // Set Window Vertical Position
 				result.AppendLine($"Application::Instance().GetBackend()->ChangeWindowPosY({ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[0].Loader, eventBase)});");
 				break;
+			case 82: // Set Window Position
+				result.AppendLine($"{GetExtensionInstance(eventBase.ObjectInfo)}->SetWindowPosition({ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[0].Loader, eventBase)});");
+				break;
+			case 90: // Hide Window
+				result.AppendLine($"Application::Instance().GetBackend()->HideWindow();");
+				break;
+			case 89: // Show Window
+				result.AppendLine($"Application::Instance().GetBackend()->ShowWindow();");
+				break;
 			default:
 				result.AppendLine($"// Window Control action {actionNum} not implemented");
 				break;
@@ -57,8 +66,15 @@ public class WindowControlExporter : ExtensionExporter
 	public override string ExportExpression(Expression expression, EventBase eventBase = null)
 	{
 		string result;
-		switch (expression)
+		switch (expression.Num)
 		{
+			case 93:
+				result = "Width";
+				break;
+			case 94:
+				result = "Height";
+				break;
+
 			default:
 				result = $"0 /* Window Control expression {expression.Num} not implemented */";
 				break;

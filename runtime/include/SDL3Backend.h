@@ -65,6 +65,8 @@ public:
 	void ShowWindow() override;
 	void ChangeWindowPosX(int x) override;
 	void ChangeWindowPosY(int y) override;
+	void Fullscreen(bool fullscreenDesktop) override;
+	void Windowed() override;
 #ifdef _DEBUG
 	void ToggleDebugUI() { DEBUG_UI.ToggleEnabled(); }
 	bool IsDebugUIEnabled() { return DEBUG_UI.IsEnabled(); }

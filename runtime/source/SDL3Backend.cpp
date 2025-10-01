@@ -27,6 +27,11 @@ SDL3Backend::~SDL3Backend() {
 void SDL3Backend::HideWindow() {
 	SDL_HideWindow(window);
 }
+void SDL3Backend::Fullscreen(bool fullscreenDesktop) {
+	if (fullscreenDesktop) SDL_SetWindowFullscreen(window, true);
+	else SDL_SetWindowFullscreen(window, false);
+}
+void SDL3Backend::Windowed() { SDL_SetWindowFullscreen(window, 0); }
 void SDL3Backend::ShowWindow() {
 	SDL_ShowWindow(window);
 }

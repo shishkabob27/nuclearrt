@@ -33,6 +33,11 @@ void SDL2Backend::HideWindow() {
 void SDL2Backend::ShowWindow() {
 	SDL_ShowWindow(window);
 }
+void SDL2Backend::Windowed() { SDL_SetWindowFullscreen(window, 0); }
+void SDL2Backend::Fullscreen(bool fullscreenDesktop) {
+	if (fullscreenDesktop) SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN_DESKTOP);
+	else SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN);
+}
 void SDL2Backend::SetTitle(std::string name) {
 	SDL_SetWindowTitle(window, name);
 }

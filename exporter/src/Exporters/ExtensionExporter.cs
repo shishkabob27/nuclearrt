@@ -13,7 +13,8 @@ public static class ExtensionExporterRegistry
 	{
 		new ButtonObjectExporter(),
 		new IniExporter(),
-		new WindowControlExporter()
+		new WindowControlExporter(),
+		new UltimateFullscreenExporter()
 	};
 
 	public static ExtensionExporter GetExporter(string extensionName)
