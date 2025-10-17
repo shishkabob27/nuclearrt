@@ -175,6 +175,7 @@ endif()
 
 #copy SDL3 dlls
 if(WIN32 AND NOT EMSCRIPTEN)
+    message(STATUS "Copying SDL3 dlls to output directory")
     foreach(sdl_target IN ITEMS SDL3::SDL3 SDL3_image::SDL3_image SDL3_ttf::SDL3_ttf)
         if(TARGET ${sdl_target})
             add_custom_command(
@@ -182,7 +183,6 @@ if(WIN32 AND NOT EMSCRIPTEN)
                 COMMAND ${CMAKE_COMMAND} -E copy_if_different
                     $<TARGET_FILE:${sdl_target}>
                     $<TARGET_FILE_DIR:${PROJECT_NAME}>
-                COMMENT "copying ${sdl_target} to output directory"
             )
         endif()
     endforeach()
