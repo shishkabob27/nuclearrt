@@ -42,8 +42,9 @@ Release builds are still not ready. You can build the application manually by fo
 
 Working on NuclearRT has a bit of a strange workflow. The easiest way to do it is:
 1. Clone the repository.
-2. Create a Symbolic Link for the exporter from `nuclearrt\exporter\bin\Debug\net8.0-windows` to `Clickteam Fusion 2.5\Data\Runtime\nuclearrt\exporter`
-3. Create a Symbolic Link for the base runtime from `nuclearrt\runtime` to `Clickteam Fusion 2.5\Data\Runtime\nuclearrt\runtime`
+2. Create a Symbolic Link for the [exporter](/exporter) from `nuclearrt\exporter\bin\Debug\net8.0-windows` to `Clickteam Fusion 2.5\Data\Runtime\nuclearrt\exporter`
+3. Create a Symbolic Link for the base [runtime](/runtime) from `nuclearrt\runtime` to `Clickteam Fusion 2.5\Data\Runtime\nuclearrt\runtime`
+4. Build the exporter [plugin](/plugin) and copy the `nuclearrt.bld` file to `Clickteam Fusion 2.5\Data\Runtime\`
 
 If you make any changes to the exporter:
 1. `dotnet build` in the `exporter` directory.
