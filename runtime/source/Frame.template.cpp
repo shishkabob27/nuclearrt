@@ -31,6 +31,10 @@ void GeneratedFrame{{ FRAME_INDEX }}::Initialize() {
 void GeneratedFrame{{ FRAME_INDEX }}::Update() {
 	Frame::Update();
 
+	//Timer events
+	{{ EVENT_TIMER_UPDATE_LOOP }}
+
+	//Normal events
 	{{ EVENT_UPDATE_LOOP }}
 
 	Frame::DeleteMarkedInstances();

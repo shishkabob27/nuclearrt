@@ -77,7 +77,8 @@ public class FrameExporter : BaseExporter
 
 		_eventProcessor.PreProcessFrame(frameIndex);
 
-		frameCpp = frameCpp.Replace("{{ EVENT_UPDATE_LOOP }}", _eventProcessor.BuildEventUpdateLoop(frameIndex));
+		frameCpp = frameCpp.Replace("{{ EVENT_TIMER_UPDATE_LOOP }}", _eventProcessor.BuildEventUpdateLoop(frameIndex, true));
+		frameCpp = frameCpp.Replace("{{ EVENT_UPDATE_LOOP }}", _eventProcessor.BuildEventUpdateLoop(frameIndex, false));
 		frameCpp = frameCpp.Replace("{{ EVENT_FUNCTIONS }}", _eventProcessor.BuildEventFunctions(frameIndex));
 
 		return frameCpp;

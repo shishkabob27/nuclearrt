@@ -15,7 +15,7 @@ public class EventProcessor
 		_exporter = exporter;
 	}
 
-	public string BuildEventUpdateLoop(int frameIndex)
+	public string BuildEventUpdateLoop(int frameIndex, bool isTimerUpdateLoop = false)
 	{
 		var result = new StringBuilder();
 
@@ -29,6 +29,7 @@ public class EventProcessor
 				result.Append("\t");
 			}
 
+			// TODO: if a group is empty, don't include it.
 			if (evt.Conditions[0].IsOfType(new GroupStartCondition())) //if this event is a group start, don't include it in the main event update loop
 			{
 				result.Append($"if (IsGroupActive({(evt.Conditions[0].Items[0].Loader as Group).Id})) {{\n");
@@ -42,7 +43,7 @@ public class EventProcessor
 			}
 
 			//only add event to normal event loop if it doesn't have a loop condition
-			if (DoesEventHaveLoop(evt) == null) result.Append($"{eventName}();\n");
+			if (DoesEventHaveLoop(evt) == null && IsTimerEvent(evt) == isTimerUpdateLoop) result.Append($"{eventName}();\n");
 		}
 		return result.ToString();
 	}
@@ -416,6 +417,24 @@ public class EventProcessor
 		}
 
 		return result.ToString();
+	}
+
+	// if true, this event should be called before the normal events
+	public bool IsTimerEvent(EventGroup evtGroup)
+	{
+		// TODO: Verify if any other conditions should be considered a timer event, I got these from 2006 documentation: https://www.clickteam.com/creation_materials/tutorials/download/Fusion_runtime.pdf
+		foreach (var condition in evtGroup.Conditions)
+		{
+			if (condition.IsOfType(new StartOfFrameCondition())
+				|| condition.IsOfType(new TimerComparisonLessThanCondition())
+				|| condition.IsOfType(new TimerComparisonGreaterThanCondition())
+				|| condition.IsOfType(new TimerComparisonEqualToCondition()))
+			{
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	//Adds global events to the frame
