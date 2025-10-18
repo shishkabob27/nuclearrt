@@ -260,6 +260,14 @@ public class EventProcessor
 				objectInfos.Add((expression.Loader as ParamObject).ObjectInfo);
 				count++;
 			}
+			else if (expression.Loader is Create)
+			{
+				if ((expression.Loader as Create).Position.ObjectInfoParent != ushort.MaxValue)
+				{
+					objectInfos.Add((int)(expression.Loader as Create).Position.ObjectInfoParent);
+					count++;
+				}
+			}
 		}
 
 		foreach (var objectInfo in objectInfos)
