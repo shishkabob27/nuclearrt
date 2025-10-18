@@ -250,6 +250,10 @@ public class ExpressionConverter
 				else
 					result += $"({GetSelector(expression.ObjectInfo)}->Count() > 0 ? (*{GetSelector(expression.ObjectInfo)}->begin())->OI->BlendCoefficient : 0)";
 			}
+			else if (expression.ObjectType > 0 && expression.Num == 45) // Selected Objects
+			{
+				result += $"{GetSelector(expression.ObjectInfo)}->Count()";
+			}
 			else if (expression.ObjectType > 0 && expression.Num == 46)
 			{
 				result += "instance->InstanceValue";
