@@ -58,7 +58,7 @@ public class ObjectInfoExporter : BaseExporter
 	private string BuildObjectInfoFunctionDefinition(ObjectInfo objectInfo)
 	{
 		var result = new StringBuilder();
-		result.Append($"std::shared_ptr<ObjectInfo> ObjectFactory::CreateObjectInfo_{objectInfo.handle}();\n");
+		result.AppendLine($"std::shared_ptr<ObjectInfo> CreateObjectInfo_{objectInfo.handle}();");
 		return result.ToString();
 	}
 
