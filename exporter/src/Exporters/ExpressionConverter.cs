@@ -201,21 +201,21 @@ public class ExpressionConverter
 				if (expression.ObjectInfo == eventBase.ObjectInfo && expression.ObjectInfoList == eventBase.ObjectInfoList)
 					result += "instance->Y";
 				else
-					result += $"(*{GetSelector(expression.ObjectInfo)}->begin())->Y";
+					result += $"({GetSelector(expression.ObjectInfo)}->Count() > 0 ? (*{GetSelector(expression.ObjectInfo)}->begin())->Y : 0)";
 			}
 			else if (expression.ObjectType > 0 && expression.Num == 2) // Image
 			{
 				if (expression.ObjectInfo == eventBase.ObjectInfo && expression.ObjectInfoList == eventBase.ObjectInfoList)
 					result += "std::dynamic_pointer_cast<CommonProperties>(instance->OI->Properties)->oAnimations->GetCurrentFrameIndex()";
 				else
-					result += $"std::dynamic_pointer_cast<CommonProperties>((*{GetSelector(expression.ObjectInfo)}->begin())->OI->Properties)->oAnimations->GetCurrentFrameIndex()";
+					result += $"({GetSelector(expression.ObjectInfo)}->Count() > 0 ? std::dynamic_pointer_cast<CommonProperties>((*{GetSelector(expression.ObjectInfo)}->begin())->OI->Properties)->oAnimations->GetCurrentFrameIndex() : 0)";
 			}
 			else if (expression.ObjectType > 0 && expression.Num == 11) // X Position
 			{
 				if (expression.ObjectInfo == eventBase.ObjectInfo && expression.ObjectInfoList == eventBase.ObjectInfoList)
 					result += "instance->X";
 				else
-					result += $"(*{GetSelector(expression.ObjectInfo)}->begin())->X";
+					result += $"({GetSelector(expression.ObjectInfo)}->Count() > 0 ? (*{GetSelector(expression.ObjectInfo)}->begin())->X : 0)";
 			}
 			else if (expression.ObjectType > 0 && expression.Num == 12) // Fixed Value
 			{
@@ -226,7 +226,7 @@ public class ExpressionConverter
 				if (expression.ObjectInfo == eventBase.ObjectInfo && expression.ObjectInfoList == eventBase.ObjectInfoList)
 					result += "std::dynamic_pointer_cast<CommonProperties>(instance->OI->Properties)->oAnimations->GetCurrentSequenceIndex()";
 				else
-					result += $"std::dynamic_pointer_cast<CommonProperties>((*{GetSelector(expression.ObjectInfo)}->begin())->OI->Properties)->oAnimations->GetCurrentSequenceIndex()";
+					result += $"({GetSelector(expression.ObjectInfo)}->Count() > 0 ? std::dynamic_pointer_cast<CommonProperties>((*{GetSelector(expression.ObjectInfo)}->begin())->OI->Properties)->oAnimations->GetCurrentSequenceIndex() : 0)";
 			}
 			else if (expression.ObjectType > 0 && expression.Num == 15) // Number of this Object
 			{
@@ -235,9 +235,9 @@ public class ExpressionConverter
 			else if (expression.ObjectType > 0 && expression.Num == 16) // Alterable Value
 			{
 				if (expression.ObjectInfo == eventBase.ObjectInfo && expression.ObjectInfoList == eventBase.ObjectInfoList)
-					result += "std::dynamic_pointer_cast<CommonProperties>(instance->OI->Properties)->oAlterableValues->GetValue(" + ((ShortExp)expression.Loader).Value + ")";
+					result += "(std::dynamic_pointer_cast<CommonProperties>(instance->OI->Properties) ? std::dynamic_pointer_cast<CommonProperties>(instance->OI->Properties)->oAlterableValues->GetValue(" + ((ShortExp)expression.Loader).Value + ") : 0)";
 				else
-					result += $"std::dynamic_pointer_cast<CommonProperties>((*{GetSelector(expression.ObjectInfo)}->begin())->OI->Properties)->oAlterableValues->GetValue({((ShortExp)expression.Loader).Value})";
+					result += $"({GetSelector(expression.ObjectInfo)}->Count() > 0 ? (std::dynamic_pointer_cast<CommonProperties>((*{GetSelector(expression.ObjectInfo)}->begin())->OI->Properties) ? std::dynamic_pointer_cast<CommonProperties>((*{GetSelector(expression.ObjectInfo)}->begin())->OI->Properties)->oAlterableValues->GetValue({((ShortExp)expression.Loader).Value}) : 0) : 0)";
 			}
 			else if (expression.ObjectType > 0 && expression.Num == 22) // Font Color
 			{
@@ -248,7 +248,7 @@ public class ExpressionConverter
 				if (expression.ObjectInfo == eventBase.ObjectInfo && expression.ObjectInfoList == eventBase.ObjectInfoList)
 					result += "instance->OI->BlendCoefficient";
 				else
-					result += $"(*{GetSelector(expression.ObjectInfo)}->begin())->OI->BlendCoefficient";
+					result += $"({GetSelector(expression.ObjectInfo)}->Count() > 0 ? (*{GetSelector(expression.ObjectInfo)}->begin())->OI->BlendCoefficient : 0)";
 			}
 			else if (expression.ObjectType > 0 && expression.Num == 46)
 			{
@@ -271,7 +271,7 @@ public class ExpressionConverter
 				if (expression.ObjectType == 7) // Counter
 				{
 					string selector = GetSelector(expression.ObjectInfo);
-					result += $"std::dynamic_pointer_cast<CommonProperties>((*({selector}->begin()))->OI->Properties)->oValue->GetValue()";
+					result += $"({selector}->Count() > 0 ? std::dynamic_pointer_cast<CommonProperties>((*({selector}->begin()))->OI->Properties)->oValue->GetValue() : 0)";
 				}
 			}
 			else if (expression.ObjectType > 0 && expression.Num == 81)
@@ -281,7 +281,7 @@ public class ExpressionConverter
 					if (expression.ObjectInfo == eventBase.ObjectInfo && expression.ObjectInfoList == eventBase.ObjectInfoList)
 						result += "std::dynamic_pointer_cast<CommonProperties>(instance->OI->Properties)->oParagraphs->GetText()";
 					else
-						result += $"std::dynamic_pointer_cast<CommonProperties>((*{GetSelector(expression.ObjectInfo)}->begin())->OI->Properties)->oParagraphs->GetText()";
+						result += $"({GetSelector(expression.ObjectInfo)}->Count() > 0 ? std::dynamic_pointer_cast<CommonProperties>((*{GetSelector(expression.ObjectInfo)}->begin())->OI->Properties)->oParagraphs->GetText() : std::string(\"\"))";
 				}
 			}
 			else if (expression.ObjectType > 0 && expression.Num == 82)
@@ -291,7 +291,7 @@ public class ExpressionConverter
 					if (expression.ObjectInfo == eventBase.ObjectInfo && expression.ObjectInfoList == eventBase.ObjectInfoList)
 						result += $"std::dynamic_pointer_cast<CommonProperties>(instance->OI->Properties)->oValue->MaxValue";
 					else
-						result += $"std::dynamic_pointer_cast<CommonProperties>((*{GetSelector(expression.ObjectInfo)}->begin())->OI->Properties)->oValue->MaxValue";
+						result += $"({GetSelector(expression.ObjectInfo)}->Count() > 0 ? std::dynamic_pointer_cast<CommonProperties>((*{GetSelector(expression.ObjectInfo)}->begin())->OI->Properties)->oValue->MaxValue : 0)";
 				}
 			}
 			else if (expression.ObjectType > 0 && expression.Num == 83)
@@ -301,7 +301,7 @@ public class ExpressionConverter
 					if (expression.ObjectInfo == eventBase.ObjectInfo && expression.ObjectInfoList == eventBase.ObjectInfoList)
 						result += "instance->GetAngle()";
 					else
-						result += $"(*{GetSelector(expression.ObjectInfo)}->begin())->GetAngle()";
+						result += $"({GetSelector(expression.ObjectInfo)}->Count() > 0 ? (*{GetSelector(expression.ObjectInfo)}->begin())->GetAngle() : 0)";
 				}
 			}
 			else
