@@ -193,7 +193,7 @@ public class EventProcessor
 				{
 					if (!condition.IsOfType(new LoopCondition())) continue;
 
-					string loopNameSanitized = StringUtils.SanitizeObjectName((((condition.Items[0].Loader as ExpressionParameter).Items[0].Loader as StringExp).Value.ToString()));
+					string loopNameSanitized = StringUtils.SanitizeObjectName(ExpressionConverter.ConvertExpression(condition.Items[0]?.Loader as ExpressionParameter).ToString());
 					if (loopNameSanitized == loopName)
 					{
 						//TODO: Check if group is active?
@@ -260,6 +260,14 @@ public class EventProcessor
 			{
 				objectInfos.Add((expression.Loader as ParamObject).ObjectInfo);
 				count++;
+			}
+			else if (expression.Loader is Create)
+			{
+				if ((expression.Loader as Create).Position.ObjectInfoParent != ushort.MaxValue)
+				{
+					objectInfos.Add((int)(expression.Loader as Create).Position.ObjectInfoParent);
+					count++;
+				}
 			}
 		}
 
@@ -340,7 +348,7 @@ public class EventProcessor
 	{
 		foreach (var condition in evtGroup.Conditions)
 		{
-			if (condition.IsOfType(new LoopCondition())) return ((condition.Items[0]?.Loader as ExpressionParameter)?.Items[0]?.Loader as StringExp)?.Value.ToString() ?? "";
+			if (condition.IsOfType(new LoopCondition())) return ExpressionConverter.ConvertExpression(condition.Items[0]?.Loader as ExpressionParameter).ToString() ?? "";
 		}
 
 		return null;

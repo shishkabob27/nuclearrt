@@ -12,7 +12,6 @@ public class StopLoopAction : ActionBase
 		StringBuilder result = new();
 
 		string loopName = StringUtils.SanitizeObjectName(ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[0].Loader, eventBase).ToString());
-		loopName = loopName.Substring(2, loopName.Length - 4); // remove first 2 letters and last 2 letters as they are quotes
 
 		result.AppendLine($"loop_{loopName}_running = false;");
 
