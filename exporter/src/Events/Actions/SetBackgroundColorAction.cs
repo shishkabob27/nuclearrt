@@ -16,7 +16,7 @@ public class SetBackgroundColorAction : ActionBase
 		{
 			return $"BackgroundColor = {ExpressionConverter.ConvertExpression(expressionParameter, eventBase)};";
 		}
-		
+
 		return "";
 	}
 }
