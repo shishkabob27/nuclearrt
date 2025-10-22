@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Platform-specific compiler flags
 if(MSVC)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4102")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /bigobj /wd4102")
 elseif(NOT EMSCRIPTEN)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wunused-label")
 endif()
@@ -171,6 +171,21 @@ endif()
 
 if(EMSCRIPTEN)
     target_link_options(${PROJECT_NAME} PRIVATE --embed-file ${ASSETS_SOURCE_FILE}@assets.pak)
+endif()
+
+#copy SDL3 dlls
+if(WIN32 AND NOT EMSCRIPTEN)
+    message(STATUS "Copying SDL3 dlls to output directory")
+    foreach(sdl_target IN ITEMS SDL3::SDL3 SDL3_image::SDL3_image SDL3_ttf::SDL3_ttf)
+        if(TARGET ${sdl_target})
+            add_custom_command(
+                TARGET ${PROJECT_NAME} POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                    $<TARGET_FILE:${sdl_target}>
+                    $<TARGET_FILE_DIR:${PROJECT_NAME}>
+            )
+        endif()
+    endforeach()
 endif()
 
 # Install target

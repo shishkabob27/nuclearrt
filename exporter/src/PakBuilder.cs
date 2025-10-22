@@ -21,6 +21,16 @@ public class PakBuilder
 			entry.Data = imageStream.ToArray();
 			entries.Add(entry);
 		}
+
+		//sounds
+		foreach (var sound in gameData.Sounds.Items)
+		{
+			var entry = new PakEntry { Type = PakAssetType.Sound, ID = (uint)sound.Handle };
+			entry.Size = (uint)sound.Data.Length;
+			entry.Data = sound.Data;
+			entries.Add(entry);
+		}
+
 		//fonts
 		//TODO: this is bad, redo this
 		var fontsFolder = new DirectoryInfo(Environment.GetFolderPath(Environment.SpecialFolder.Fonts));
@@ -80,7 +90,7 @@ public class PakBuilder
 			string fileName = entry.Type switch
 			{
 				PakAssetType.Image => $"images/{entry.ID}.png",
-				PakAssetType.Sound => $"sounds/{entry.ID}.wav",
+				PakAssetType.Sound => $"sounds/{entry.ID}.{GetAudioExtension(entry.Data[0..4])}",
 				PakAssetType.Font => $"fonts/{entry.ID}.ttf",
 				_ => $"binary/{entry.ID}.bin"
 			};
@@ -97,6 +107,24 @@ public class PakBuilder
 
 		pak.Flush();
 		pak.Close();
+	}
+
+	string GetAudioExtension(byte[] magic)
+	{
+		if (magic[0] == 0xFF && magic[1] == 0xFB ||
+			magic[0] == 0xFF && magic[1] == 0xF3 ||
+			magic[0] == 0xFF && magic[1] == 0xF2 ||
+			magic[0] == 0x49 && magic[1] == 0x44 && magic[2] == 0x33
+		)
+			return "mp3";
+
+		if (magic[0] == 0x52 && magic[1] == 0x49 && magic[2] == 0x46 && magic[3] == 0x46)
+			return "wav";
+
+		if (magic[0] == 0x4F && magic[1] == 0x67 && magic[2] == 0x67 && magic[3] == 0x53)
+			return "ogg";
+
+		return "wav";
 	}
 }
 

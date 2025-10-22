@@ -21,3 +21,8 @@ public class DestroyAction : ActionBase
 		return result.ToString();
 	}
 }
+
+public class DestroyStringAction : DestroyAction
+{
+	public override int ObjectType { get; set; } = 3;
+}
