@@ -14,7 +14,7 @@ public class SendToOutputAction : ActionBase
 		result.AppendLine("#ifdef _DEBUG");
 		result.AppendLine($"	std::cout << {ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[0].Loader, eventBase)} << std::endl;");
 		result.AppendLine("#endif");
-		
+
 		return result.ToString();
 	}
 }
