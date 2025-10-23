@@ -17,7 +17,9 @@ public class OverlappingObjectCondition : ConditionBase
 		result.AppendLine($"    for (ObjectIterator other(*{GetSelector(((ParamObject)eventBase.Items[0].Loader).ObjectInfo)}); !other.end(); ++other) {{");
 		result.AppendLine($"        if (IsColliding(&(**it), &(**other))) {{");
 		result.AppendLine($"            hasCollision = true;");
-		result.AppendLine($"            break;");
+		result.AppendLine($"        }}");
+		result.AppendLine($"        else {{");
+		result.AppendLine($"            {ifStatement}false) other.deselect();");
 		result.AppendLine($"        }}");
 		result.AppendLine($"    }}");
 		result.AppendLine($"    {ifStatement} hasCollision) it.deselect();");
