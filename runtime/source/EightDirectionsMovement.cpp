@@ -1,6 +1,5 @@
 #include "EightDirectionsMovement.h"
 #include "Application.h"
-#include <iostream>
 
 void EightDirectionsMovement::Update(float deltaTime) {
 	bool moved = false;
