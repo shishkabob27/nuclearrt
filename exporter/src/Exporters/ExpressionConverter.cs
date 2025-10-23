@@ -210,6 +210,13 @@ public class ExpressionConverter
 				else
 					result += $"({GetSelector(expression.ObjectInfo)}->Count() > 0 ? std::dynamic_pointer_cast<CommonProperties>((*{GetSelector(expression.ObjectInfo)}->begin())->OI->Properties)->oAnimations->GetCurrentFrameIndex() : 0)";
 			}
+			else if (expression.ObjectType > 0 && expression.Num == 3) // Real Movement Speed
+			{
+				if (expression.ObjectInfo == eventBase.ObjectInfo && expression.ObjectInfoList == eventBase.ObjectInfoList)
+					result += "std::dynamic_pointer_cast<CommonProperties>(instance->OI->Properties)->oMovements->GetCurrentMovement()->GetRealSpeed()";
+				else
+					result += $"({GetSelector(expression.ObjectInfo)}->Count() > 0 ? std::dynamic_pointer_cast<CommonProperties>((*{GetSelector(expression.ObjectInfo)}->begin())->OI->Properties)->oMovements->GetCurrentMovement()->GetRealSpeed() : 0)";
+			}
 			else if (expression.ObjectType > 0 && expression.Num == 11) // X Position
 			{
 				if (expression.ObjectInfo == eventBase.ObjectInfo && expression.ObjectInfoList == eventBase.ObjectInfoList)

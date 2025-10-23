@@ -106,7 +106,8 @@ public class ObjectInfoExporter : BaseExporter
 		result.Append($"\"{SanitizeString(common.Identifier)}\", ");
 		result.Append($"{common.NewFlags.GetFlag("VisibleAtStart").ToString().ToLower()}, ");
 		result.Append($"{(!common.Flags.GetFlag("ScrollingIndependant")).ToString().ToLower()}, ");
-		result.Append($"{(!common.NewFlags.GetFlag("CollisionBox")).ToString().ToLower()}");
+		result.Append($"{(!common.NewFlags.GetFlag("CollisionBox")).ToString().ToLower()}, ");
+		result.Append($"{common.NewFlags.GetFlag("AutomaticRotation").ToString().ToLower()}");
 
 		result.Append(BuildQualifiers(common));
 		result.Append(BuildAlterableValues(common));
@@ -116,6 +117,7 @@ public class ObjectInfoExporter : BaseExporter
 		result.Append(BuildValue(common));
 		result.Append(BuildCounter(common));
 		result.Append(BuildParagraphs(common));
+		result.Append(BuildMovements(common));
 		result.Append(BuildExtension(common));
 
 		return result.ToString();
@@ -335,6 +337,53 @@ public class ObjectInfoExporter : BaseExporter
 			result.Append("}");
 			result.Append(")");
 
+			return result.ToString();
+		}
+		else
+		{
+			return ", nullptr";
+		}
+	}
+
+	private string BuildMovements(ObjectCommon common)
+	{
+		if (common.Movements != null)
+		{
+			var result = new StringBuilder();
+			result.Append(", std::make_shared<Movements>(");
+			result.Append("std::vector<std::shared_ptr<Movement>>{");
+			for (int i = 0; i < common.Movements.Items.Count; i++)
+			{
+				var movement = common.Movements.Items[i];
+
+				string movementClassName = null;
+				switch (movement.Type)
+				{
+					case 3:
+						movementClassName = "EightDirectionsMovement";
+						break;
+				}
+
+				if (movementClassName != null)
+				{
+					result.Append($"std::make_shared<{movementClassName}>({movement.Player - 1}, {movement.MovingAtStart}, {movement.DirectionAtStart}, ");
+
+					if (movement.Loader is EightDirections eightDirections)
+					{
+						result.Append($"{eightDirections.Speed}, {eightDirections.Acceleration}, {eightDirections.Deceleration}, {eightDirections.BounceFactor}, {eightDirections.Directions}");
+					}
+
+					result.Append(")");
+				}
+				else
+				{
+					result.Append("nullptr");
+				}
+
+				if (i != common.Movements.Items.Count - 1)
+					result.Append(", ");
+			}
+			result.Append("})");
 			return result.ToString();
 		}
 		else

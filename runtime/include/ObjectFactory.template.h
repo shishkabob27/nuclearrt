@@ -8,6 +8,8 @@
 #include "QuickBackdropProperties.h"
 #include "CommonProperties.h"
 
+#include "EightDirectionsMovement.h"
+
 {{ EXTENSION_INCLUDES }}
 
 class ObjectFactory {

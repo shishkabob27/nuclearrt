@@ -17,6 +17,21 @@ void Frame::PostInitialize()
 {
 	for (auto& instance : ObjectInstances)
 	{
+		if (instance->OI->Type == 2) // Common object
+		{
+			auto properties = std::dynamic_pointer_cast<CommonProperties>(instance->OI->Properties);
+			if (properties && properties->oMovements)
+			{
+				for (auto& movement : properties->oMovements->items)
+				{
+					if (movement)
+					{
+						movement->Instance = instance.get();
+						movement->Initialize();
+					}
+				}
+			}
+		}
 		if (instance->OI->Type >= 32) // Extension
 		{
 			auto properties = std::dynamic_pointer_cast<CommonProperties>(instance->OI->Properties);
@@ -39,9 +54,16 @@ void Frame::Update()
 		if (instance->OI->Type == 2) // Common object with possible animation
 		{
 			auto properties = std::dynamic_pointer_cast<CommonProperties>(instance->OI->Properties);
-			if (properties && properties->oAnimations)
+			if (properties)
 			{
-				properties->oAnimations->Update(deltaTime);
+				if (properties->oMovements)
+				{
+					properties->oMovements->Update(deltaTime);
+				}
+				if (properties->oAnimations)
+				{
+					properties->oAnimations->Update(deltaTime);
+				}
 			}
 		}
 		else if (instance->OI->Type >= 32) // Extension
@@ -144,10 +166,20 @@ void Frame::DrawLayer(Layer& layer, unsigned int index)
 				auto imageInfo = imageBank.GetImage(imageId);
 				if (imageInfo)
 				{
+					int angle = instance->GetAngle();
+					if (properties->AutomaticRotation)
+					{
+						std::shared_ptr<Movement> movement = properties->oMovements->GetCurrentMovement();
+						if (movement)
+						{
+							angle += movement->GetMovementDirection() * 180 / 16;
+						}
+					}
+
 					Application::Instance().GetBackend()->DrawTexture(
 						imageId, instance->X - scrollXOffset, instance->Y - scrollYOffset,
 						imageInfo->HotspotX, imageInfo->HotspotY, 
-						instance->GetAngle(), 1.0f, instance->OI->RGBCoefficient, instance->OI->BlendCoefficient, instance->OI->Effect, instance->OI->EffectParameter);
+						angle, 1.0f, instance->OI->RGBCoefficient, instance->OI->BlendCoefficient, instance->OI->Effect, instance->OI->EffectParameter);
 				}
 			}
 		}
