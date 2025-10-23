@@ -11,6 +11,10 @@ public:
 	Movements() = default;
 	Movements(const std::vector<std::shared_ptr<Movement>>& movementItems) : items(movementItems) {
 		currentMovementIndex = 0;
+		
+		if (items[currentMovementIndex]) {
+			items[currentMovementIndex]->OnEnabled();
+		}
 	}
 
 	std::vector<std::shared_ptr<Movement>> items;
@@ -22,7 +26,15 @@ public:
 	}
 
 	void SetMovement(int index) {
+		if (items[currentMovementIndex]) {
+			items[currentMovementIndex]->OnDisabled();
+		}
+
 		currentMovementIndex = index;
+
+		if (items[currentMovementIndex]) {
+			items[currentMovementIndex]->OnEnabled();
+		}	
 	}
 
 	std::shared_ptr<Movement> GetCurrentMovement() {

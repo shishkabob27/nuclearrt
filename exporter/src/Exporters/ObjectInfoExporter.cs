@@ -359,6 +359,9 @@ public class ObjectInfoExporter : BaseExporter
 				string movementClassName = null;
 				switch (movement.Type)
 				{
+					case 1:
+						movementClassName = "MouseMovement";
+						break;
 					case 3:
 						movementClassName = "EightDirectionsMovement";
 						break;
@@ -371,6 +374,10 @@ public class ObjectInfoExporter : BaseExporter
 					if (movement.Loader is EightDirections eightDirections)
 					{
 						result.Append($"{eightDirections.Speed}, {eightDirections.Acceleration}, {eightDirections.Deceleration}, {eightDirections.BounceFactor}, {eightDirections.Directions}");
+					}
+					else if (movement.Loader is Mouse mouse)
+					{
+						result.Append($"{mouse.X1}, {mouse.X2}, {mouse.Y1}, {mouse.Y2}");
 					}
 
 					result.Append(")");

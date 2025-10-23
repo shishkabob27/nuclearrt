@@ -662,6 +662,20 @@ int SDL3Backend::GetMouseY()
 	return static_cast<int>(relativeY);
 }
 
+void SDL3Backend::SetMouseX(int x)
+{
+	float y;
+	SDL_GetMouseState(NULL, &y);
+	SDL_WarpMouseInWindow(window, x, y);
+}
+
+void SDL3Backend::SetMouseY(int y)
+{
+	float x;
+	SDL_GetMouseState(&x, NULL);
+	SDL_WarpMouseInWindow(window, x, y);
+}
+
 int SDL3Backend::GetMouseWheelMove()
 {
 	SDL_Event event;

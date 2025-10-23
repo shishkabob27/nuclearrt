@@ -8,6 +8,7 @@
 #include "QuickBackdropProperties.h"
 #include "CommonProperties.h"
 
+#include "MouseMovement.h"
 #include "EightDirectionsMovement.h"
 
 {{ EXTENSION_INCLUDES }}

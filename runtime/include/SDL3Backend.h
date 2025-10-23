@@ -49,6 +49,8 @@ public:
 
 	int GetMouseX() override;
 	int GetMouseY() override;
+	void SetMouseX(int x) override;
+	void SetMouseY(int y) override;
 	int GetMouseWheelMove() override;
 	uint32_t GetMouseState() override;
 	void HideMouseCursor() override;

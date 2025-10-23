@@ -19,7 +19,9 @@ public:
 	ObjectInstance* Instance;
 
 	virtual ~Movement() = default;
-	virtual void Initialize() {}
+	virtual void Initialize() {} // called for each movement at the start of the frame
+	virtual void OnEnabled() {} // called when the movement is switched to
+	virtual void OnDisabled() {} // called when the movement is switched to another movement
 	virtual int GetRealSpeed() { return 0; }
 	virtual int GetMovementDirection() { return 0; } // 0-31 with 0 being right and going counter-clockwise
 	virtual void Update(float deltaTime) {}
