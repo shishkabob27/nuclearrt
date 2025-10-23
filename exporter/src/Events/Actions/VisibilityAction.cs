@@ -35,3 +35,13 @@ public class CounterReappearAction : ReappearAction
 {
 	public override int ObjectType { get; set; } = 7;
 }
+
+public class StringMakeInvisibleAction : MakeInvisibleAction
+{
+	public override int ObjectType { get; set; } = 3;
+}
+
+public class StringReappearAction : ReappearAction
+{
+	public override int ObjectType { get; set; } = 3;
+}
