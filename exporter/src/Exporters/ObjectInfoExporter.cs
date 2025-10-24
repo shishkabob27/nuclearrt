@@ -168,7 +168,7 @@ public class ObjectInfoExporter : BaseExporter
 			var result = new StringBuilder();
 
 			result.Append(", std::make_shared<AlterableValues>(");
-			result.Append("std::vector<float>{");
+			result.Append("std::vector<int>{");
 			if (common.Values != null)
 			{
 				foreach (var value in common.Values.Items)
