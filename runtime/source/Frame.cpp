@@ -511,13 +511,30 @@ bool Frame::IsCollidingWithBackground(ObjectInstance *instance)
 	// Check collision with all backdrop objects
 	for (auto& backdropInstance : ObjectInstances)
 	{
-		// Check only against backdrop objects (Type 1)
+		// Check only against (Quick) backdrop objects
 		if (backdropInstance->OI->Type == 1)
 		{
 			auto backdropProps = static_cast<BackdropProperties*>(backdropInstance->OI->Properties.get());
 			
 			// Check if this backdrop is an obstacle
 			if (backdropProps && backdropProps->ObstacleType > 0)
+			{
+				// Check if the backdrop is on the same layer as the instance
+				// to ensure scrolling is handled consistently
+				if (backdropInstance->Layer == instance->Layer)
+				{
+					// Use the existing collision detection between objects
+					if (IsColliding(instance, backdropInstance.get()))
+					{
+						return true;
+					}
+				}
+			}
+		}
+		else if (backdropInstance->OI->Type == 0)
+		{
+			auto quickBackdropProps = static_cast<QuickBackdropProperties*>(backdropInstance->OI->Properties.get());
+			if (quickBackdropProps && quickBackdropProps->ObstacleType > 0)
 			{
 				// Check if the backdrop is on the same layer as the instance
 				// to ensure scrolling is handled consistently
@@ -539,8 +556,8 @@ bool Frame::IsCollidingWithBackground(ObjectInstance *instance)
 bool Frame::IsColliding(ObjectInstance *instance1, ObjectInstance *instance2)
 {
 	// Only check collision for relevant object types
-	if ((instance1->OI->Type != 1 && instance1->OI->Type != 2) ||
-		(instance2->OI->Type != 1 && instance2->OI->Type != 2))
+	if ((instance1->OI->Type != 0 && instance1->OI->Type != 1 && instance1->OI->Type != 2) ||
+		(instance2->OI->Type != 0 && instance2->OI->Type != 1 && instance2->OI->Type != 2))
 		return false;
 
 	// Get image IDs for both instances
@@ -552,7 +569,17 @@ bool Frame::IsColliding(ObjectInstance *instance1, ObjectInstance *instance2)
 	int hotspotX2 = 0, hotspotY2 = 0;
 	
 	// Get information for instance1
-	if (instance1->OI->Type == 1) // Backdrop
+	if (instance1->OI->Type == 0) // Quick backdrop
+	{
+		auto quickBackdropProps = static_cast<QuickBackdropProperties*>(instance1->OI->Properties.get());
+		if (!quickBackdropProps) return false;
+		imageId1 = quickBackdropProps->oShape->Image;
+		
+		// Position exactly as in DrawLayer for quick backdrops
+		drawX1 = instance1->X - (scrollX * Layers[instance1->Layer].XCoefficient);
+		drawY1 = instance1->Y - (scrollY * Layers[instance1->Layer].YCoefficient);
+	}
+	else if (instance1->OI->Type == 1) // Backdrop
 	{
 		auto backdropProps = static_cast<BackdropProperties*>(instance1->OI->Properties.get());
 		if (!backdropProps) return false;
@@ -590,7 +617,17 @@ bool Frame::IsColliding(ObjectInstance *instance1, ObjectInstance *instance2)
 	}
 
 	// Get information for instance2
-	if (instance2->OI->Type == 1) // Backdrop
+	if (instance2->OI->Type == 0) // Quick backdrop
+	{
+		auto quickBackdropProps = static_cast<QuickBackdropProperties*>(instance2->OI->Properties.get());
+		if (!quickBackdropProps) return false;
+		imageId2 = quickBackdropProps->oShape->Image;
+		
+		// Position exactly as in DrawLayer for quick backdrops
+		drawX2 = instance2->X - (scrollX * Layers[instance2->Layer].XCoefficient);
+		drawY2 = instance2->Y - (scrollY * Layers[instance2->Layer].YCoefficient);
+	}
+	else if (instance2->OI->Type == 1) // Backdrop
 	{
 		auto backdropProps = static_cast<BackdropProperties*>(instance2->OI->Properties.get());
 		if (!backdropProps) return false;
@@ -632,23 +669,44 @@ bool Frame::IsColliding(ObjectInstance *instance1, ObjectInstance *instance2)
 	auto imageInfo2 = ImageBank::Instance().GetImage(imageId2);
 	if (!imageInfo1 || !imageInfo2) return false;
 
+	int image1Width = imageInfo1->Width;
+	int image1Height = imageInfo1->Height;
+	int image2Width = imageInfo2->Width;
+	int image2Height = imageInfo2->Height;
+
+	if (instance1->OI->Type == 0)
+	{
+		auto quickBackdropProps = static_cast<QuickBackdropProperties*>(instance1->OI->Properties.get());
+		if (!quickBackdropProps) return false;
+		image1Width = quickBackdropProps->Width;
+		image1Height = quickBackdropProps->Height;
+	}
+
+	if (instance2->OI->Type == 0)
+	{
+		auto quickBackdropProps = static_cast<QuickBackdropProperties*>(instance2->OI->Properties.get());
+		if (!quickBackdropProps) return false;
+		image2Width = quickBackdropProps->Width;
+		image2Height = quickBackdropProps->Height;
+	}
+
 	// Calculate bounding box for instance1
 	int x1_1 = drawX1 - hotspotX1;
 	int y1_1 = drawY1 - hotspotY1;
-	int x2_1 = x1_1 + imageInfo1->Width;
+	int x2_1 = x1_1 + image1Width;
 	int y2_1 = y1_1;
 	int x3_1 = x1_1;
-	int y3_1 = y1_1 + imageInfo1->Height;
+	int y3_1 = y1_1 + image1Height;
 	int x4_1 = x2_1;
 	int y4_1 = y3_1;
 
 	// Calculate bounding box for instance2
 	int x1_2 = drawX2 - hotspotX2;
 	int y1_2 = drawY2 - hotspotY2;
-	int x2_2 = x1_2 + imageInfo2->Width;
+	int x2_2 = x1_2 + image2Width;
 	int y2_2 = y1_2;
 	int x3_2 = x1_2;
-	int y3_2 = y1_2 + imageInfo2->Height;
+	int y3_2 = y1_2 + image2Height;
 	int x4_2 = x2_2;
 	int y4_2 = y3_2;
 	
@@ -748,7 +806,7 @@ bool Frame::DoLinesIntersect(int x1, int y1, int x2, int y2, int x3, int y3, int
 
 bool Frame::IsColliding(ObjectInstance *instance, int x, int y)
 {
-	if (instance->OI->Type != 1 && instance->OI->Type != 2) return false;
+	if (instance->OI->Type != 0 && instance->OI->Type != 1 && instance->OI->Type != 2) return false;
 
 	unsigned int imageId;
 	bool fineDetection = false;
@@ -764,6 +822,16 @@ bool Frame::IsColliding(ObjectInstance *instance, int x, int y)
 		imageId = backdropProps->Image;
 		
 		// Position exactly as in DrawLayer for backdrops
+		drawX = instance->X - (scrollX * Layers[instance->Layer].XCoefficient);
+		drawY = instance->Y - (scrollY * Layers[instance->Layer].YCoefficient);
+	}
+	else if (instance->OI->Type == 0) // Quick backdrop
+	{
+		auto quickBackdropProps = static_cast<QuickBackdropProperties*>(instance->OI->Properties.get());
+		if (!quickBackdropProps) return false;
+		imageId = quickBackdropProps->oShape->Image;
+		
+		// Position exactly as in DrawLayer for quick backdrops
 		drawX = instance->X - (scrollX * Layers[instance->Layer].XCoefficient);
 		drawY = instance->Y - (scrollY * Layers[instance->Layer].YCoefficient);
 	}
