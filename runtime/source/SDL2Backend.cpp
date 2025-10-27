@@ -335,7 +335,7 @@ void SDL2Backend::DrawTexture(int id, int x, int y, int offsetX, int offsetY, in
 	SDL_SetTextureBlendMode(texture, origBlendMode);
 }
 
-void SDL2Backend::DrawQuickBackdrop(int x, int y, int width, int height, std::shared_ptr<Shape> shape)
+void SDL2Backend::DrawQuickBackdrop(int x, int y, int width, int height, Shape* shape)
 {
 	//TODO: Borders
 	//TODO: Ellipse masks

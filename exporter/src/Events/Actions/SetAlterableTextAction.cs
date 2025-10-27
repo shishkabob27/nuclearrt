@@ -13,9 +13,7 @@ public class SetAlterableTextAction : ActionBase
 
 		result.AppendLine($"for (ObjectIterator it(*{GetSelector(eventBase.ObjectInfo)}); !it.end(); ++it) {{");
 		result.AppendLine($"  auto instance = *it;");
-		result.AppendLine($"  auto commonProperties = std::dynamic_pointer_cast<CommonProperties>(instance->OI->Properties);");
-		result.AppendLine($"  auto paragraphs = std::dynamic_pointer_cast<ObjectParagraphs>(commonProperties->oParagraphs);");
-		result.AppendLine($"  paragraphs->SetAlterableText({ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[0].Loader, eventBase)});");
+		result.AppendLine($"  ((StringObject*)instance)->SetAlterableText({ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[0].Loader, eventBase)});");
 		result.AppendLine("}");
 
 		return result.ToString();

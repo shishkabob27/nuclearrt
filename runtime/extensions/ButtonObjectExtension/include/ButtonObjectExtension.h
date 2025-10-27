@@ -7,26 +7,27 @@
 	
 class ButtonObjectExtension : public Extension {
 public:
-	ButtonObjectExtension(short width, short height, short type, short flags) : Width(width), Height(height), Type(type), Flags(flags) {}
-
+	ButtonObjectExtension(unsigned int objectInfoHandle, int type, std::string name, int x, int y, unsigned int layer, short instanceValue, short width, short height, short buttonType, short flags)
+	: Extension(objectInfoHandle, type, name, x, y, layer, instanceValue), Width(width), Height(height), ButtonType(buttonType), Flags(flags) {}
+	
 	void Initialize() override;
 	void Update(float deltaTime) override;
 	void Draw() override;
-
+	
 	void ButtonDraw();
 	void CheckboxDraw();
 	void RadioButtonDraw();
-
+	
 	bool IsClicked() const;
 	void SetText(const std::string& text);
 	void SetEnabled(bool enabled);
 	void SetShown(bool shown);
 	
 private:
-	short Width;
-	short Height;
-	short Type;
-	short Flags;
+	short Width = 0;
+	short Height = 0;
+	short ButtonType = 0;
+	short Flags = 0;
 	std::string Text = "";
 	bool Enabled = true;
 	bool Clicked = false;

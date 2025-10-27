@@ -34,7 +34,7 @@ public:
 	void LoadTexture(int id) override;
 	void UnloadTexture(int id) override;
 	void DrawTexture(int id, int x, int y, int offsetX, int offsetY, int angle, float scale, int color, char blendCoefficient, int effect, unsigned int effectParam) override;
-	void DrawQuickBackdrop(int x, int y, int width, int height, std::shared_ptr<Shape> shape) override;
+	void DrawQuickBackdrop(int x, int y, int width, int height, Shape* shape) override;
 	
 	void DrawRectangle(int x, int y, int width, int height, int color) override;
 	void DrawRectangleLines(int x, int y, int width, int height, int color) override;

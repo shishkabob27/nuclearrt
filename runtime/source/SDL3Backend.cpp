@@ -116,19 +116,19 @@ void SDL3Backend::Initialize() {
 
 			if (ImGui::TreeNode("Object Instances")) {
 				int i = 0;
-				for (auto& instance : currentFrame->ObjectInstances) {					
-					if (ImGui::TreeNode(std::string(instance->OI->Name + "##" + std::to_string(i)).c_str())) {
-						ImGui::Text("Handle: %d", instance->Handle);
+				for (auto& [handle, instance] : currentFrame->ObjectInstances) {					
+					if (ImGui::TreeNode(std::string(instance->Name + "##" + std::to_string(handle)).c_str())) {
+						ImGui::Text("Handle: %d", handle);
 						ImGui::Text("X: %d", instance->X);
 						ImGui::Text("Y: %d", instance->Y);
 
 						if (ImGui::TreeNode("OI")) {
-							ImGui::Text("Handle: %d", instance->OI->Handle);
-							ImGui::Text("Type: %d", instance->OI->Type);
-							ImGui::Text("RGB Coefficient: %d", instance->OI->RGBCoefficient);
-							ImGui::Text("Effect: %d", instance->OI->Effect);
-							ImGui::Text("Blend Coefficient: %d", instance->OI->BlendCoefficient);
-							ImGui::Text("Effect Parameter: %d", instance->OI->EffectParameter);
+							ImGui::Text("Handle: %d", handle);
+							ImGui::Text("Type: %d", instance->Type);
+							ImGui::Text("RGB Coefficient: %d", instance->RGBCoefficient);
+							ImGui::Text("Effect: %d", instance->Effect);
+							ImGui::Text("Blend Coefficient: %d", instance->BlendCoefficient);
+							ImGui::Text("Effect Parameter: %d", instance->EffectParameter);
 							ImGui::TreePop();
 						}
 
@@ -368,7 +368,7 @@ void SDL3Backend::DrawTexture(int id, int x, int y, int offsetX, int offsetY, in
 	SDL_SetTextureBlendMode(texture, origBlendMode);
 }
 
-void SDL3Backend::DrawQuickBackdrop(int x, int y, int width, int height, std::shared_ptr<Shape> shape)
+void SDL3Backend::DrawQuickBackdrop(int x, int y, int width, int height, Shape* shape)
 {
 	//TODO: Borders
 	//TODO: Ellipse masks

@@ -51,14 +51,14 @@ public class ObjectInfoExporter : BaseExporter
 	{
 		var result = new StringBuilder();
 		result.Append($"case {objectInfo.handle}:\n");
-		result.Append($"return CreateObjectInfo_{objectInfo.handle}();\n");
+		result.Append($"return CreateInstance_{SanitizeObjectName(objectInfo.name)}_{objectInfo.handle}();\n");
 		return result.ToString();
 	}
 
 	private string BuildObjectInfoFunctionDefinition(ObjectInfo objectInfo)
 	{
 		var result = new StringBuilder();
-		result.AppendLine($"std::shared_ptr<ObjectInfo> CreateObjectInfo_{objectInfo.handle}();");
+		result.AppendLine($"ObjectInstance* CreateInstance_{SanitizeObjectName(objectInfo.name)}_{objectInfo.handle}();");
 		return result.ToString();
 	}
 
@@ -66,59 +66,91 @@ public class ObjectInfoExporter : BaseExporter
 	{
 		var result = new StringBuilder();
 
-		result.AppendLine($"std::shared_ptr<ObjectInfo> ObjectFactory::CreateObjectInfo_{objectInfo.handle}() {{");
+		result.AppendLine($"ObjectInstance* ObjectFactory::CreateInstance_{SanitizeObjectName(objectInfo.name)}_{objectInfo.handle}() {{");
 
-		result.Append($"\treturn std::make_shared<ObjectInfo>({objectInfo.handle}, ");
+		string objectTypeClass = ExpressionConverter.GetObjectClassName(objectInfo.handle, convertToCCN: false);
+		string additionalParameters = "";
+		if (objectInfo.ObjectType >= 32)
+		{
+			objectTypeClass = "Extension";
+			if (objectInfo.properties is ObjectCommon common)
+			{
+				ExtensionExporter extensionExporter = ExtensionExporterRegistry.GetExporter(common.Identifier);
+				if (extensionExporter != null)
+				{
+					objectTypeClass = extensionExporter.CppClassName;
+					if (common.ExtensionOffset > 0 && common.ExtensionData != null)
+					{
+						string extensionParameters = extensionExporter.ExportExtension(common.ExtensionData);
+						additionalParameters = $", {extensionParameters}";
+					}
+				}
+			}
+		}
+
+		result.Append($"\tObjectInstance* instance = new {objectTypeClass}({objectInfo.handle}, ");
 		result.Append($"{objectInfo.ObjectType}, ");
-		result.Append($"std::string(\"{SanitizeString(objectInfo.name)}\"), ");
-		result.Append($"{ColorToRGB(objectInfo.rgbCoeff)}, ");
-		result.Append($"{objectInfo.InkEffect}, ");
-		result.Append($"{objectInfo.blend}, ");
-		result.Append($"{objectInfo.InkEffectValue}, ");
-		result.Append($"std::make_shared<");
+		result.Append($"\"{SanitizeString(objectInfo.name)}\", ");
+		result.Append($"0, 0, 0, 0{additionalParameters}");
 
-		if (objectInfo.properties is ObjectCommon common)
-		{
-			result.Append(BuildCommonProperties(common));
-		}
-		else if (objectInfo.properties is Backdrop backdrop)
-		{
-			result.Append(BuildBackdropProperties(backdrop));
-		}
-		else if (objectInfo.properties is Quickbackdrop quickBackdrop)
-		{
-			result.Append(BuildQuickBackdropProperties(quickBackdrop));
-		}
-
-		result.Append(")");
 		result.AppendLine(");");
+
+		result.AppendLine($"instance->RGBCoefficient = {ColorToArgb(objectInfo.rgbCoeff)};");
+		result.AppendLine($"instance->BlendCoefficient = {objectInfo.blend};");
+		result.AppendLine($"instance->Effect = {objectInfo.InkEffect};");
+		result.AppendLine($"instance->EffectParameter = {objectInfo.InkEffectValue};");
+
+		{
+			if (objectInfo.properties is ObjectCommon common)
+			{
+				result.AppendLine($"instance->Qualifiers = {BuildQualifiers(common)};");
+			}
+		}
+
+
+		if (objectInfo.ObjectType == 0)
+		{
+			result.AppendLine(BuildQuickBackdropProperties((Quickbackdrop)objectInfo.properties));
+		}
+		else if (objectInfo.ObjectType == 1)
+		{
+			result.AppendLine(BuildBackdropProperties((Backdrop)objectInfo.properties));
+		}
+		else if (objectInfo.ObjectType == 2)
+		{
+			var common = (ObjectCommon)objectInfo.properties;
+			result.AppendLine($"((Active*)instance)->Visible = {common.NewFlags.GetFlag("VisibleAtStart").ToString().ToLower()};");
+			result.AppendLine($"((Active*)instance)->FollowFrame = {(!common.Flags.GetFlag("ScrollingIndependant")).ToString().ToLower()};");
+			result.AppendLine($"((Active*)instance)->AutomaticRotation = {common.NewFlags.GetFlag("AutomaticRotation").ToString().ToLower()};");
+			result.AppendLine($"((Active*)instance)->FineDetection = {(!common.NewFlags.GetFlag("CollisionBox")).ToString().ToLower()};");
+			result.AppendLine($"((Active*)instance)->Animations = {BuildAnimations(common)};");
+			result.AppendLine($"((Active*)instance)->Values = {BuildAlterableValues(common)};");
+			result.AppendLine($"((Active*)instance)->Strings = {BuildAlterableStrings(common)};");
+			result.AppendLine($"((Active*)instance)->Flags = {BuildAlterableFlags(common)};");
+			result.AppendLine($"((Active*)instance)->Movements = {BuildMovements(common)};");
+		}
+		else if (objectInfo.ObjectType == 3)
+		{
+			result.AppendLine(BuildParagraphs((ObjectCommon)objectInfo.properties));
+		}
+		else if (objectInfo.ObjectType == 5 || objectInfo.ObjectType == 6 || objectInfo.ObjectType == 7)
+		{
+			var common = (ObjectCommon)objectInfo.properties;
+			result.AppendLine($"((CounterBase*)instance)->Visible = {common.NewFlags.GetFlag("VisibleAtStart").ToString().ToLower()};");
+			result.AppendLine($"((CounterBase*)instance)->FollowFrame = {common.Preferences.GetFlag("ScrollingIndependant").ToString().ToLower()};");
+			result.AppendLine(BuildCounter((ObjectCommon)objectInfo.properties));
+
+			if (objectInfo.ObjectType == 7) // only counter has alterable values, strings, and flags
+			{
+				result.AppendLine($"((Counter*)instance)->Values = {BuildAlterableValues((ObjectCommon)objectInfo.properties)};");
+				result.AppendLine($"((Counter*)instance)->Strings = {BuildAlterableStrings((ObjectCommon)objectInfo.properties)};");
+				result.AppendLine($"((Counter*)instance)->Flags = {BuildAlterableFlags((ObjectCommon)objectInfo.properties)};");
+			}
+		}
+
+
+		result.AppendLine($"\treturn instance;");
 		result.AppendLine("}");
-
-		return result.ToString();
-	}
-
-	private string BuildCommonProperties(ObjectCommon common)
-	{
-		var result = new StringBuilder();
-		result.Append("CommonProperties>(");
-
-		// Basic properties
-		result.Append($"\"{SanitizeString(common.Identifier)}\", ");
-		result.Append($"{common.NewFlags.GetFlag("VisibleAtStart").ToString().ToLower()}, ");
-		result.Append($"{(!common.Flags.GetFlag("ScrollingIndependant")).ToString().ToLower()}, ");
-		result.Append($"{(!common.NewFlags.GetFlag("CollisionBox")).ToString().ToLower()}, ");
-		result.Append($"{common.NewFlags.GetFlag("AutomaticRotation").ToString().ToLower()}");
-
-		result.Append(BuildQualifiers(common));
-		result.Append(BuildAlterableValues(common));
-		result.Append(BuildAlterableStrings(common));
-		result.Append(BuildAlterableFlags(common));
-		result.Append(BuildAnimations(common));
-		result.Append(BuildValue(common));
-		result.Append(BuildCounter(common));
-		result.Append(BuildParagraphs(common));
-		result.Append(BuildMovements(common));
-		result.Append(BuildExtension(common));
 
 		return result.ToString();
 	}
@@ -126,24 +158,20 @@ public class ObjectInfoExporter : BaseExporter
 	private string BuildBackdropProperties(Backdrop backdrop)
 	{
 		var result = new StringBuilder();
-		result.Append("BackdropProperties>(");
-		result.Append($"{(int)backdrop.ObstacleType}, ");
-		result.Append($"{(int)backdrop.CollisionType}, ");
-		result.Append($"{backdrop.Width}, ");
-		result.Append($"{backdrop.Height}, ");
-		result.Append($"{backdrop.Image}");
+		result.AppendLine($"((Backdrop*)instance)->Image = {backdrop.Image};");
+		result.AppendLine($"((Backdrop*)instance)->ObstacleType = {(int)backdrop.ObstacleType};");
+		result.AppendLine($"((Backdrop*)instance)->CollisionType = {(int)backdrop.CollisionType};");
 		return result.ToString();
 	}
 
 	private string BuildQuickBackdropProperties(Quickbackdrop quickBackdrop)
 	{
 		var result = new StringBuilder();
-		result.Append("QuickBackdropProperties>(");
-		result.Append($"{(int)quickBackdrop.ObstacleType}, ");
-		result.Append($"{(int)quickBackdrop.CollisionType}, ");
-		result.Append($"{quickBackdrop.Width}, ");
-		result.Append($"{quickBackdrop.Height}, ");
-		result.Append(BuildShape(quickBackdrop.Shape));
+		result.AppendLine($"((QuickBackdrop*)instance)->ObstacleType = {(int)quickBackdrop.ObstacleType};");
+		result.AppendLine($"((QuickBackdrop*)instance)->CollisionType = {(int)quickBackdrop.CollisionType};");
+		result.AppendLine($"((QuickBackdrop*)instance)->Width = {quickBackdrop.Width};");
+		result.AppendLine($"((QuickBackdrop*)instance)->Height = {quickBackdrop.Height};");
+		result.AppendLine($"((QuickBackdrop*)instance)->Shape = {BuildShape(quickBackdrop.Shape)};");
 		return result.ToString();
 	}
 
@@ -151,7 +179,7 @@ public class ObjectInfoExporter : BaseExporter
 	{
 		var result = new StringBuilder();
 
-		result.Append(", std::vector<short>{");
+		result.Append("std::vector<short>{");
 		foreach (var qualifier in common._qualifiers)
 		{
 			result.Append($"{qualifier}, ");
@@ -163,247 +191,169 @@ public class ObjectInfoExporter : BaseExporter
 
 	private string BuildAlterableValues(ObjectCommon common)
 	{
-		if (common.Flags.GetFlag("Values"))
-		{
-			var result = new StringBuilder();
-
-			result.Append(", std::make_shared<AlterableValues>(");
-			result.Append("std::vector<int>{");
-			if (common.Values != null)
-			{
-				foreach (var value in common.Values.Items)
-				{
-					result.Append($"{value}, ");
-				}
-			}
-			result.Append("})");
-
-			return result.ToString();
-		}
-		else
-		{
-			return ", nullptr";
-		}
+		return "AlterableValues(std::vector<int>{ " + (common.Values == null ? string.Empty : string.Join(",", common.Values.Items)) + " })";
 	}
 
 	private string BuildAlterableStrings(ObjectCommon common)
 	{
-		if (common.Strings != null)
-		{
-			var result = new StringBuilder();
-
-			result.Append(", std::make_shared<AlterableStrings>(");
-			result.Append("std::vector<std::string>{");
-			foreach (var str in common.Strings.Items)
-			{
-				result.Append($"\"{SanitizeString(str)}\", ");
-			}
-			result.Append("})");
-
-			return result.ToString();
-		}
-		else
-		{
-			return ", nullptr";
-		}
+		return "AlterableStrings(std::vector<std::string>{ " + (common.Strings == null ? string.Empty : string.Join(",", common.Strings.Items.Select(str => $"\"{SanitizeString(str)}\""))) + " })";
 	}
 
 	private string BuildAlterableFlags(ObjectCommon common)
 	{
 		var result = new StringBuilder();
 
-		result.Append(", std::make_shared<AlterableFlags>(");
-		result.Append("std::vector<bool>{");
-		if (common.Values != null)
+		result.Append("AlterableFlags(std::vector<bool>{");
+		for (int i = 0; i < 32; i++)
 		{
-			for (int i = 0; i < 32; i++)
-			{
-				result.Append($"{common.Values.Flags.GetFlag(i).ToString().ToLower()}, ");
-			}
+			if (common.Values == null) break;
+			result.Append($"{common.Values.Flags.GetFlag(i).ToString().ToLower()}");
+			if (i != 31) result.Append(", ");
 		}
 		result.Append("})");
-
 		return result.ToString();
 	}
 
 	private string BuildAnimations(ObjectCommon common)
 	{
-		if (common.AnimationsOffset > 0)
+		var result = new StringBuilder();
+
+		result.Append($"Animations(");
+		result.Append("std::unordered_map<int, Sequence*>{");
+
+		var sequences = new List<string>();
+		foreach (var sequence in common.Animations.AnimationDict)
 		{
-			var result = new StringBuilder();
+			var sequenceStr = new StringBuilder();
+			sequenceStr.Append($"std::pair<int, Sequence*>({sequence.Key}, ");
+			sequenceStr.Append($"new Sequence(");
+			sequenceStr.Append("std::vector<Direction*>{");
 
-			result.Append(", ");
-			result.Append($"std::make_shared<Animations>(");
-			result.Append($"std::unordered_map<int, std::shared_ptr<Sequence>>{{");
-
-			var sequences = new List<string>();
-			foreach (var sequence in common.Animations.AnimationDict)
+			var directions = new List<string>();
+			foreach (var direction in sequence.Value.DirectionDict.Values)
 			{
-				var sequenceStr = new StringBuilder();
-				sequenceStr.Append($"std::pair<int, std::shared_ptr<Sequence>>({sequence.Key}, ");
-				sequenceStr.Append($"std::make_shared<Sequence>(");
-				sequenceStr.Append($"std::vector<std::shared_ptr<Direction>>{{");
-
-				var directions = new List<string>();
-				foreach (var direction in sequence.Value.DirectionDict.Values)
-				{
-					int index = sequence.Value.DirectionDict.Values.ToList().IndexOf(direction);
-					directions.Add($"std::make_shared<Direction>({index}, {direction.MinSpeed}, " +
-							$"{direction.MaxSpeed}, {(direction.Repeat == 0).ToString().ToLower()}, {direction.BackTo}, " +
-							$"std::vector<unsigned int>{{{string.Join(",", direction.Frames)}}})"
+				int index = sequence.Value.DirectionDict.Values.ToList().IndexOf(direction);
+					directions.Add(
+						"new Direction(" + index + ", " + direction.MinSpeed + ", " +
+						direction.MaxSpeed + ", " + (direction.Repeat == 0).ToString().ToLower() + ", " + direction.BackTo + ", " +
+						"std::vector<unsigned int>{" + string.Join(",", direction.Frames) + "})"
 					);
-				}
-
-				sequenceStr.Append(string.Join(", ", directions));
-				sequenceStr.Append("}))");
-				sequences.Add(sequenceStr.ToString());
 			}
 
-			result.Append(string.Join(", ", sequences));
-			result.Append("})");
+			sequenceStr.Append(string.Join(", ", directions));
+			sequenceStr.Append("}))");
+			sequences.Add(sequenceStr.ToString());
+		}
 
-			return result.ToString();
-		}
-		else
-		{
-			return ", nullptr";
-		}
-	}
+		result.Append(string.Join(", ", sequences));
+		result.Append("})");
 
-	private string BuildValue(ObjectCommon common)
-	{
-		if (common.Counter != null)
-		{
-			return $", std::make_shared<Value>({common.Counter.Initial}, {common.Counter.Minimum}, {common.Counter.Maximum})";
-		}
-		else
-		{
-			return ", nullptr";
-		}
+		return result.ToString();
 	}
 
 	private string BuildCounter(ObjectCommon common)
 	{
+		var result = new StringBuilder();
+
 		if (common.Counters != null)
 		{
-			var result = new StringBuilder();
-
-			result.Append(", ");
-			result.Append($"std::make_shared<Counter>");
-			result.Append($"({common.Counters.Width}, {common.Counters.Height}, {common.Counters.Player - 1}, {common.Counters.DisplayType}, {common.Counters.IntegerDigits.ToString().ToLower()}, {common.Counters.FloatDigits.ToString().ToLower()}, {common.Counters.Decimals.ToString().ToLower()}, {common.Counters.FormatFloat.ToString().ToLower()}, {common.Counters.AddNulls.ToString().ToLower()}, {common.Counters.IntegerDigits}, {common.Counters.FloatDigits}, {common.Counters.FloatDigits}, {common.Counters.Font}, ");
-
-			result.Append("std::vector<unsigned int>{");
-			foreach (var frame in common.Counters.Frames)
-			{
-				result.Append($"{frame}, ");
-			}
-			result.Append("}, ");
-
-
-			result.Append("std::make_shared<Shape>(");
-			result.Append($"{((common.Counters.Shape.LineFlags & 1) == 0).ToString().ToLower()}, {((common.Counters.Shape.LineFlags & 2) == 0).ToString().ToLower()}, {common.Counters.Shape.BorderSize}, {ColorToArgb(common.Counters.Shape.BorderColor)}, {common.Counters.Shape.ShapeType}, {common.Counters.Shape.FillType}, {ColorToArgb(common.Counters.Shape.Color1)}, {ColorToArgb(common.Counters.Shape.Color2)}, {((common.Counters.Shape.GradFlags & 1) == 0).ToString().ToLower()}, {common.Counters.Shape.Image})");
-			result.Append(")");
-
-			return result.ToString();
+			result.AppendLine($"((CounterBase*)instance)->Width = {common.Counters.Width};");
+			result.AppendLine($"((CounterBase*)instance)->Height = {common.Counters.Height};");
+			result.AppendLine($"((CounterBase*)instance)->Player = {common.Counters.Player - 1};");
+			result.AppendLine($"((CounterBase*)instance)->DisplayType = {common.Counters.DisplayType};");
+			result.AppendLine($"((CounterBase*)instance)->IntDigitPadding = {common.Counters.IntegerDigits.ToString().ToLower()};");
+			result.AppendLine($"((CounterBase*)instance)->FloatWholePadding = {common.Counters.FloatDigits.ToString().ToLower()};");
+			result.AppendLine($"((CounterBase*)instance)->FloatDecimalPadding = {common.Counters.UseDecimals.ToString().ToLower()};");
+			result.AppendLine($"((CounterBase*)instance)->FloatPadding = {common.Counters.AddNulls.ToString().ToLower()};");
+			result.AppendLine($"((CounterBase*)instance)->BarDirection = {common.Counters.Inverse.ToString().ToLower()};");
+			result.AppendLine($"((CounterBase*)instance)->IntDigitCount = {common.Counters.IntegerDigits};");
+			result.AppendLine($"((CounterBase*)instance)->FloatWholeCount = {common.Counters.FloatDigits};");
+			result.AppendLine($"((CounterBase*)instance)->FloatDecimalCount = {common.Counters.Decimals};");
+			result.AppendLine($"((CounterBase*)instance)->Font = {common.Counters.Font};");
+			result.AppendLine($"((CounterBase*)instance)->oShape = {BuildShape(common.Counters.Shape)};");
+			result.AppendLine($"((CounterBase*)instance)->Frames = std::vector<unsigned int>{{{string.Join(",", common.Counters.Frames)}}};");
 		}
-		else
+
+		if (common.Counter != null)
 		{
-			return ", nullptr";
+			result.AppendLine($"((Counter*)instance)->DefaultValue = {common.Counter.Initial};");
+			result.AppendLine($"((Counter*)instance)->MinValue = {common.Counter.Minimum};");
+			result.AppendLine($"((Counter*)instance)->MaxValue = {common.Counter.Maximum};");
+			result.AppendLine($"((Counter*)instance)->SetValue({common.Counter.Initial});");
 		}
+
+		return result.ToString();
 	}
 
 	private string BuildParagraphs(ObjectCommon common)
 	{
-		if (common.Text != null)
-		{
-			var result = new StringBuilder();
+		if (common.Text == null) return string.Empty;
 
-			result.Append(", std::make_shared<ObjectParagraphs>(");
-			result.Append($"{common.Text.Width}, ");
-			result.Append($"{common.Text.Height}, ");
-			result.Append("std::vector<std::shared_ptr<Paragraph>>{");
-			foreach (var paragraph in common.Text.Items)
-			{
-				result.Append($"std::make_shared<Paragraph>(");
-				result.Append($"{paragraph.FontHandle}, ");
-				result.Append($"{ColorToRGB(paragraph.Color)}, ");
-				result.Append($"\"{SanitizeString(paragraph.Value)}\"");
-				result.Append(")");
-				if (paragraph != common.Text.Items.Last())
-				{
-					result.Append(", ");
-				}
-			}
-			result.Append("}");
-			result.Append(")");
+		var result = new StringBuilder();
 
-			return result.ToString();
-		}
-		else
+		result.AppendLine($"((StringObject*)instance)->Width = {common.Text.Width};");
+		result.AppendLine($"((StringObject*)instance)->Height = {common.Text.Height};");
+		result.Append("((StringObject*)instance)->Paragraphs = std::vector<Paragraph>{");
+		foreach (var paragraph in common.Text.Items)
 		{
-			return ", nullptr";
+			result.Append($"Paragraph({paragraph.FontHandle}, {ColorToRGB(paragraph.Color)}, \"{SanitizeString(paragraph.Value)}\")");
+			if (paragraph != common.Text.Items.Last()) result.Append(", ");
 		}
+		result.AppendLine("};");
+
+		return result.ToString();
 	}
 
 	private string BuildMovements(ObjectCommon common)
 	{
-		if (common.Movements != null)
+		if (common.Movements == null) return string.Empty;
+
+		var result = new StringBuilder();
+		result.Append("Movements(std::unordered_map<int, Movement*>{");
+		for (int i = 0; i < common.Movements.Items.Count; i++)
 		{
-			var result = new StringBuilder();
-			result.Append(", std::make_shared<Movements>(");
-			result.Append("std::vector<std::shared_ptr<Movement>>{");
-			for (int i = 0; i < common.Movements.Items.Count; i++)
+			var movement = common.Movements.Items[i];
+
+			string? movementClassName = null;
+			switch (movement.Type)
 			{
-				var movement = common.Movements.Items[i];
+				case 1:
+					movementClassName = "MouseMovement";
+					break;
+				case 3:
+					movementClassName = "EightDirectionsMovement";
+					break;
+			}
 
-				string movementClassName = null;
-				switch (movement.Type)
+			if (movementClassName != null)
+			{
+				result.Append($"std::pair<int, Movement*>({i}, new {movementClassName}({movement.Player - 1}, {movement.MovingAtStart}, {movement.DirectionAtStart}, ");
+
+				if (movement.Loader is EightDirections eightDirections)
 				{
-					case 1:
-						movementClassName = "MouseMovement";
-						break;
-					case 3:
-						movementClassName = "EightDirectionsMovement";
-						break;
+					result.Append($"{eightDirections.Speed}, {eightDirections.Acceleration}, {eightDirections.Deceleration}, {eightDirections.BounceFactor}, {eightDirections.Directions}");
+				}
+				else if (movement.Loader is Mouse mouse)
+				{
+					result.Append($"{mouse.X1}, {mouse.X2}, {mouse.Y1}, {mouse.Y2}");
 				}
 
-				if (movementClassName != null)
-				{
-					result.Append($"std::make_shared<{movementClassName}>({movement.Player - 1}, {movement.MovingAtStart}, {movement.DirectionAtStart}, ");
-
-					if (movement.Loader is EightDirections eightDirections)
-					{
-						result.Append($"{eightDirections.Speed}, {eightDirections.Acceleration}, {eightDirections.Deceleration}, {eightDirections.BounceFactor}, {eightDirections.Directions}");
-					}
-					else if (movement.Loader is Mouse mouse)
-					{
-						result.Append($"{mouse.X1}, {mouse.X2}, {mouse.Y1}, {mouse.Y2}");
-					}
-
-					result.Append(")");
-				}
-				else
-				{
-					result.Append("nullptr");
-				}
+				result.Append("))");
 
 				if (i != common.Movements.Items.Count - 1)
 					result.Append(", ");
 			}
-			result.Append("})");
-			return result.ToString();
+
 		}
-		else
-		{
-			return ", nullptr";
-		}
+		result.Append("})");
+		return result.ToString();
 	}
 
 	private string BuildShape(Shape shape)
 	{
 		var result = new StringBuilder();
 
-		result.Append("std::make_shared<Shape>(");
+		result.Append("Shape(");
 		result.Append($"{((shape.LineFlags & 1) == 0).ToString().ToLower()}, ");
 		result.Append($"{((shape.LineFlags & 2) == 0).ToString().ToLower()}, ");
 		result.Append($"{shape.BorderSize}, ");
@@ -417,26 +367,5 @@ public class ObjectInfoExporter : BaseExporter
 		result.Append(")");
 
 		return result.ToString();
-	}
-
-	private string BuildExtension(ObjectCommon common)
-	{
-		if (common.ExtensionOffset > 0 && common.ExtensionData != null)
-		{
-			string extensionName = common.Identifier;
-
-			ExtensionExporter extension = ExtensionExporterRegistry.GetExporter(extensionName);
-			if (extension == null)
-			{
-				Logger.Log($"Extension {extensionName} not found");
-				return ", nullptr";
-			}
-
-			return $", {extension.ExportExtension(common.ExtensionData)}";
-		}
-		else
-		{
-			return ", nullptr";
-		}
 	}
 }

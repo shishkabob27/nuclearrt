@@ -33,7 +33,7 @@ public:
 	virtual void LoadTexture(int id) {}
 	virtual void UnloadTexture(int id) {}
 	virtual void DrawTexture(int id, int x, int y, int offsetX, int offsetY, int angle, float scale, int color, char blendCoefficient, int effect, unsigned int effectParam) {}
-	virtual void DrawQuickBackdrop(int x, int y, int width, int height, std::shared_ptr<Shape> shape) {}
+	virtual void DrawQuickBackdrop(int x, int y, int width, int height, Shape* shape) {}
 
 	virtual void DrawRectangle(int x, int y, int width, int height, int color) {}
 	virtual void DrawRectangleLines(int x, int y, int width, int height, int color) {}

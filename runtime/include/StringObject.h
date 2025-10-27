@@ -1,31 +1,22 @@
 #pragma once
 
+#include "Shape.h"
 #include <vector>
 #include <memory>
-#include <string>
+#include "Paragraph.h"
 
-class Paragraph
-{
+class StringObject : public ObjectInstance {
 public:
-	unsigned short Font;
-	int Color;
-
-	std::string Text;
-
-	Paragraph(unsigned short font, int color, std::string text)
-		: Font(font), Color(color), Text(text) {}
-};
-
-class ObjectParagraphs
-{
-public:
-	ObjectParagraphs(int width, int height, std::vector<std::shared_ptr<Paragraph>> paragraphs)
-		: Width(width), Height(height), Paragraphs(paragraphs) {}
+	StringObject(unsigned int objectInfoHandle, int type, std::string name, int x, int y, unsigned int layer, short instanceValue)
+		: ObjectInstance(objectInfoHandle, type, name, x, y, layer, instanceValue) {}
 
 	int Width;
 	int Height;
 
-	std::vector<std::shared_ptr<Paragraph>> Paragraphs;
+	bool Visible = true;
+	bool FollowFrame = false;
+
+	std::vector<Paragraph> Paragraphs;
 
 	int CurrentParagraph = 0;
 	std::string AlterableText;
@@ -38,7 +29,7 @@ public:
 		}
 		else
 		{
-			return Paragraphs[CurrentParagraph]->Text;
+			return Paragraphs[CurrentParagraph].Text;
 		}
 	}
 
@@ -46,11 +37,11 @@ public:
 	{
 		if (CurrentParagraph == -1)
 		{
-			return Paragraphs[0]->Font; // TODO: Verify
+			return Paragraphs[0].Font; // TODO: Verify
 		}
 		else
 		{
-			return Paragraphs[CurrentParagraph]->Font;
+			return Paragraphs[CurrentParagraph].Font;
 		}
 	}
 
@@ -58,11 +49,11 @@ public:
 	{
 		if (CurrentParagraph == -1)
 		{
-			return Paragraphs[0]->Color; // TODO: Verify
+			return Paragraphs[0].Color; // TODO: Verify
 		}
 		else
 		{
-			return Paragraphs[CurrentParagraph]->Color;
+			return Paragraphs[CurrentParagraph].Color;
 		}
 	}
 
@@ -100,5 +91,13 @@ public:
 		AlterableText = alterableText;
 		CurrentParagraph = -1;
 	}
-};
 
+	std::vector<unsigned int> GetFontsUsed() override {
+		std::vector<unsigned int> fontsUsed;
+		for (auto& paragraph : Paragraphs)
+		{
+			fontsUsed.push_back(paragraph.Font);
+		}
+		return fontsUsed;
+	}
+};

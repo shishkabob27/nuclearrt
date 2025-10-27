@@ -9,35 +9,36 @@ class Movements
 {
 public:
 	Movements() = default;
-	Movements(const std::vector<std::shared_ptr<Movement>>& movementItems) : items(movementItems) {
+	Movements(const std::unordered_map<int, Movement*> movementItems) : items(movementItems) {
 		currentMovementIndex = 0;
-		
-		if (items[currentMovementIndex]) {
-			items[currentMovementIndex]->OnEnabled();
+
+		if (!items.empty() && items.find(currentMovementIndex) != items.end()) {
+			items.find(currentMovementIndex)->second->OnEnabled();
 		}
 	}
 
-	std::vector<std::shared_ptr<Movement>> items;
+	std::unordered_map<int, Movement*> items;
 	unsigned int currentMovementIndex = 0;
 
 	void Update(float deltaTime) {
-		if (items[currentMovementIndex] == nullptr) return;
-		items[currentMovementIndex]->Update(deltaTime);
+		if (items.empty() || items.find(currentMovementIndex) == items.end()) return;
+		items.at(currentMovementIndex)->Update(deltaTime);
 	}
 
 	void SetMovement(int index) {
-		if (items[currentMovementIndex]) {
-			items[currentMovementIndex]->OnDisabled();
+		if (items.find(currentMovementIndex) != items.end()) {
+			items.at(currentMovementIndex)->OnDisabled();
 		}
 
 		currentMovementIndex = index;
 
-		if (items[currentMovementIndex]) {
-			items[currentMovementIndex]->OnEnabled();
+		if (items.find(currentMovementIndex) != items.end()) {
+			items.at(currentMovementIndex)->OnEnabled();
 		}	
 	}
 
-	std::shared_ptr<Movement> GetCurrentMovement() {
-		return items[currentMovementIndex];
+	Movement* GetCurrentMovement() {
+		if (!items.empty() && items.find(currentMovementIndex) != items.end()) return items.find(currentMovementIndex)->second;
+		return nullptr;
 	}
 };

@@ -9,7 +9,8 @@
 	
 class IniExtension : public Extension {
 public:
-	IniExtension(int flags, const std::string& name) : Flags(flags), Name(name) {}
+	IniExtension(unsigned int objectInfoHandle, int type, std::string name, int x, int y, unsigned int layer, short instanceValue, int flags, std::string fileName)
+		: Extension(objectInfoHandle, type, name, x, y, layer, instanceValue), Flags(flags), Name(fileName) {}
 
 	void Initialize() override;
 

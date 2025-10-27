@@ -1,0 +1,34 @@
+#pragma once
+
+#include "ObjectInstance.h"
+#include <vector>
+#include <memory>
+
+#include "Animations.h"
+#include "AlterableValues.h"
+#include "AlterableStrings.h"
+#include "AlterableFlags.h"
+#include "Movements.h"
+
+class Active : public ObjectInstance {
+public:
+	Active(unsigned int objectInfoHandle, int type, std::string name, int x, int y, unsigned int layer, short instanceValue)
+		: ObjectInstance(objectInfoHandle, type, name, x, y, layer, instanceValue) {}
+
+	Animations Animations;
+	AlterableValues Values;
+	AlterableStrings Strings;
+	AlterableFlags Flags;
+	Movements Movements;
+
+	bool Visible = true;
+	bool FollowFrame = false;
+	bool AutomaticRotation = false;
+	bool FineDetection = false;
+
+	std::vector<unsigned int> GetImagesUsed() override {
+		return Animations.GetImagesUsed();
+	}
+};
+
+ 

@@ -16,11 +16,12 @@ public class CreateObjectAction : ActionBase
 		result.AppendLine("{");
 		if (create.Position.ObjectInfoParent != ushort.MaxValue)
 		{
-			result.AppendLine($"auto parent = *{GetSelector((int)create.Position.ObjectInfoParent)}->begin();");
+			result.AppendLine($"ObjectInstance* parent = *{GetSelector((int)create.Position.ObjectInfoParent)}->begin();");
 		}
-		result.AppendLine($"CreateInstance({create.Position.X}, {create.Position.Y}, {create.Position.Layer}, {ExpressionConverter.GetObject(create.ObjectInfo, IsGlobal).Item1}, {create.Position.Angle}, {(create.Position.ObjectInfoParent != ushort.MaxValue ? "parent.get()" : "nullptr")});");
+		var objectInfo = ExpressionConverter.GetObject(create.ObjectInfo, IsGlobal);
+		result.AppendLine($"ObjectInstance* instance = CreateInstance(ObjectFactory::Instance().CreateInstance_{StringUtils.SanitizeObjectName(objectInfo.Item2)}_{objectInfo.Item1}(), {create.Position.X}, {create.Position.Y}, {create.Position.Layer}, {objectInfo.Item1}, {create.Position.Angle}{(create.Position.ObjectInfoParent != ushort.MaxValue ? ", parent" : "")});");
 		//add to selector
-		result.AppendLine($"{GetSelector(create.ObjectInfo)}->AddExternalInstance(ObjectInstances.back());");
+		result.AppendLine($"{GetSelector(create.ObjectInfo)}->AddInstance(instance);");
 		result.AppendLine("}");
 
 		return result.ToString();

@@ -12,8 +12,7 @@ public class IsVisibleCondition : ConditionBase
 
 		result.AppendLine($"for (ObjectIterator it(*{GetSelector(eventBase.ObjectInfo)}); !it.end(); ++it) {{");
 		result.AppendLine($"    auto instance = *it;");
-		result.AppendLine($"    auto commonProperties = std::dynamic_pointer_cast<CommonProperties>(instance->OI->Properties);");
-		result.AppendLine($"    {ifStatement} commonProperties->Visible) it.deselect();");
+		result.AppendLine($"    {ifStatement} ((Active*)instance)->Visible) it.deselect();");
 		result.AppendLine("}");
 
 		//If no instances are selected, we go to the end label

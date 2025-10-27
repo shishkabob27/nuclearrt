@@ -1,6 +1,5 @@
 #include "ButtonObjectExtension.h"
 #include "Application.h"
-#include "CommonProperties.h"
 
 void ButtonObjectExtension::Initialize() {
 	if (Flags & 1) {
@@ -16,8 +15,8 @@ void ButtonObjectExtension::Update(float deltaTime) {
 	auto input = Application::Instance().GetInput();
 	int mouseX = input->GetMouseX();
 	int mouseY = input->GetMouseY();
-	Hovered = (mouseX >= instance->X && mouseX < instance->X + Width &&
-				mouseY >= instance->Y && mouseY < instance->Y + Height) && Shown;
+	Hovered = (mouseX >= X && mouseX < X + Width &&
+				mouseY >= Y && mouseY < Y + Height) && Shown;
 	Clicked = Hovered && input->IsMouseButtonPressed(1, false) && Enabled;
 	HeldDown = Hovered && input->IsMouseButtonDown(1) && Enabled;
 
@@ -25,10 +24,10 @@ void ButtonObjectExtension::Update(float deltaTime) {
 		return;
 	}
 
-	if (Type == 1) { // checkbox
+	if (ButtonType == 1) { // checkbox
 		Checked = !Checked;
 	}
-	else if (Type == 2) { // radio button
+	else if (ButtonType == 2) { // radio button
 		Checked = true;
 	}
 }
@@ -36,9 +35,9 @@ void ButtonObjectExtension::Update(float deltaTime) {
 void ButtonObjectExtension::Draw() {
 	if (!Shown) return;
 
-	Application::Instance().GetBackend()->DrawRectangle(instance->X, instance->Y, Width, Height, 0xFFFFFFFF);
+	Application::Instance().GetBackend()->DrawRectangle(X, Y, Width, Height, 0xFFFFFFFF);
 
-	switch (Type) {
+	switch (ButtonType) {
 		case 0: // button
 		case 3: // Bitmap button
 		case 4: // Bitmap with text button
@@ -69,13 +68,13 @@ void ButtonObjectExtension::ButtonDraw() {
 		borderColor = 0x0078D7;
 	}
 
-	Application::Instance().GetBackend()->DrawRectangle(instance->X + 1, instance->Y + 1, Width - 2, Height - 2, fillColor);
-	Application::Instance().GetBackend()->DrawRectangleLines(instance->X + 1, instance->Y + 1, Width - 2, Height - 2, borderColor);
+	Application::Instance().GetBackend()->DrawRectangle(X + 1, Y + 1, Width - 2, Height - 2, fillColor);
+	Application::Instance().GetBackend()->DrawRectangleLines(X + 1, Y + 1, Width - 2, Height - 2, borderColor);
 }
 
 void ButtonObjectExtension::CheckboxDraw() {
-	int boxX = instance->X;
-	int boxY = instance->Y;
+	int boxX = X;
+	int boxY = Y;
 
 	int borderColor = 0x626262;
 	int fillColor = 0xFFFFFF;
@@ -90,7 +89,7 @@ void ButtonObjectExtension::CheckboxDraw() {
 	}
 
 	if (Flags & 4) {
-		boxX = instance->X + Width - 12;
+		boxX = X + Width - 12;
 	}
 
 	Application::Instance().GetBackend()->DrawRectangle(boxX, boxY + Height - 18, 12, 12, fillColor);
@@ -98,8 +97,8 @@ void ButtonObjectExtension::CheckboxDraw() {
 }
 
 void ButtonObjectExtension::RadioButtonDraw() {
-	int radioX = instance->X;
-	int radioY = instance->Y;
+	int radioX = X;
+	int radioY = Y;
 
 	int borderColor = 0x626262;
 	int fillColor = 0xFFFFFF;
@@ -114,7 +113,7 @@ void ButtonObjectExtension::RadioButtonDraw() {
 	}
 
 	if (Flags & 4) {
-		radioX = instance->X + Width - 12;
+		radioX = X + Width - 12;
 	}
 
 	Application::Instance().GetBackend()->DrawRectangle(radioX, radioY + Height - 18, 12, 12, fillColor);
