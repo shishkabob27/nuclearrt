@@ -6,8 +6,8 @@
 
 class ObjectInstance {
 public:
-    ObjectInstance(unsigned int objectInfoHandle, int type, std::string name, int x, int y, unsigned int layer, short instanceValue)
-        : ObjectInfoHandle(objectInfoHandle), Type(type), Name(name), X(x), Y(y), Layer(layer), InstanceValue(instanceValue) {}
+    ObjectInstance(unsigned int objectInfoHandle, int type, std::string name)
+        : ObjectInfoHandle(objectInfoHandle), Type(type), Name(name) {}
     virtual ~ObjectInstance() = default;
 	
 	unsigned int Handle = 0;

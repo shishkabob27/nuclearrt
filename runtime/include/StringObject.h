@@ -7,8 +7,8 @@
 
 class StringObject : public ObjectInstance {
 public:
-	StringObject(unsigned int objectInfoHandle, int type, std::string name, int x, int y, unsigned int layer, short instanceValue)
-		: ObjectInstance(objectInfoHandle, type, name, x, y, layer, instanceValue) {}
+	StringObject(unsigned int objectInfoHandle, int type, std::string name)
+		: ObjectInstance(objectInfoHandle, type, name) {}
 
 	int Width;
 	int Height;

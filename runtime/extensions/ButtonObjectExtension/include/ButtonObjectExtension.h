@@ -7,8 +7,8 @@
 	
 class ButtonObjectExtension : public Extension {
 public:
-	ButtonObjectExtension(unsigned int objectInfoHandle, int type, std::string name, int x, int y, unsigned int layer, short instanceValue, short width, short height, short buttonType, short flags)
-	: Extension(objectInfoHandle, type, name, x, y, layer, instanceValue), Width(width), Height(height), ButtonType(buttonType), Flags(flags) {}
+	ButtonObjectExtension(unsigned int objectInfoHandle, int type, std::string name, short width, short height, short buttonType, short flags)
+	: Extension(objectInfoHandle, type, name), Width(width), Height(height), ButtonType(buttonType), Flags(flags) {}
 	
 	void Initialize() override;
 	void Update(float deltaTime) override;

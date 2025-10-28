@@ -7,8 +7,8 @@
 
 class Counter : public CounterBase {
 public:
-	Counter(unsigned int objectInfoHandle, int type, std::string name, int x, int y, unsigned int layer, short instanceValue)
-		: CounterBase(objectInfoHandle, type, name, x, y, layer, instanceValue) {}
+	Counter(unsigned int objectInfoHandle, int type, std::string name)
+		: CounterBase(objectInfoHandle, type, name) {}
 	
 	int DefaultValue = 0;
 	int MinValue = 0;

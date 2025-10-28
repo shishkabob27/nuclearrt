@@ -351,7 +351,7 @@ std::vector<unsigned int> Frame::GetFontsUsed()
 	return fontsUsed;
 }
 
-ObjectInstance* Frame::CreateInstance(ObjectInstance* createdInstance, short x, short y, unsigned int layer, unsigned int objectInfoHandle, short angle, ObjectInstance* parentInstance)
+ObjectInstance* Frame::CreateInstance(ObjectInstance* createdInstance, short x, short y, unsigned int layer, short instanceValue, unsigned int objectInfoHandle, short angle, ObjectInstance* parentInstance)
 {
 	
 	//get max unique handle
@@ -366,6 +366,7 @@ ObjectInstance* Frame::CreateInstance(ObjectInstance* createdInstance, short x, 
 	createdInstance->X = x;
 	createdInstance->Y = y;
 	createdInstance->Layer = layer;
+	createdInstance->InstanceValue = instanceValue;
 	createdInstance->ObjectInfoHandle = objectInfoHandle;
 	createdInstance->SetAngle(angle);
 
@@ -375,7 +376,7 @@ ObjectInstance* Frame::CreateInstance(ObjectInstance* createdInstance, short x, 
 	auto backend = Application::Instance().GetBackend();
 	for (unsigned int textureId : texturesToLoad) {
 		backend->LoadTexture(textureId);
-	}	
+	}
 	
 	ObjectInstances[handle] = createdInstance;
 	if (parentInstance) {

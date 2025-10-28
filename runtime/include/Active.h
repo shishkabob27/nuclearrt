@@ -12,8 +12,8 @@
 
 class Active : public ObjectInstance {
 public:
-	Active(unsigned int objectInfoHandle, int type, std::string name, int x, int y, unsigned int layer, short instanceValue)
-		: ObjectInstance(objectInfoHandle, type, name, x, y, layer, instanceValue) {}
+	Active(unsigned int objectInfoHandle, int type, std::string name)
+		: ObjectInstance(objectInfoHandle, type, name) {}
 
 	Animations Animations;
 	AlterableValues Values;

@@ -6,8 +6,8 @@
 
 class Backdrop : public ObjectInstance {
 public:
-	Backdrop(unsigned int objectInfoHandle, int type, std::string name, int x, int y, unsigned int layer, short instanceValue)
-		: ObjectInstance(objectInfoHandle, type, name, x, y, layer, instanceValue) {}
+	Backdrop(unsigned int objectInfoHandle, int type, std::string name)
+		: ObjectInstance(objectInfoHandle, type, name) {}
 
 	unsigned int ObstacleType;
 	unsigned int CollisionType;

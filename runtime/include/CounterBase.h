@@ -12,8 +12,8 @@
 
 class CounterBase : public ObjectInstance {
 public:
-	CounterBase(unsigned int objectInfoHandle, int type, std::string name, int x, int y, unsigned int layer, short instanceValue)
-		: ObjectInstance(objectInfoHandle, type, name, x, y, layer, instanceValue) {}
+	CounterBase(unsigned int objectInfoHandle, int type, std::string name)
+		: ObjectInstance(objectInfoHandle, type, name) {}
 
 	bool Visible = true;
 	bool FollowFrame = false;

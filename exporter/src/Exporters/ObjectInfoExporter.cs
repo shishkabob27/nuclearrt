@@ -88,12 +88,7 @@ public class ObjectInfoExporter : BaseExporter
 			}
 		}
 
-		result.Append($"\tObjectInstance* instance = new {objectTypeClass}({objectInfo.handle}, ");
-		result.Append($"{objectInfo.ObjectType}, ");
-		result.Append($"\"{SanitizeString(objectInfo.name)}\", ");
-		result.Append($"0, 0, 0, 0{additionalParameters}");
-
-		result.AppendLine(");");
+		result.Append($"\tObjectInstance* instance = new {objectTypeClass}({objectInfo.handle}, {objectInfo.ObjectType}, \"{SanitizeString(objectInfo.name)}\"{additionalParameters});");
 
 		result.AppendLine($"instance->RGBCoefficient = {ColorToArgb(objectInfo.rgbCoeff)};");
 		result.AppendLine($"instance->BlendCoefficient = {objectInfo.blend};");
