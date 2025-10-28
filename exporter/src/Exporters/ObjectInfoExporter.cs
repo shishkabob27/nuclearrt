@@ -126,6 +126,8 @@ public class ObjectInfoExporter : BaseExporter
 		}
 		else if (objectInfo.ObjectType == 3)
 		{
+			var common = (ObjectCommon)objectInfo.properties;
+			result.AppendLine($"((StringObject*)instance)->Visible = {common.NewFlags.GetFlag("VisibleAtStart").ToString().ToLower()};");
 			result.AppendLine(BuildParagraphs((ObjectCommon)objectInfo.properties));
 		}
 		else if (objectInfo.ObjectType == 5 || objectInfo.ObjectType == 6 || objectInfo.ObjectType == 7)
