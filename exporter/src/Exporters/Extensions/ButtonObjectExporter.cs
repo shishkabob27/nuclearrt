@@ -32,8 +32,7 @@ public class ButtonObjectExporter : ExtensionExporter
 			case -82: // "Button is clicked" condition
 				result.AppendLine($"for (ObjectIterator it(*{ExpressionConverter.GetSelector(eventBase.ObjectInfo, isGlobal)}); !it.end(); ++it) {{");
 				result.AppendLine($"    auto instance = *it;");
-				result.AppendLine($"    auto buttonExt = {GetExtensionInstanceLoop()};");
-				result.AppendLine($"    {ifStatement} buttonExt->IsClicked()) it.deselect();");
+				result.AppendLine($"    {ifStatement} {GetExtensionInstanceLoop()}->IsClicked()) it.deselect();");
 				result.AppendLine("}");
 				result.AppendLine($"if ({ExpressionConverter.GetSelector(eventBase.ObjectInfo, isGlobal)}->Count() == 0) goto {nextLabel};");
 				break;
@@ -56,29 +55,25 @@ public class ButtonObjectExporter : ExtensionExporter
 			case 81: // Show button
 				result.AppendLine($"for (ObjectIterator it(*{ExpressionConverter.GetSelector(eventBase.ObjectInfo, isGlobal)}); !it.end(); ++it) {{");
 				result.AppendLine($"    auto instance = *it;");
-				result.AppendLine($"    auto buttonExt = {GetExtensionInstanceLoop()};");
-				result.AppendLine($"    buttonExt->SetShown(true);");
+				result.AppendLine($"    {GetExtensionInstanceLoop()}->SetShown(true);");
 				result.AppendLine("}");
 				break;
 			case 82: // Hide button
 				result.AppendLine($"for (ObjectIterator it(*{ExpressionConverter.GetSelector(eventBase.ObjectInfo, isGlobal)}); !it.end(); ++it) {{");
 				result.AppendLine($"    auto instance = *it;");
-				result.AppendLine($"    auto buttonExt = {GetExtensionInstanceLoop()};");
-				result.AppendLine($"    buttonExt->SetShown(false);");
+				result.AppendLine($"    {GetExtensionInstanceLoop()}->SetShown(false);");
 				result.AppendLine("}");
 				break;
 			case 83: // Enable button
 				result.AppendLine($"for (ObjectIterator it(*{ExpressionConverter.GetSelector(eventBase.ObjectInfo, isGlobal)}); !it.end(); ++it) {{");
 				result.AppendLine($"    auto instance = *it;");
-				result.AppendLine($"    auto buttonExt = {GetExtensionInstanceLoop()};");
-				result.AppendLine($"    buttonExt->SetEnabled(true);");
+				result.AppendLine($"    {GetExtensionInstanceLoop()}->SetEnabled(true);");
 				result.AppendLine("}");
 				break;
 			case 84: // Disable button
 				result.AppendLine($"for (ObjectIterator it(*{ExpressionConverter.GetSelector(eventBase.ObjectInfo, isGlobal)}); !it.end(); ++it) {{");
 				result.AppendLine($"    auto instance = *it;");
-				result.AppendLine($"    auto buttonExt = {GetExtensionInstanceLoop()};");
-				result.AppendLine($"    buttonExt->SetEnabled(false);");
+				result.AppendLine($"    {GetExtensionInstanceLoop()}->SetEnabled(false);");
 				result.AppendLine("}");
 				break;
 			default:

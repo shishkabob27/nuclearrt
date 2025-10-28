@@ -5,7 +5,7 @@
 class AlterableValues
 {
 public:
-	AlterableValues() = default;
+	AlterableValues() : Values(std::vector<int>(1, 0)) {}
 	AlterableValues(const std::vector<int>& values) : Values(values) {}
 
 	void SetValue(int index, int value) { 

@@ -1,7 +1,5 @@
 #include "Frame.h"
 #include "Application.h"
-#include "BackdropProperties.h"
-#include "CommonProperties.h"
 #include "ImageBank.h"
 #include "FontBank.h"
 #include "Extension.h"
@@ -15,30 +13,19 @@ void Frame::Initialize()
 
 void Frame::PostInitialize()
 {
-	for (auto& instance : ObjectInstances)
+	for (auto& [handle, instance] : ObjectInstances)
 	{
-		if (instance->OI->Type == 2) // Common object
+		if (instance->Type == 2) // Common object
 		{
-			auto properties = std::dynamic_pointer_cast<CommonProperties>(instance->OI->Properties);
-			if (properties && properties->oMovements)
+			for (auto& movement : ((Active*)instance)->Movements.items)
 			{
-				for (auto& movement : properties->oMovements->items)
-				{
-					if (movement)
-					{
-						movement->Instance = instance.get();
-						movement->Initialize();
-					}
-				}
+				movement.second->Instance = instance;
+				movement.second->Initialize();
 			}
 		}
-		if (instance->OI->Type >= 32) // Extension
+		if (instance->Type >= 32) // Extension
 		{
-			auto properties = std::dynamic_pointer_cast<CommonProperties>(instance->OI->Properties);
-			if (properties && properties->oExtension) {
-				properties->oExtension->SetInstance(instance.get());
-				properties->oExtension->Initialize();
-			}
+			((Extension*)instance)->Initialize();
 		}
 	}
 }
@@ -48,31 +35,17 @@ void Frame::Update()
 	float deltaTime = Application::Instance().GetBackend()->GetTimeDelta();
 	GameTimer.Update(deltaTime);
 
-	for (auto& instance : ObjectInstances)
+	for (auto& [handle, instance] : ObjectInstances)
 	{
 		//Animation update
-		if (instance->OI->Type == 2) // Common object with possible animation
+		if (instance->Type == 2) // Common object with possible animation
 		{
-			auto properties = std::dynamic_pointer_cast<CommonProperties>(instance->OI->Properties);
-			if (properties)
-			{
-				if (properties->oMovements)
-				{
-					properties->oMovements->Update(deltaTime);
-				}
-				if (properties->oAnimations)
-				{
-					properties->oAnimations->Update(deltaTime);
-				}
-			}
+			((Active*)instance)->Movements.Update(deltaTime);
+			((Active*)instance)->Animations.Update(deltaTime);
 		}
-		else if (instance->OI->Type >= 32) // Extension
+		else if (instance->Type >= 32) // Extension
 		{
-			auto properties = std::dynamic_pointer_cast<CommonProperties>(instance->OI->Properties);
-			if (properties && properties->oExtension)
-			{
-				properties->oExtension->Update(deltaTime);
-			}
+			((Extension*)instance)->Update(deltaTime);
 		}
 	}
 }
@@ -130,144 +103,130 @@ void Frame::SetScrollY(int y)
 
 void Frame::DrawLayer(Layer& layer, unsigned int index)
 {
-	for (auto& instance : ObjectInstances)
+	for (auto& [handle, instance] : ObjectInstances)
 	{
-		if (instance->Layer != index) continue;
+		if (instance->Layer != index) continue; // TODO: dont do this
 		
-		if (instance->OI->Type == 1)
+		if (instance->Type == 1)
 		{
 			auto& imageBank = ImageBank::Instance();
-			auto backdropProps = static_cast<BackdropProperties*>(instance->OI->Properties.get());
-			unsigned int imageId = backdropProps->Image;
-			
+			unsigned int imageId = ((Backdrop*)instance)->Image;
+
 			Application::Instance().GetBackend()->DrawTexture(
 				imageId, instance->X - (scrollX * layer.XCoefficient), instance->Y - (scrollY * layer.YCoefficient),
-				0, 0, 0, 1.0f, instance->OI->RGBCoefficient, instance->OI->BlendCoefficient, instance->OI->Effect, instance->OI->EffectParameter);
+				0, 0, 0, 1.0f, instance->RGBCoefficient, instance->BlendCoefficient, instance->Effect, instance->EffectParameter);
 		}
-		else if (instance->OI->Type == 2)
+		else if (instance->Type == 2)
 		{
-			// Common object with possible animation
-			auto properties = std::dynamic_pointer_cast<CommonProperties>(instance->OI->Properties);
-			if (properties && properties->Visible)
-			{
-				auto& imageBank = ImageBank::Instance();
-				unsigned int imageId = 0;
+			if (!((Active*)instance)->Visible) continue;
+
+			auto& imageBank = ImageBank::Instance();
+			unsigned int imageId = 0;
 				
-				imageId = properties->oAnimations->GetCurrentImageHandle();
-
-				int scrollXOffset = 0;
-				int scrollYOffset = 0;
-				if (properties->FollowFrame)
-				{
-					scrollXOffset = scrollX * layer.XCoefficient;
-					scrollYOffset = scrollY * layer.YCoefficient;
-				}
-
-				auto imageInfo = imageBank.GetImage(imageId);
-				if (imageInfo)
-				{
-					int angle = instance->GetAngle();
-					if (properties->AutomaticRotation)
-					{
-						std::shared_ptr<Movement> movement = properties->oMovements->GetCurrentMovement();
-						if (movement)
-						{
-							angle += movement->GetMovementDirection() * 180 / 16;
-						}
-					}
-
-					Application::Instance().GetBackend()->DrawTexture(
-						imageId, instance->X - scrollXOffset, instance->Y - scrollYOffset,
-						imageInfo->HotspotX, imageInfo->HotspotY, 
-						angle, 1.0f, instance->OI->RGBCoefficient, instance->OI->BlendCoefficient, instance->OI->Effect, instance->OI->EffectParameter);
-				}
-			}
-		}
-		else if (instance->OI->Type == 3) // Text
-		{
-			auto properties = std::dynamic_pointer_cast<CommonProperties>(instance->OI->Properties);
-			auto paragraphs = properties->oParagraphs;
-			if (paragraphs)
-			{
-
-				int scrollXOffset = 0;
-				int scrollYOffset = 0;
-				if (properties->FollowFrame)
-				{
-					scrollXOffset = scrollX * layer.XCoefficient;
-					scrollYOffset = scrollY * layer.YCoefficient;
-				}
-
-				std::string text = paragraphs->GetText();
-				Application::Instance().GetBackend()->DrawText(FontBank::Instance().GetFont(paragraphs->GetFont()).get(), instance->X - scrollXOffset, instance->Y - scrollYOffset, paragraphs->GetColor(), text);
-			}
-		}
-		else if (instance->OI->Type == 5 || instance->OI->Type == 6 || instance->OI->Type == 7) // Score, Lives, Counter
-		{
-			auto properties = std::dynamic_pointer_cast<CommonProperties>(instance->OI->Properties);
-			if (!properties || !properties->Visible) continue;
-			
-			auto counter = properties->oCounter;
+			imageId = ((Active*)instance)->Animations.GetCurrentImageHandle();
 
 			int scrollXOffset = 0;
 			int scrollYOffset = 0;
-			if (properties->FollowFrame)
+			if (((Active*)instance)->FollowFrame)
+			{
+				scrollXOffset = scrollX * layer.XCoefficient;
+				scrollYOffset = scrollY * layer.YCoefficient;
+			}
+
+			auto imageInfo = imageBank.GetImage(imageId);
+			if (imageInfo)
+			{
+				int angle = ((Active*)instance)->GetAngle();
+				if (((Active*)instance)->AutomaticRotation)
+				{
+					auto movement = ((Active*)instance)->Movements.GetCurrentMovement();
+					if (movement != nullptr)
+					{
+						angle += movement->GetMovementDirection() * 180 / 16;
+					}
+				}
+
+				Application::Instance().GetBackend()->DrawTexture(
+					imageId, instance->X - scrollXOffset, instance->Y - scrollYOffset,
+					imageInfo->HotspotX, imageInfo->HotspotY, 
+					angle, 1.0f, instance->RGBCoefficient, instance->BlendCoefficient, instance->Effect, instance->EffectParameter);
+			}
+		}
+		else if (instance->Type == 3) // Text
+		{
+			if (!((StringObject*)instance)->Visible) continue;
+
+			int scrollXOffset = 0;
+			int scrollYOffset = 0;
+
+			if (((StringObject*)instance)->FollowFrame)
+			{
+				scrollXOffset = scrollX * layer.XCoefficient;
+				scrollYOffset = scrollY * layer.YCoefficient;
+			}
+
+			std::string text = ((StringObject*)instance)->GetText();
+			Application::Instance().GetBackend()->DrawText(FontBank::Instance().GetFont(((StringObject*)instance)->GetFont()).get(), instance->X - scrollXOffset, instance->Y - scrollYOffset, ((StringObject*)instance)->GetColor(), text);
+		}
+		else if (instance->Type == 5 || instance->Type == 6 || instance->Type == 7) // Score, Lives, Counter
+		{
+			CounterBase* counter = (CounterBase*)instance;
+			if (!counter->Visible) continue;
+			
+			int scrollXOffset = 0;
+			int scrollYOffset = 0;
+			if (counter->FollowFrame)
 			{
 				scrollXOffset = scrollX * layer.XCoefficient;
 				scrollYOffset = scrollY * layer.YCoefficient;
 			}
 
 			//TODO: Add support for other display types
-			if (counter && counter->DisplayType == 1) // Numbers
+			if (counter->DisplayType == 1) // Numbers
 			{
 				auto appdata = Application::Instance().GetAppData();
+
+				int value = 0;
+				if (instance->Type == 5) // Score
+				{
+					value = Application::Instance().GetAppData()->GetPlayerScores()[counter->Player];
+				}
+				else if (instance->Type == 6) // Lives
+				{
+					value = Application::Instance().GetAppData()->GetPlayerLives()[counter->Player];
+				}
+				else
+				{
+					value = ((Counter*)instance)->GetValue();
+				}
 				
-				if (instance->OI->Type == 5) // Score
-				{
-					DrawCounterNumbers(*properties->oCounter, appdata->GetPlayerScores()[properties->oCounter->Player], instance->X - scrollXOffset, instance->Y - scrollYOffset);
-				}
-				else if (instance->OI->Type == 6) // Lives
-				{
-					DrawCounterNumbers(*properties->oCounter, appdata->GetPlayerLives()[properties->oCounter->Player], instance->X - scrollXOffset, instance->Y - scrollYOffset);
-				}
-				else if (instance->OI->Type == 7) // Counter
-				{
-					DrawCounterNumbers(*properties->oCounter, properties->oValue->GetValue(), instance->X - scrollXOffset, instance->Y - scrollYOffset);
-				}
+				DrawCounterNumbers(counter, value, instance->X - scrollXOffset, instance->Y - scrollYOffset);
 			}
 		}
-		else if (instance->OI->Type == 0) // Quick backdrop
+		else if (instance->Type == 0) // Quick backdrop
 		{
-			auto properties = std::dynamic_pointer_cast<QuickBackdropProperties>(instance->OI->Properties);
-			if (properties)
-			{
-				int scrollXOffset = scrollX * layer.XCoefficient;
-				int scrollYOffset = scrollY * layer.YCoefficient;
-				Application::Instance().GetBackend()->DrawQuickBackdrop(instance->X - scrollXOffset, instance->Y - scrollYOffset, properties->Width, properties->Height, properties->oShape);
-			}
+			int scrollXOffset = scrollX * layer.XCoefficient;
+			int scrollYOffset = scrollY * layer.YCoefficient;
+			Application::Instance().GetBackend()->DrawQuickBackdrop(instance->X - scrollXOffset, instance->Y - scrollYOffset, ((QuickBackdrop*)instance)->Width, ((QuickBackdrop*)instance)->Height, &((QuickBackdrop*)instance)->Shape);
 		}
-		else if (instance->OI->Type >= 32) // Extension
+		else if (instance->Type >= 32) // Extension
 		{
-			auto properties = std::dynamic_pointer_cast<CommonProperties>(instance->OI->Properties);
-			if (properties && properties->oExtension)
-			{
-				properties->oExtension->Draw();
-			}
+			((Extension*)instance)->Draw();
 		}
 	}
 }
 
 int Frame::NumberOfThisObject(unsigned int objectInfoHandle)
 {
-	return std::count_if(ObjectInstances.begin(), ObjectInstances.end(), [objectInfoHandle](const std::shared_ptr<ObjectInstance>& instance) { return instance->OI->Handle == objectInfoHandle; });
+	return 0;
 }
 
-void Frame::DrawCounterNumbers(Counter &counter, int value, int x, int y)
+void Frame::DrawCounterNumbers(CounterBase *counter, int value, int x, int y)
 {
 	std::string valueString = std::to_string(value);
 	int numDigits = valueString.size();
 
-	if (counter.IntDigitCount > 0) numDigits = counter.IntDigitCount;
+	if (counter->IntDigitCount > 0) numDigits = counter->IntDigitCount;
 
 	bool negative = false;
 	if (value < 0)
@@ -277,18 +236,18 @@ void Frame::DrawCounterNumbers(Counter &counter, int value, int x, int y)
 	}
 
 	//Fixed Size
-	if (counter.IntDigitCount > 0)
+	if (counter->IntDigitCount > 0)
 	{
-		if (counter.IntDigitCount > valueString.size()) //Add leading zeros
+		if (counter->IntDigitCount > valueString.size()) //Add leading zeros
 		{
-			while (valueString.size() < counter.IntDigitCount)
+			while (valueString.size() < counter->IntDigitCount)
 			{
 				valueString = "0" + valueString;
 			}
 		}
 		else //Remove extra digits
 		{
-			valueString = valueString.substr(valueString.size() - counter.IntDigitCount);
+			valueString = valueString.substr(valueString.size() - counter->IntDigitCount);
 		}
 	}		
 
@@ -311,7 +270,7 @@ void Frame::DrawCounterNumbers(Counter &counter, int value, int x, int y)
 		}
 
 		int imageIndex = charMap.find(valueString[i]);
-		totalWidth += ImageBank::Instance().GetImage(counter.Frames[imageIndex])->Width;
+		totalWidth += ImageBank::Instance().GetImage(counter->Frames[imageIndex])->Width;
 	}
 
 	//Get height of the tallest character displayed
@@ -324,7 +283,7 @@ void Frame::DrawCounterNumbers(Counter &counter, int value, int x, int y)
 		}
 
 		int imageIndex = charMap.find(valueString[i]);
-		MaxHeight = std::max(MaxHeight, ImageBank::Instance().GetImage(counter.Frames[imageIndex])->Height);
+		MaxHeight = std::max(MaxHeight, ImageBank::Instance().GetImage(counter->Frames[imageIndex])->Height);
 	}
 
 	int currentX = x - totalWidth;
@@ -338,11 +297,11 @@ void Frame::DrawCounterNumbers(Counter &counter, int value, int x, int y)
 		}
 
 		int imageIndex = charMap.find(valueString[i]);
-		auto imageInfo = ImageBank::Instance().GetImage(counter.Frames[imageIndex]);
+		auto imageInfo = ImageBank::Instance().GetImage(counter->Frames[imageIndex]);
 		if (imageInfo)
 		{
 			Application::Instance().GetBackend()->DrawTexture(
-				counter.Frames[imageIndex], currentX, y - MaxHeight,
+				counter->Frames[imageIndex], currentX, y - MaxHeight,
 				0, 0, 
 				0, 1.0f, 0xFFFFFFFF, 0, 0, 0);
 			currentX += imageInfo->Width;
@@ -354,49 +313,17 @@ std::vector<unsigned int> Frame::GetImagesUsed()
 {
 	std::vector<unsigned int> imagesUsed;
 	
-	for (auto& instance : ObjectInstances)
+	for (auto& [handle, instance] : ObjectInstances)
 	{
-		//Backdrops
-		if (instance->OI->Type == 1)
+		std::vector<unsigned int> instanceImages = instance->GetImagesUsed();
+		for (unsigned int image : instanceImages)
 		{
-			imagesUsed.push_back(((BackdropProperties*)instance->OI->Properties.get())->Image);
-		}
-		//Common objects with animations
-		else if (instance->OI->Type == 2)
-		{
-			auto properties = std::dynamic_pointer_cast<CommonProperties>(instance->OI->Properties);
-			if (properties && properties->oAnimations)
+			if (std::find(imagesUsed.begin(), imagesUsed.end(), image) == imagesUsed.end())
 			{
-				auto images = properties->oAnimations->GetImagesUsed();
-				imagesUsed.insert(imagesUsed.end(), images.begin(), images.end());
-			}
-		}
-		//Score, Lives, Counter
-		else if (instance->OI->Type == 5 || instance->OI->Type == 6 || instance->OI->Type == 7)
-		{
-			auto properties = std::dynamic_pointer_cast<CommonProperties>(instance->OI->Properties);
-			auto counter = properties->oCounter;
-			if (counter)
-			{
-				for (unsigned int frame : counter->Frames)
-				{
-					imagesUsed.push_back(frame);
-				}
-			}
-		}
-		else if (instance->OI->Type == 0) // Quick backdrop
-		{
-			auto properties = std::dynamic_pointer_cast<QuickBackdropProperties>(instance->OI->Properties);
-			if (properties)
-			{
-				imagesUsed.push_back(properties->oShape->Image);
+				imagesUsed.push_back(image);
 			}
 		}
 	}
-
-	//erase any duplicates
-	std::sort(imagesUsed.begin(), imagesUsed.end());
-	imagesUsed.erase(std::unique(imagesUsed.begin(), imagesUsed.end()), imagesUsed.end());
 
 	return imagesUsed;
 }
@@ -405,17 +332,14 @@ std::vector<unsigned int> Frame::GetFontsUsed()
 {
 	std::vector<unsigned int> fontsUsed;
 
-	for (auto& instance : ObjectInstances)
+	for (auto& [handle, instance] : ObjectInstances)
 	{
-		if (instance->OI->Type == 3) // Text
+		std::vector<unsigned int> instanceFonts = instance->GetFontsUsed();
+		for (unsigned int font : instanceFonts)
 		{
-			auto properties = std::dynamic_pointer_cast<CommonProperties>(instance->OI->Properties);
-			if (properties && properties->oParagraphs)
+			if (std::find(fontsUsed.begin(), fontsUsed.end(), font) == fontsUsed.end())
 			{
-				for (auto& paragraph : properties->oParagraphs->Paragraphs)
-				{
-					fontsUsed.push_back(paragraph->Font);
-				}
+				fontsUsed.push_back(font);
 			}
 		}
 	}
@@ -427,70 +351,41 @@ std::vector<unsigned int> Frame::GetFontsUsed()
 	return fontsUsed;
 }
 
-void Frame::CreateInstance(short x, short y, unsigned int layer, unsigned int objectInfoHandle, short angle, ObjectInstance *parentInstance)
+ObjectInstance* Frame::CreateInstance(ObjectInstance* createdInstance, short x, short y, unsigned int layer, short instanceValue, unsigned int objectInfoHandle, short angle, ObjectInstance* parentInstance)
 {
-	auto objectInfo = ObjectFactory::Instance().GetObjectInfo(objectInfoHandle);
-	if (!objectInfo)
-	{
-		std::cout << "Unable to create instance: " << objectInfoHandle << std::endl;
-		return;
-	}
-
+	
 	//get max unique handle
 	unsigned int maxHandle = 0;
-	for (auto& instance : ObjectInstances)
+	for (auto& [handle, instance] : ObjectInstances)
 	{
-		maxHandle = std::max(maxHandle, instance->Handle);
+		maxHandle = std::max(maxHandle, handle);
 	}
-
+	
 	unsigned int handle = maxHandle + 1;
+	createdInstance->Handle = handle;
+	createdInstance->X = x;
+	createdInstance->Y = y;
+	createdInstance->Layer = layer;
+	createdInstance->InstanceValue = instanceValue;
+	createdInstance->ObjectInfoHandle = objectInfoHandle;
+	createdInstance->SetAngle(angle);
 
+	//TODO: move this to a separate function
+	// Load any textures needed for this instance
+	std::vector<unsigned int> texturesToLoad = createdInstance->GetImagesUsed();
+	auto backend = Application::Instance().GetBackend();
+	for (unsigned int textureId : texturesToLoad) {
+		backend->LoadTexture(textureId);
+	}
+	
+	ObjectInstances[handle] = createdInstance;
 	if (parentInstance) {
-		x += parentInstance->X;
-		y += parentInstance->Y;
-		layer = parentInstance->Layer;
+		createdInstance->X += parentInstance->X;
+		createdInstance->Y += parentInstance->Y;
+		createdInstance->Layer = parentInstance->Layer;
 	}
 
-	auto instance = ObjectFactory::Instance().CreateInstance(handle, objectInfoHandle, x, y, layer, 0);
-	if (instance) {
-		instance->SetAngle(angle);
-		ObjectInstances.push_back(instance);
-		
-		//TODO: move this to a separate function
-		// Load any textures needed for this instance
-		std::vector<unsigned int> texturesToLoad;
-		
-		// For backdrops
-		if (objectInfo->Type == 1) {
-			auto backdropProps = std::dynamic_pointer_cast<BackdropProperties>(objectInfo->Properties);
-			if (backdropProps) {
-				texturesToLoad.push_back(backdropProps->Image);
-			}
-		}
-		// For common objects with animations
-		else if (objectInfo->Type == 2) {
-			auto properties = std::dynamic_pointer_cast<CommonProperties>(objectInfo->Properties);
-			if (properties && properties->oAnimations) {
-				auto images = properties->oAnimations->GetImagesUsed();
-				texturesToLoad.insert(texturesToLoad.end(), images.begin(), images.end());
-			}
-		}
-		// For counter objects (score, lives, counter)
-		else if (objectInfo->Type == 5 || objectInfo->Type == 6 || objectInfo->Type == 7) {
-			auto properties = std::dynamic_pointer_cast<CommonProperties>(objectInfo->Properties);
-			if (properties && properties->oCounter) {
-				texturesToLoad.insert(texturesToLoad.end(), 
-					properties->oCounter->Frames.begin(), 
-					properties->oCounter->Frames.end());
-			}
-		}
-		
-		// Load all the required textures
-		auto backend = Application::Instance().GetBackend();
-		for (unsigned int textureId : texturesToLoad) {
-			backend->LoadTexture(textureId);
-		}
-	}
+	return createdInstance;
 }
 
 int Frame::GetMouseX()
@@ -506,44 +401,47 @@ int Frame::GetMouseY()
 //Check if the object is colliding with any backdrop
 bool Frame::IsCollidingWithBackground(ObjectInstance *instance)
 {
-	if (instance->OI->Type != 2) return false; // Only Active objects
+	if (instance->Type != 2) return false; // Only Active objects
 	
 	// Check collision with all backdrop objects
-	for (auto& backdropInstance : ObjectInstances)
+	for (auto& [handle, backdropInstance] : ObjectInstances)
 	{
 		// Check only against (Quick) backdrop objects
-		if (backdropInstance->OI->Type == 1)
+		if (backdropInstance->Type == 1)
 		{
-			auto backdropProps = static_cast<BackdropProperties*>(backdropInstance->OI->Properties.get());
+			Backdrop* backdrop = (Backdrop*)backdropInstance;
 			
 			// Check if this backdrop is an obstacle
-			if (backdropProps && backdropProps->ObstacleType > 0)
+			if (backdrop->ObstacleType > 0)
 			{
 				// Check if the backdrop is on the same layer as the instance
 				// to ensure scrolling is handled consistently
-				if (backdropInstance->Layer == instance->Layer)
+				if (backdrop->Layer == instance->Layer)
 				{
 					// Use the existing collision detection between objects
-					if (IsColliding(instance, backdropInstance.get()))
+					if (IsColliding(instance, backdrop))
 					{
 						return true;
 					}
 				}
 			}
 		}
-		else if (backdropInstance->OI->Type == 0)
+		else if (backdropInstance->Type == 0)
 		{
-			auto quickBackdropProps = static_cast<QuickBackdropProperties*>(backdropInstance->OI->Properties.get());
-			if (quickBackdropProps && quickBackdropProps->ObstacleType > 0)
+			QuickBackdrop* quickBackdrop = (QuickBackdrop*)backdropInstance;
+			if (quickBackdrop->ObstacleType > 0)
 			{
 				// Check if the backdrop is on the same layer as the instance
 				// to ensure scrolling is handled consistently
-				if (backdropInstance->Layer == instance->Layer)
+				if (quickBackdrop->ObstacleType > 0)
 				{
-					// Use the existing collision detection between objects
-					if (IsColliding(instance, backdropInstance.get()))
+					if (quickBackdrop->Layer == instance->Layer)
 					{
-						return true;
+						// Use the existing collision detection between objects
+						if (IsColliding(instance, quickBackdrop))
+						{
+							return true;
+						}
 					}
 				}
 			}
@@ -555,9 +453,9 @@ bool Frame::IsCollidingWithBackground(ObjectInstance *instance)
 
 bool Frame::IsColliding(ObjectInstance *instance1, ObjectInstance *instance2)
 {
-	// Only check collision for relevant object types
-	if ((instance1->OI->Type != 0 && instance1->OI->Type != 1 && instance1->OI->Type != 2) ||
-		(instance2->OI->Type != 0 && instance2->OI->Type != 1 && instance2->OI->Type != 2))
+	//Only check collision for relevant object types
+	if ((instance1->Type != 0 && instance1->Type != 1 && instance1->Type != 2) ||
+		(instance2->Type != 0 && instance2->Type != 1 && instance2->Type != 2))
 		return false;
 
 	// Get image IDs for both instances
@@ -569,21 +467,17 @@ bool Frame::IsColliding(ObjectInstance *instance1, ObjectInstance *instance2)
 	int hotspotX2 = 0, hotspotY2 = 0;
 	
 	// Get information for instance1
-	if (instance1->OI->Type == 0) // Quick backdrop
+	if (instance1->Type == 0) // Quick backdrop
 	{
-		auto quickBackdropProps = static_cast<QuickBackdropProperties*>(instance1->OI->Properties.get());
-		if (!quickBackdropProps) return false;
-		imageId1 = quickBackdropProps->oShape->Image;
+		imageId1 = ((QuickBackdrop*)instance1)->Shape.Image;
 		
 		// Position exactly as in DrawLayer for quick backdrops
 		drawX1 = instance1->X - (scrollX * Layers[instance1->Layer].XCoefficient);
 		drawY1 = instance1->Y - (scrollY * Layers[instance1->Layer].YCoefficient);
 	}
-	else if (instance1->OI->Type == 1) // Backdrop
+	else if (instance1->Type == 1) // Backdrop
 	{
-		auto backdropProps = static_cast<BackdropProperties*>(instance1->OI->Properties.get());
-		if (!backdropProps) return false;
-		imageId1 = backdropProps->Image;
+		imageId1 = ((Backdrop*)instance1)->Image;
 		
 		// Position exactly as in DrawLayer for backdrops
 		drawX1 = instance1->X - (scrollX * Layers[instance1->Layer].XCoefficient);
@@ -591,15 +485,12 @@ bool Frame::IsColliding(ObjectInstance *instance1, ObjectInstance *instance2)
 	}
 	else // Common object
 	{
-		auto properties = std::dynamic_pointer_cast<CommonProperties>(instance1->OI->Properties);
-		if (!properties || !properties->oAnimations) return false;
-		
-		imageId1 = properties->oAnimations->GetCurrentImageHandle();
+		imageId1 = ((Active*)instance1)->Animations.GetCurrentImageHandle();
 		
 		// Position exactly as in DrawLayer for common objects
 		int scrollXOffset = 0;
 		int scrollYOffset = 0;
-		if (properties->FollowFrame)
+		if (((Active*)instance1)->FollowFrame)
 		{
 			scrollXOffset = scrollX * Layers[instance1->Layer].XCoefficient;
 			scrollYOffset = scrollY * Layers[instance1->Layer].YCoefficient;
@@ -617,21 +508,17 @@ bool Frame::IsColliding(ObjectInstance *instance1, ObjectInstance *instance2)
 	}
 
 	// Get information for instance2
-	if (instance2->OI->Type == 0) // Quick backdrop
+	if (instance2->Type == 0) // Quick backdrop
 	{
-		auto quickBackdropProps = static_cast<QuickBackdropProperties*>(instance2->OI->Properties.get());
-		if (!quickBackdropProps) return false;
-		imageId2 = quickBackdropProps->oShape->Image;
+		imageId2 = ((QuickBackdrop*)instance2)->Shape.Image;
 		
 		// Position exactly as in DrawLayer for quick backdrops
 		drawX2 = instance2->X - (scrollX * Layers[instance2->Layer].XCoefficient);
 		drawY2 = instance2->Y - (scrollY * Layers[instance2->Layer].YCoefficient);
 	}
-	else if (instance2->OI->Type == 1) // Backdrop
+	else if (instance2->Type == 1) // Backdrop
 	{
-		auto backdropProps = static_cast<BackdropProperties*>(instance2->OI->Properties.get());
-		if (!backdropProps) return false;
-		imageId2 = backdropProps->Image;
+		imageId2 = ((Backdrop*)instance2)->Image;
 		
 		// Position exactly as in DrawLayer for backdrops
 		drawX2 = instance2->X - (scrollX * Layers[instance2->Layer].XCoefficient);
@@ -639,15 +526,12 @@ bool Frame::IsColliding(ObjectInstance *instance1, ObjectInstance *instance2)
 	}
 	else // Common object
 	{
-		auto properties = std::dynamic_pointer_cast<CommonProperties>(instance2->OI->Properties);
-		if (!properties || !properties->oAnimations) return false;
-		
-		imageId2 = properties->oAnimations->GetCurrentImageHandle();
+		imageId2 = ((Active*)instance2)->Animations.GetCurrentImageHandle();
 		
 		// Position exactly as in DrawLayer for common objects
 		int scrollXOffset = 0;
 		int scrollYOffset = 0;
-		if (properties->FollowFrame)
+		if (((Active*)instance2)->FollowFrame)
 		{
 			scrollXOffset = scrollX * Layers[instance2->Layer].XCoefficient;
 			scrollYOffset = scrollY * Layers[instance2->Layer].YCoefficient;
@@ -674,20 +558,16 @@ bool Frame::IsColliding(ObjectInstance *instance1, ObjectInstance *instance2)
 	int image2Width = imageInfo2->Width;
 	int image2Height = imageInfo2->Height;
 
-	if (instance1->OI->Type == 0)
+	if (instance1->Type == 0)
 	{
-		auto quickBackdropProps = static_cast<QuickBackdropProperties*>(instance1->OI->Properties.get());
-		if (!quickBackdropProps) return false;
-		image1Width = quickBackdropProps->Width;
-		image1Height = quickBackdropProps->Height;
+		image1Width = ((QuickBackdrop*)instance1)->Width;
+		image1Height = ((QuickBackdrop*)instance1)->Height;
 	}
 
-	if (instance2->OI->Type == 0)
+	if (instance2->Type == 0)
 	{
-		auto quickBackdropProps = static_cast<QuickBackdropProperties*>(instance2->OI->Properties.get());
-		if (!quickBackdropProps) return false;
-		image2Width = quickBackdropProps->Width;
-		image2Height = quickBackdropProps->Height;
+		image2Width = ((QuickBackdrop*)instance2)->Width;
+		image2Height = ((QuickBackdrop*)instance2)->Height;
 	}
 
 	// Calculate bounding box for instance1
@@ -806,7 +686,7 @@ bool Frame::DoLinesIntersect(int x1, int y1, int x2, int y2, int x3, int y3, int
 
 bool Frame::IsColliding(ObjectInstance *instance, int x, int y)
 {
-	if (instance->OI->Type != 0 && instance->OI->Type != 1 && instance->OI->Type != 2) return false;
+	if (instance->Type != 0 && instance->Type != 1 && instance->Type != 2) return false;
 
 	unsigned int imageId;
 	bool fineDetection = false;
@@ -815,21 +695,17 @@ bool Frame::IsColliding(ObjectInstance *instance, int x, int y)
 	int drawX, drawY;
 	int hotspotX = 0, hotspotY = 0;
 	
-	if (instance->OI->Type == 1) // Backdrop
+	if (instance->Type == 1) // Backdrop
 	{
-		auto backdropProps = static_cast<BackdropProperties*>(instance->OI->Properties.get());
-		if (!backdropProps) return false;
-		imageId = backdropProps->Image;
+		imageId = ((Backdrop*)instance)->Image;
 		
 		// Position exactly as in DrawLayer for backdrops
 		drawX = instance->X - (scrollX * Layers[instance->Layer].XCoefficient);
 		drawY = instance->Y - (scrollY * Layers[instance->Layer].YCoefficient);
 	}
-	else if (instance->OI->Type == 0) // Quick backdrop
+	else if (instance->Type == 0) // Quick backdrop
 	{
-		auto quickBackdropProps = static_cast<QuickBackdropProperties*>(instance->OI->Properties.get());
-		if (!quickBackdropProps) return false;
-		imageId = quickBackdropProps->oShape->Image;
+		imageId = ((QuickBackdrop*)instance)->Shape.Image;
 		
 		// Position exactly as in DrawLayer for quick backdrops
 		drawX = instance->X - (scrollX * Layers[instance->Layer].XCoefficient);
@@ -837,24 +713,14 @@ bool Frame::IsColliding(ObjectInstance *instance, int x, int y)
 	}
 	else // Common object
 	{
-		auto properties = std::dynamic_pointer_cast<CommonProperties>(instance->OI->Properties);
-		if (!properties) return false;
-
-		fineDetection = properties->FineDetection;
+		imageId = ((Active*)instance)->Animations.GetCurrentImageHandle();
 		
-		if (properties->oAnimations)
-		{
-			imageId = properties->oAnimations->GetCurrentImageHandle();
-		}
-		else
-		{
-			imageId = 0;
-		}
+		fineDetection = ((Active*)instance)->FineDetection;
 		
 		// Position exactly as in DrawLayer for common objects
 		int scrollXOffset = 0;
 		int scrollYOffset = 0;
-		if (properties->FollowFrame)
+		if (((Active*)instance)->FollowFrame)
 		{
 			scrollXOffset = scrollX * Layers[instance->Layer].XCoefficient;
 			scrollYOffset = scrollY * Layers[instance->Layer].YCoefficient;

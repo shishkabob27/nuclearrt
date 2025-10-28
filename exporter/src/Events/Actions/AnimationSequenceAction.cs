@@ -13,9 +13,7 @@ public class AnimationSequenceAction : ActionBase
 
 		result.AppendLine($"for (ObjectIterator it(*{GetSelector(eventBase.ObjectInfo)}); !it.end(); ++it) {{");
 		result.AppendLine($"    auto instance = *it;");
-		result.AppendLine($"    auto commonProperties = std::dynamic_pointer_cast<CommonProperties>(instance->OI->Properties);");
-		result.AppendLine($"    auto animations = std::dynamic_pointer_cast<Animations>(commonProperties->oAnimations);");
-		result.AppendLine($"    animations->SetCurrentSequenceIndex({((Short)eventBase.Items[0].Loader).Value});");
+		result.AppendLine($"    ((Active*)instance)->Animations.SetCurrentSequenceIndex({((Short)eventBase.Items[0].Loader).Value});");
 		result.AppendLine("}");
 
 		return result.ToString();

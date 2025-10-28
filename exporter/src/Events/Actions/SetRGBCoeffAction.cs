@@ -13,7 +13,7 @@ public class SetRGBCoeffAction : ActionBase
 
 		result.AppendLine($"for (ObjectIterator it(*{GetSelector(eventBase.ObjectInfo)}); !it.end(); ++it) {{");
 		result.AppendLine($"    auto instance = *it;");
-		result.AppendLine($"    instance->OI->RGBCoefficient = {ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[0].Loader, eventBase)};");
+		result.AppendLine($"    instance->RGBCoefficient = {ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[0].Loader, eventBase)};");
 		result.AppendLine("}");
 
 		return result.ToString();

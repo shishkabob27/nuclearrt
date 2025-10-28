@@ -13,9 +13,7 @@ public class CurrentFrameComparisonCondition : ConditionBase
 
 		result.AppendLine($"for (ObjectIterator it(*{GetSelector(eventBase.ObjectInfo)}); !it.end(); ++it) {{");
 		result.AppendLine($"    auto instance = *it;");
-		result.AppendLine($"    auto commonProperties = std::dynamic_pointer_cast<CommonProperties>(instance->OI->Properties);");
-		result.AppendLine($"    auto animations = std::dynamic_pointer_cast<Animations>(commonProperties->oAnimations);");
-		result.AppendLine($"    if (animations->GetCurrentFrameIndex() != {ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[0].Loader, eventBase)}) it.deselect();");
+		result.AppendLine($"    if (((Active*)instance)->Animations.GetCurrentFrameIndex() != {ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[0].Loader, eventBase)}) it.deselect();");
 		result.AppendLine("}");
 
 		result.AppendLine($"if ({GetSelector(eventBase.ObjectInfo)}->Count() == 0) goto {nextLabel};");
