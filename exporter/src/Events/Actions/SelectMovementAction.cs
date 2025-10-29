@@ -13,7 +13,6 @@ public class SelectMovementAction : ActionBase
 
 		result.AppendLine($"for (ObjectIterator it(*{GetSelector(eventBase.ObjectInfo)}); !it.end(); ++it) {{");
 		result.AppendLine($"    auto instance = *it;");
-		result.AppendLine($"    auto commonProperties = std::dynamic_pointer_cast<CommonProperties>(instance->OI->Properties);");
 
 		string movementIndex = "0";
 		if (eventBase.Items[0].Loader is Short shortLoader)
@@ -25,7 +24,7 @@ public class SelectMovementAction : ActionBase
 			movementIndex = ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[0].Loader, eventBase);
 		}
 
-		result.AppendLine($"    commonProperties->oMovements->SetMovement({movementIndex});");
+		result.AppendLine($"    ((Active*)instance)->Movements.SetMovement({movementIndex});");
 		result.AppendLine("}");
 		return result.ToString();
 	}

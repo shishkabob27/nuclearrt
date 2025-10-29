@@ -1,25 +1,18 @@
 #pragma once
 
-#include "ObjectInfoProperties.h"
+#include "ObjectInstance.h"
 #include <vector>
 #include <memory>
 
-class ObjectInstance;
-
-class Extension : public ObjectInfoProperties {
+class Extension : public ObjectInstance {
 public:
-	Extension() = default;
+	Extension(unsigned int objectInfoHandle, int type, std::string name)
+		: ObjectInstance(objectInfoHandle, type, name) {}
 	virtual ~Extension() = default;
-
-	void SetInstance(ObjectInstance* inst) { instance = inst; }
-	ObjectInstance* GetInstance() const { return instance; }
 
 	virtual void Initialize() {}
 	virtual void Update(float deltaTime) {}
 	virtual void Draw() {}
-
-protected:
-	ObjectInstance* instance = nullptr;
 };
 
  

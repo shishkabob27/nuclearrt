@@ -1,24 +1,32 @@
 #pragma once
 
 #include <memory>
-#include "ObjectInfo.h"
+#include <string>
+#include <vector>
 
 class ObjectInstance {
 public:
-    ObjectInstance(unsigned int handle, std::shared_ptr<ObjectInfo> objectInfo, int x, int y, unsigned int layer, short instanceValue)
-        : Handle(handle), OI(objectInfo), X(x), Y(y), Layer(layer), InstanceValue(instanceValue) {}
+    ObjectInstance(unsigned int objectInfoHandle, int type, std::string name)
+        : ObjectInfoHandle(objectInfoHandle), Type(type), Name(name) {}
     virtual ~ObjectInstance() = default;
-
+	
 	unsigned int Handle = 0;
-
-	std::shared_ptr<ObjectInfo> OI;
-
+	unsigned int Type = 0;
+	unsigned int ObjectInfoHandle = 0;
+	std::string Name = "";
+	
 	int X = 0;
 	int Y = 0;
 
 	unsigned int Layer = 0;
 
 	short InstanceValue = 0;
+	std::vector<short> Qualifiers = { -1, -1, -1, -1, -1, -1, -1, -1 };
+
+	int RGBCoefficient = 0xFFFFFF;
+	int Effect = 0;
+	unsigned char BlendCoefficient = 0; // Alpha
+	unsigned int EffectParameter = 0; 
 	
 	unsigned int GetAngle() const {
 		return Angle;
@@ -35,6 +43,9 @@ public:
 		
 		Angle = angle;
 	}
+
+	virtual std::vector<unsigned int> GetImagesUsed() { return std::vector<unsigned int>(); };
+	virtual std::vector<unsigned int> GetFontsUsed() { return std::vector<unsigned int>(); };
 
 private:
 	unsigned int Angle = 0;

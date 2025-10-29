@@ -4,6 +4,8 @@ using CTFAK.MFA;
 using CTFAK.MMFParser.EXE.Loaders.Events.Parameters;
 using CTFAK.MMFParser.EXE.Loaders.Events.Expressions;
 using CTFAK.Utils;
+using CTFAK.CCN;
+using CTFAK.CCN.Chunks.Objects;
 
 public class ExpressionConverter
 {
@@ -206,16 +208,16 @@ public class ExpressionConverter
 			else if (expression.ObjectType > 0 && expression.Num == 2) // Image
 			{
 				if (expression.ObjectInfo == eventBase.ObjectInfo && expression.ObjectInfoList == eventBase.ObjectInfoList)
-					result += "std::dynamic_pointer_cast<CommonProperties>(instance->OI->Properties)->oAnimations->GetCurrentFrameIndex()";
+					result += "((Active*)instance)->Animations.GetCurrentFrameIndex()";
 				else
-					result += $"({GetSelector(expression.ObjectInfo)}->Count() > 0 ? std::dynamic_pointer_cast<CommonProperties>((*{GetSelector(expression.ObjectInfo)}->begin())->OI->Properties)->oAnimations->GetCurrentFrameIndex() : 0)";
+					result += $"({GetSelector(expression.ObjectInfo)}->Count() > 0 ? ((Active*)*({GetSelector(expression.ObjectInfo)}->begin()))->Animations.GetCurrentFrameIndex() : 0)";
 			}
 			else if (expression.ObjectType > 0 && expression.Num == 3) // Real Movement Speed
 			{
 				if (expression.ObjectInfo == eventBase.ObjectInfo && expression.ObjectInfoList == eventBase.ObjectInfoList)
-					result += "std::dynamic_pointer_cast<CommonProperties>(instance->OI->Properties)->oMovements->GetCurrentMovement()->GetRealSpeed()";
+					result += "((Active*)instance)->Movements.GetCurrentMovement()->GetRealSpeed()";
 				else
-					result += $"({GetSelector(expression.ObjectInfo)}->Count() > 0 ? std::dynamic_pointer_cast<CommonProperties>((*{GetSelector(expression.ObjectInfo)}->begin())->OI->Properties)->oMovements->GetCurrentMovement()->GetRealSpeed() : 0)";
+					result += $"({GetSelector(expression.ObjectInfo)}->Count() > 0 ? ((Active*)*({GetSelector(expression.ObjectInfo)}->begin()))->Movements.GetCurrentMovement()->GetRealSpeed() : 0)";
 			}
 			else if (expression.ObjectType > 0 && expression.Num == 11) // X Position
 			{
@@ -231,9 +233,9 @@ public class ExpressionConverter
 			else if (expression.ObjectType > 0 && expression.Num == 14) // Animation Number
 			{
 				if (expression.ObjectInfo == eventBase.ObjectInfo && expression.ObjectInfoList == eventBase.ObjectInfoList)
-					result += "std::dynamic_pointer_cast<CommonProperties>(instance->OI->Properties)->oAnimations->GetCurrentSequenceIndex()";
+					result += "((Active*)instance)->Animations.GetCurrentSequenceIndex()";
 				else
-					result += $"({GetSelector(expression.ObjectInfo)}->Count() > 0 ? std::dynamic_pointer_cast<CommonProperties>((*{GetSelector(expression.ObjectInfo)}->begin())->OI->Properties)->oAnimations->GetCurrentSequenceIndex() : 0)";
+					result += $"({GetSelector(expression.ObjectInfo)}->Count() > 0 ? ((Active*)*({GetSelector(expression.ObjectInfo)}->begin()))->Animations.GetCurrentSequenceIndex() : 0)";
 			}
 			else if (expression.ObjectType > 0 && expression.Num == 15) // Number of this Object
 			{
@@ -242,9 +244,9 @@ public class ExpressionConverter
 			else if (expression.ObjectType > 0 && expression.Num == 16) // Alterable Value
 			{
 				if (expression.ObjectInfo == eventBase.ObjectInfo && expression.ObjectInfoList == eventBase.ObjectInfoList)
-					result += "(std::dynamic_pointer_cast<CommonProperties>(instance->OI->Properties) ? std::dynamic_pointer_cast<CommonProperties>(instance->OI->Properties)->oAlterableValues->GetValue(" + ((ShortExp)expression.Loader).Value + ") : 0)";
+					result += $"(({GetObjectClassName(expression.ObjectInfo)}*)instance)->Values.GetValue({((ShortExp)expression.Loader).Value})";
 				else
-					result += $"({GetSelector(expression.ObjectInfo)}->Count() > 0 ? (std::dynamic_pointer_cast<CommonProperties>((*{GetSelector(expression.ObjectInfo)}->begin())->OI->Properties) ? std::dynamic_pointer_cast<CommonProperties>((*{GetSelector(expression.ObjectInfo)}->begin())->OI->Properties)->oAlterableValues->GetValue({((ShortExp)expression.Loader).Value}) : 0) : 0)";
+					result += $"({GetSelector(expression.ObjectInfo)}->Count() > 0 ? (({GetObjectClassName(expression.ObjectInfo)}*)*({GetSelector(expression.ObjectInfo)}->begin()))->Values.GetValue({((ShortExp)expression.Loader).Value}) : 0)";
 			}
 			else if (expression.ObjectType > 0 && expression.Num == 22) // Font Color
 			{
@@ -253,9 +255,9 @@ public class ExpressionConverter
 			else if (expression.ObjectType > 0 && expression.Num == 27) // Alpha Coefficient
 			{
 				if (expression.ObjectInfo == eventBase.ObjectInfo && expression.ObjectInfoList == eventBase.ObjectInfoList)
-					result += "instance->OI->BlendCoefficient";
+					result += "instance->BlendCoefficient";
 				else
-					result += $"({GetSelector(expression.ObjectInfo)}->Count() > 0 ? (*{GetSelector(expression.ObjectInfo)}->begin())->OI->BlendCoefficient : 0)";
+					result += $"({GetSelector(expression.ObjectInfo)}->Count() > 0 ? (*{GetSelector(expression.ObjectInfo)}->begin())->BlendCoefficient : 0)";
 			}
 			else if (expression.ObjectType > 0 && expression.Num == 45) // Selected Objects
 			{
@@ -282,7 +284,7 @@ public class ExpressionConverter
 				if (expression.ObjectType == 7) // Counter
 				{
 					string selector = GetSelector(expression.ObjectInfo);
-					result += $"({selector}->Count() > 0 ? std::dynamic_pointer_cast<CommonProperties>((*({selector}->begin()))->OI->Properties)->oValue->GetValue() : 0)";
+					result += $"({selector}->Count() > 0 ? ((Counter*)*({selector}->begin()))->GetValue() : 0)";
 				}
 			}
 			else if (expression.ObjectType > 0 && expression.Num == 81)
@@ -290,9 +292,9 @@ public class ExpressionConverter
 				if (expression.ObjectType == 3) // String
 				{
 					if (expression.ObjectInfo == eventBase.ObjectInfo && expression.ObjectInfoList == eventBase.ObjectInfoList)
-						result += "std::dynamic_pointer_cast<CommonProperties>(instance->OI->Properties)->oParagraphs->GetText()";
+						result += "((StringObject*)instance)->GetText()";
 					else
-						result += $"({GetSelector(expression.ObjectInfo)}->Count() > 0 ? std::dynamic_pointer_cast<CommonProperties>((*{GetSelector(expression.ObjectInfo)}->begin())->OI->Properties)->oParagraphs->GetText() : std::string(\"\"))";
+						result += $"({GetSelector(expression.ObjectInfo)}->Count() > 0 ? ((StringObject*)*({GetSelector(expression.ObjectInfo)}->begin()))->GetText() : std::string(\"\"))";
 				}
 			}
 			else if (expression.ObjectType > 0 && expression.Num == 82)
@@ -300,9 +302,9 @@ public class ExpressionConverter
 				if (expression.ObjectType == 7) // Counter
 				{
 					if (expression.ObjectInfo == eventBase.ObjectInfo && expression.ObjectInfoList == eventBase.ObjectInfoList)
-						result += $"std::dynamic_pointer_cast<CommonProperties>(instance->OI->Properties)->oValue->MaxValue";
+						result += $"((Counter*)instance)->MaxValue";
 					else
-						result += $"({GetSelector(expression.ObjectInfo)}->Count() > 0 ? std::dynamic_pointer_cast<CommonProperties>((*{GetSelector(expression.ObjectInfo)}->begin())->OI->Properties)->oValue->MaxValue : 0)";
+						result += $"({GetSelector(expression.ObjectInfo)}->Count() > 0 ? ((Counter*)*({GetSelector(expression.ObjectInfo)}->begin()))->MaxValue : 0)";
 				}
 			}
 			else if (expression.ObjectType > 0 && expression.Num == 83)
@@ -355,6 +357,39 @@ public class ExpressionConverter
 	{
 		var obj = GetObject(objectInfo, isGlobal);
 		return $"{StringUtils.SanitizeObjectName(obj.Item2)}_{obj.Item1}_selector";
+	}
+
+	public static string GetObjectClassName(int objectInfo, bool isGlobal = false, bool convertToCCN = true)
+	{
+		int ObjectType = 0;
+		int ObjectInfo = 0;
+		if (convertToCCN)
+		{
+			var obj = GetObject(objectInfo, isGlobal);
+			ObjectType = Exporter.Instance.GameData.frameitems[obj.Item1].ObjectType;
+			ObjectInfo = obj.Item1;
+		}
+		else
+		{
+			ObjectInfo = objectInfo;
+			ObjectType = Exporter.Instance.GameData.frameitems[objectInfo].ObjectType;
+		}
+
+		switch (ObjectType)
+		{
+			case 0: return "QuickBackdrop";
+			case 1: return "Backdrop";
+			case 2: return "Active";
+			case 3: return "StringObject";
+			case 5: return "Score";
+			case 6: return "Lives";
+			case 7: return "Counter";
+			case >= 32:
+			ObjectCommon common = Exporter.Instance.GameData.frameitems[ObjectInfo].properties as ObjectCommon;
+			ExtensionExporter exporter = ExtensionExporterRegistry.GetExporter(common.Identifier);
+			return exporter?.CppClassName ?? "Extension";
+			default: return "ObjectInstance";
+		}
 	}
 
 	public static Tuple<int, string, ObjectInstance> GetObject(int objectInfo, bool isGlobal = false, int frame = -1)

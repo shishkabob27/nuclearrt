@@ -7,7 +7,8 @@
 
 class Animations {
 public:
-	Animations(const std::unordered_map<int, std::shared_ptr<Sequence>>& sequences) {
+	Animations() = default;
+	Animations(const std::unordered_map<int, Sequence*> sequences) {
 		Sequences = sequences;
 
 		//set current sequence to the first one in the map
@@ -196,7 +197,7 @@ public:
 	}
 
 private:
-	std::unordered_map<int, std::shared_ptr<Sequence>> Sequences;
+	std::unordered_map<int, Sequence*> Sequences;
 	float CurrentFrameTime = 0.0f;
 
 	int CurrentSequenceIndex = 0;

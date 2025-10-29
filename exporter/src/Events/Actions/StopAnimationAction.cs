@@ -13,9 +13,7 @@ public class StopAnimationAction : ActionBase
 
 		result.AppendLine($"for (ObjectIterator it(*{GetSelector(eventBase.ObjectInfo)}); !it.end(); ++it) {{");
 		result.AppendLine($"    auto instance = *it;");
-		result.AppendLine($"    auto commonProperties = std::dynamic_pointer_cast<CommonProperties>(instance->OI->Properties);");
-		result.AppendLine($"    auto animations = std::dynamic_pointer_cast<Animations>(commonProperties->oAnimations);");
-		result.AppendLine($"    animations->Stop();");
+		result.AppendLine($"    ((Active*)instance)->Animations.Stop();");
 		result.AppendLine("}");
 
 		return result.ToString();
