@@ -353,16 +353,7 @@ std::vector<unsigned int> Frame::GetFontsUsed()
 
 ObjectInstance* Frame::CreateInstance(ObjectInstance* createdInstance, short x, short y, unsigned int layer, short instanceValue, unsigned int objectInfoHandle, short angle, ObjectInstance* parentInstance)
 {
-	
-	//get max unique handle
-	unsigned int maxHandle = 0;
-	for (auto& [handle, instance] : ObjectInstances)
-	{
-		maxHandle = std::max(maxHandle, handle);
-	}
-	
-	unsigned int handle = maxHandle + 1;
-	createdInstance->Handle = handle;
+	createdInstance->Handle = ++MaxObjectInstanceHandle;
 	createdInstance->X = x;
 	createdInstance->Y = y;
 	createdInstance->Layer = layer;
@@ -378,7 +369,7 @@ ObjectInstance* Frame::CreateInstance(ObjectInstance* createdInstance, short x, 
 		backend->LoadTexture(textureId);
 	}
 	
-	ObjectInstances[handle] = createdInstance;
+	ObjectInstances[createdInstance->Handle] = createdInstance;
 	if (parentInstance) {
 		createdInstance->X += parentInstance->X;
 		createdInstance->Y += parentInstance->Y;

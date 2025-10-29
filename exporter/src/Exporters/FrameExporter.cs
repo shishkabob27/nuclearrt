@@ -122,7 +122,12 @@ public class FrameExporter : BaseExporter
 			objectInstances.Append($"CreateInstance(factory.CreateInstance_{objectName}_{obj.objectInfo}(), {obj.x}, {obj.y}, {obj.layer}, {obj.instance}, {obj.objectInfo}, 0);\n");
 			objectsCount += 1;
 		}
-		if (objectsCount != 0) { objectInstances.Insert(0, $"ObjectInstances.reserve({objectsCount});\n"); }
+
+		if (objectsCount != 0) {
+			objectInstances.Insert(0, $"ObjectInstances.reserve({objectsCount});\n");
+			objectInstances.AppendLine($"MaxObjectInstanceHandle = {objectsCount};");
+		}
+
 
 		return objectInstances.ToString();
 	}

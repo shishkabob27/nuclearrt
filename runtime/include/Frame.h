@@ -25,6 +25,8 @@ public:
 	std::vector<Layer> Layers;
 
 	std::unordered_map<unsigned int, ObjectInstance*> ObjectInstances;
+	unsigned int MaxObjectInstanceHandle = 0;
+	
 	Timer GameTimer;
 
 	bool IsGroupActive(unsigned int groupId) {
