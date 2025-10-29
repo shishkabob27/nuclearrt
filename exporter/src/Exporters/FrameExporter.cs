@@ -101,6 +101,7 @@ public class FrameExporter : BaseExporter
 	private string BuildLayers(CTFAK.CCN.Chunks.Frame.Frame frame)
 	{
 		var layers = new StringBuilder();
+		layers.AppendLine($"Layers.reserve({frame.layers.Items.Count});");
 		foreach (var layer in frame.layers.Items)
 		{
 			layers.AppendLine($"Layers.push_back(Layer(\"{SanitizeString(layer.Name)}\", {layer.XCoeff}, {layer.YCoeff}));");
@@ -111,6 +112,7 @@ public class FrameExporter : BaseExporter
 	private string BuildObjectInstances(CTFAK.CCN.Chunks.Frame.Frame frame)
 	{
 		var objectInstances = new StringBuilder();
+		var objectsCount = 0;
 		foreach (var obj in frame.objects)
 		{
 			// skip instances not created on start
@@ -118,7 +120,10 @@ public class FrameExporter : BaseExporter
 			if (GameData.frameitems[(int)obj.objectInfo].properties is ObjectCommon common && common.Flags.GetFlag("DoNotCreateAtStart")) continue;
 			string objectName = SanitizeObjectName(GameData.frameitems[(int)obj.objectInfo].name);
 			objectInstances.Append($"CreateInstance(factory.CreateInstance_{objectName}_{obj.objectInfo}(), {obj.x}, {obj.y}, {obj.layer}, {obj.instance}, {obj.objectInfo}, 0);\n");
+			objectsCount += 1;
 		}
+		if (objectsCount != 0) { objectInstances.Insert(0, $"ObjectInstances.reserve({objectsCount});\n"); }
+
 		return objectInstances.ToString();
 	}
 
