@@ -128,13 +128,14 @@ public class ObjectInfoExporter : BaseExporter
 		{
 			var common = (ObjectCommon)objectInfo.properties;
 			result.AppendLine($"((StringObject*)instance)->Visible = {common.NewFlags.GetFlag("VisibleAtStart").ToString().ToLower()};");
+			result.AppendLine($"((StringObject*)instance)->FollowFrame = {(!common.Flags.GetFlag("ScrollingIndependant")).ToString().ToLower()};");
 			result.AppendLine(BuildParagraphs((ObjectCommon)objectInfo.properties));
 		}
 		else if (objectInfo.ObjectType == 5 || objectInfo.ObjectType == 6 || objectInfo.ObjectType == 7)
 		{
 			var common = (ObjectCommon)objectInfo.properties;
 			result.AppendLine($"((CounterBase*)instance)->Visible = {common.NewFlags.GetFlag("VisibleAtStart").ToString().ToLower()};");
-			result.AppendLine($"((CounterBase*)instance)->FollowFrame = {common.Preferences.GetFlag("ScrollingIndependant").ToString().ToLower()};");
+			result.AppendLine($"((CounterBase*)instance)->FollowFrame = {(!common.Flags.GetFlag("ScrollingIndependant")).ToString().ToLower()};");
 			result.AppendLine(BuildCounter((ObjectCommon)objectInfo.properties));
 
 			if (objectInfo.ObjectType == 7) // only counter has alterable values, strings, and flags
