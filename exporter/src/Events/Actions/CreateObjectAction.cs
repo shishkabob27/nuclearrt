@@ -16,7 +16,10 @@ public class CreateObjectAction : ActionBase
 		result.AppendLine("{");
 		if (create.Position.ObjectInfoParent != ushort.MaxValue)
 		{
-			result.AppendLine($"ObjectInstance* parent = *{GetSelector((int)create.Position.ObjectInfoParent)}->begin();");
+			result.AppendLine($"ObjectInstance* parent = nullptr;");
+			result.AppendLine($"if ({GetSelector((int)create.Position.ObjectInfoParent)}->Size() > 0) {{");
+			result.AppendLine($"    parent = *{GetSelector((int)create.Position.ObjectInfoParent)}->begin();");
+			result.AppendLine($"}}");
 		}
 		var objectInfo = ExpressionConverter.GetObject(create.ObjectInfo, IsGlobal);
 		result.AppendLine($"ObjectInstance* instance = CreateInstance(ObjectFactory::Instance().CreateInstance_{StringUtils.SanitizeObjectName(objectInfo.Item2)}_{objectInfo.Item1}(), {create.Position.X}, {create.Position.Y}, {create.Position.Layer}, 0, {objectInfo.Item1}, {create.Position.Angle}{(create.Position.ObjectInfoParent != ushort.MaxValue ? ", parent" : "")});");
