@@ -13,7 +13,7 @@ public class FlagOnCondition : ConditionBase
 
 		result.AppendLine($"for (ObjectIterator it(*{GetSelector(eventBase.ObjectInfo)}); !it.end(); ++it) {{");
 		result.AppendLine($"    auto instance = *it;");
-		result.AppendLine($"    bool flag = (({ExpressionConverter.GetObjectClassName(eventBase.ObjectInfo)}*)instance)->Flags.GetFlag({ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[0].Loader, eventBase)});");
+		result.AppendLine($"    bool flag = (({ExpressionConverter.GetObjectClassName(eventBase.ObjectInfo, IsGlobal)}*)instance)->Flags.GetFlag({ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[0].Loader, eventBase)});");
 
 		if (eventBase.Num == -25)
 			result.AppendLine($"    if (!flag) it.deselect();");

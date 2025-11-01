@@ -15,7 +15,7 @@ public class SpreadAlterableValueAction : ActionBase
 		result.AppendLine($"	int currentValue = {ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[1].Loader, eventBase)};");
 		result.AppendLine($"	for (ObjectIterator it(*{GetSelector(eventBase.ObjectInfo)}); !it.end(); ++it) {{");
 		result.AppendLine($"		auto instance = *it;");
-		result.AppendLine($"		(({ExpressionConverter.GetObjectClassName(eventBase.ObjectInfo)}*)instance)->Values.SetValue({((AlterableValue)eventBase.Items[0].Loader).Value}, currentValue);");
+		result.AppendLine($"		(({ExpressionConverter.GetObjectClassName(eventBase.ObjectInfo, IsGlobal)}*)instance)->Values.SetValue({((AlterableValue)eventBase.Items[0].Loader).Value}, currentValue);");
 		result.AppendLine($"		currentValue++;");
 		result.AppendLine($"	}}");
 		result.AppendLine($"}}");

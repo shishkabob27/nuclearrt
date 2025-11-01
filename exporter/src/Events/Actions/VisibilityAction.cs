@@ -13,7 +13,7 @@ public class MakeInvisibleAction : ActionBase
 
 		result.AppendLine($"for (ObjectIterator it(*{GetSelector(eventBase.ObjectInfo)}); !it.end(); ++it) {{");
 		result.AppendLine($"    auto instance = *it;");
-		result.AppendLine($"    (({ExpressionConverter.GetObjectClassName(eventBase.ObjectInfo)}*)instance)->Visible = {(eventBase.Num == 26 ? false : true).ToString().ToLower()};");
+		result.AppendLine($"    (({ExpressionConverter.GetObjectClassName(eventBase.ObjectInfo, IsGlobal)}*)instance)->Visible = {(eventBase.Num == 26 ? false : true).ToString().ToLower()};");
 		result.AppendLine("}");
 
 		return result.ToString();
