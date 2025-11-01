@@ -89,6 +89,11 @@ public:
 		return SelectedInstances.size();
 	}
 
+	// Get number of all object instances in the selector
+	size_t Size() const {
+		return AllSelectorObjectInstances.size();
+	}
+
 	// Access instance by index
 	ObjectInstance* At(size_t index) {
 		if (index < SelectedInstances.size()) {

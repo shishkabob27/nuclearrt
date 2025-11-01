@@ -201,11 +201,6 @@ void Frame::DrawLayer(Layer& layer, unsigned int index)
 	}
 }
 
-int Frame::NumberOfThisObject(unsigned int objectInfoHandle)
-{
-	return 0;
-}
-
 void Frame::DrawCounterNumbers(CounterBase *counter, int value, int x, int y)
 {
 	std::string valueString = std::to_string(value);

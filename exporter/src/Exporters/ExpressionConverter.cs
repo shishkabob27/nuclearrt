@@ -239,7 +239,7 @@ public class ExpressionConverter
 			}
 			else if (expression.ObjectType > 0 && expression.Num == 15) // Number of this Object
 			{
-				result += $"NumberOfThisObject({GetObject(expression.ObjectInfo).Item1})";
+				result += $"{GetSelector(expression.ObjectInfo)}->Size()";
 			}
 			else if (expression.ObjectType > 0 && expression.Num == 16) // Alterable Value
 			{
