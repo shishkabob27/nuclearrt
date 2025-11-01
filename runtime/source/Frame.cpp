@@ -13,21 +13,6 @@ void Frame::Initialize()
 
 void Frame::PostInitialize()
 {
-	for (auto& [handle, instance] : ObjectInstances)
-	{
-		if (instance->Type == 2) // Common object
-		{
-			for (auto& movement : ((Active*)instance)->Movements.items)
-			{
-				movement.second->Instance = instance;
-				movement.second->Initialize();
-			}
-		}
-		if (instance->Type >= 32) // Extension
-		{
-			((Extension*)instance)->Initialize();
-		}
-	}
 }
 
 void Frame::Update()
@@ -374,6 +359,20 @@ ObjectInstance* Frame::CreateInstance(ObjectInstance* createdInstance, short x, 
 		createdInstance->X += parentInstance->X;
 		createdInstance->Y += parentInstance->Y;
 		createdInstance->Layer = parentInstance->Layer;
+	}
+
+	//init movement and extensions
+	if (createdInstance->Type == 2) // Common object
+	{
+		for (auto& [handle, movement] : ((Active*)createdInstance)->Movements.items)
+		{
+			movement->Instance = createdInstance;
+			movement->Initialize();
+		}
+	}
+	else if (createdInstance->Type >= 32) // Extension
+	{
+		((Extension*)createdInstance)->Initialize();
 	}
 
 	return createdInstance;
