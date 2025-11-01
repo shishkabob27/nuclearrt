@@ -314,25 +314,36 @@ public class ObjectInfoExporter : BaseExporter
 			string? movementClassName = null;
 			switch (movement.Type)
 			{
+				case 0:
+					movementClassName = "StaticMovement";
+					break;
 				case 1:
 					movementClassName = "MouseMovement";
 					break;
 				case 3:
 					movementClassName = "EightDirectionsMovement";
 					break;
+				case 5:
+					movementClassName = "PathMovement";
+					break;
 			}
 
 			if (movementClassName != null)
 			{
-				result.Append($"std::pair<int, Movement*>({i}, new {movementClassName}({movement.Player - 1}, {movement.MovingAtStart}, {movement.DirectionAtStart}, ");
+				result.Append($"std::pair<int, Movement*>({i}, new {movementClassName}({movement.Player - 1}, {movement.MovingAtStart}, {movement.DirectionAtStart}");
 
 				if (movement.Loader is EightDirections eightDirections)
 				{
-					result.Append($"{eightDirections.Speed}, {eightDirections.Acceleration}, {eightDirections.Deceleration}, {eightDirections.BounceFactor}, {eightDirections.Directions}");
+					result.Append($", {eightDirections.Speed}, {eightDirections.Acceleration}, {eightDirections.Deceleration}, {eightDirections.BounceFactor}, {eightDirections.Directions}");
 				}
 				else if (movement.Loader is Mouse mouse)
 				{
-					result.Append($"{mouse.X1}, {mouse.X2}, {mouse.Y1}, {mouse.Y2}");
+					result.Append($", {mouse.X1}, {mouse.X2}, {mouse.Y1}, {mouse.Y2}");
+				}
+				else if (movement.Loader is MovementPath pathMovement)
+				{
+					result.Append($", {pathMovement.MinimumSpeed}, {pathMovement.MaximumSpeed}, {pathMovement.Loop}, {pathMovement.RepositionAtEnd}, {pathMovement.ReverseAtEnd}, ");
+					result.Append($"std::vector<PathNode>{{{string.Join(",", pathMovement.Steps.Select(node => $"PathNode({node.Speed}, {node.Direction}, {node.DestinationX}, {node.DestinationY})"))}}}");
 				}
 
 				result.Append("))");

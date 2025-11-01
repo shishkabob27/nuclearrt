@@ -13,8 +13,10 @@
 #include "Counter.h"
 #include "Extension.h"
 
+#include "StaticMovement.h"
 #include "MouseMovement.h"
 #include "EightDirectionsMovement.h"
+#include "PathMovement.h"
 
 {{ EXTENSION_INCLUDES }}
 
