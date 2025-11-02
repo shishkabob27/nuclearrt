@@ -1,9 +1,11 @@
 #pragma once
 
-#include "Sequence.h"
 #include <unordered_map>
 #include <memory>
 #include <algorithm>
+
+#include "Application.h"
+#include "Sequence.h"
 
 class Animations {
 public:
@@ -15,6 +17,8 @@ public:
 		if (!Sequences.empty()) {
 			CurrentSequenceIndex = Sequences.begin()->first;
 		}
+		
+		CurrentDirection = Sequences.begin()->second->Directions.begin()->second->Index;
 	}
 
 	bool IsSequenceOver(int sequence) const {
@@ -30,8 +34,8 @@ public:
 		std::vector<unsigned int> imagesUsed;
 		for (const auto& sequencePair : Sequences) {
 			const auto& sequence = sequencePair.second;
-			for (const auto& direction : sequence->Directions) {
-				for (const auto& frame : direction->Frames) {
+			for (const auto& directionPair : sequence->Directions) {
+				for (const auto& frame : directionPair.second->Frames) {
 					if (std::find(imagesUsed.begin(), imagesUsed.end(), frame) == imagesUsed.end()) {
 						imagesUsed.push_back(frame);
 					}
@@ -45,7 +49,12 @@ public:
 		int displaySequence = forcedSequence != -1 ? forcedSequence : CurrentSequenceIndex;
 		int displayDirection = forcedDirection != -1 ? forcedDirection : CurrentDirection;
 		int displayFrame = forcedFrame != -1 ? forcedFrame : CurrentFrameIndex;
-		return Sequences.at(displaySequence)->Directions[displayDirection]->Frames[displayFrame];
+
+		if (Sequences.at(displaySequence)->Directions.find(displayDirection) == Sequences.at(displaySequence)->Directions.end() || AutomaticRotation) {
+			displayDirection = Sequences.at(displaySequence)->Directions.begin()->second->Index;
+		}
+		
+		return Sequences.at(displaySequence)->Directions.at(displayDirection)->Frames.at(displayFrame);
 	}
 
 	unsigned int GetCurrentSequenceIndex() const {
@@ -60,6 +69,10 @@ public:
 		return CurrentFrameIndex;
 	}
 
+	int GetAutomaticRotationDirection() const {
+		return automaticRotationDirection;
+	}
+
 	void Start() {
 		started = true;
 	}
@@ -72,12 +85,14 @@ public:
 			return;
 		}
 
-		if (Sequences.find(index) != Sequences.end()) {
-			CurrentSequenceIndex = index;
-			CurrentDirection = 0; // Reset direction when changing sequence
-			CurrentFrameIndex = 0; // Reset frame when changing sequence
-			CurrentFrameTime = 0.0f; // Reset frame time
+		if (Sequences.find(index) == Sequences.end()) {
+			return;
 		}
+
+		CurrentSequenceIndex = index;
+		CurrentDirection = Sequences.at(index)->Directions.begin()->second->Index;
+		CurrentFrameIndex = 0;
+		CurrentFrameTime = 0.0f;
 	}
 
 	void SetCurrentDirection(int index) {
@@ -86,7 +101,7 @@ public:
 		}
 
 		auto& currentSequence = Sequences.at(CurrentSequenceIndex);
-		if (index >= 0 && index < static_cast<int>(currentSequence->Directions.size())) {
+		if (index >= 0 && currentSequence->Directions.find(index) != currentSequence->Directions.end()) {
 			CurrentDirection = index;
 			CurrentFrameIndex = 0; // Reset frame when changing direction
 			CurrentFrameTime = 0.0f; // Reset frame time
@@ -98,8 +113,8 @@ public:
 			return;
 		}
 
-		auto& currentDirection = Sequences.at(CurrentSequenceIndex)->Directions[CurrentDirection];
-		if (index >= 0 && index < static_cast<int>(currentDirection->Frames.size())) {
+		auto& currentDirection = Sequences.at(CurrentSequenceIndex)->Directions.find(CurrentDirection);
+		if (index >= 0 && currentDirection != Sequences.at(CurrentSequenceIndex)->Directions.end() && index < static_cast<int>(currentDirection->second->Frames.size())) {
 			CurrentFrameIndex = index;
 			CurrentFrameTime = 0.0f; // Reset frame time
 		}
@@ -113,8 +128,42 @@ public:
 		forcedFrame = frame;
 	}
 
-	void SetForcedDirection(int direction) {
-		forcedDirection = direction;
+	void SetForcedDirection(int directionMask) {
+		int newDirection = -1;
+		auto& sequence = Sequences.at(CurrentSequenceIndex);
+
+		std::vector<int> validDirections;
+		if (directionMask == -1) // set to any valid direction
+		{
+			//set to all
+			for (int i = 0; i < 32; ++i) {
+				validDirections.push_back(i);
+			}
+		}
+		else
+		{
+			for (int i = 0; i < 32; ++i) {
+				if (directionMask & (1 << i)) {
+					validDirections.push_back(i);
+				}
+			}
+		}
+
+		//remove any directions that don't exist
+		validDirections.erase(std::remove_if(validDirections.begin(), validDirections.end(), [sequence](int direction) {
+			return sequence->Directions.find(direction) == sequence->Directions.end();
+		}), validDirections.end());
+
+		if (validDirections.empty()) {
+			return;
+		}
+
+		//get a random valid direction from the list
+		int index = Application::Instance().RandomRange(0, static_cast<short>(validDirections.size() - 1));
+		newDirection = validDirections.at(index);
+		automaticRotationDirection = newDirection;
+
+		forcedDirection = newDirection;
 	}
 
 	void RestoreForcedSequence() {
@@ -128,6 +177,10 @@ public:
 	void RestoreForcedFrame() {
 		CurrentFrameIndex = forcedFrame;
 		forcedFrame = -1;
+	}
+
+	bool IsDirectionForced() const {
+		return forcedDirection != -1;
 	}
 
 	void Update(float deltaTime) {
@@ -147,7 +200,17 @@ public:
 		}
 
 		auto& currentSequence = Sequences.at(displaySequence);
-		auto& currentDirection = currentSequence->Directions[displayDirection];
+
+		//if the direction doesn't exist, set to the first direction
+		if (currentSequence->Directions.find(displayDirection) == currentSequence->Directions.end()) {
+			forcedDirection = -1;
+			displayDirection = currentSequence->Directions.begin()->second->Index;
+			CurrentDirection = displayDirection;
+			CurrentFrameIndex = 0;
+			CurrentFrameTime = 0.0f;
+			return;
+		}
+		auto& currentDirection = currentSequence->Directions.at(displayDirection);
 
 		int animSpeed = currentDirection->MaximumSpeed; // TODO: look at minimum speed too
 
@@ -195,7 +258,8 @@ public:
 			}
 		}
 	}
-
+	
+	bool AutomaticRotation = false;
 private:
 	std::unordered_map<int, Sequence*> Sequences;
 	float CurrentFrameTime = 0.0f;
@@ -209,6 +273,8 @@ private:
 	int forcedFrame = -1;
 	int forcedDirection = -1;
 	int forcedSequence = -1;
+
+	int automaticRotationDirection = -1;
 
 	mutable std::unordered_map<int, bool> SequenceOverEvents;
 };

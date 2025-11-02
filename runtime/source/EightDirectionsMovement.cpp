@@ -1,6 +1,8 @@
 #include "EightDirectionsMovement.h"
 #include "Application.h"
 
+#include "Active.h"
+
 void EightDirectionsMovement::Update(float deltaTime) {
 	bool moved = false;
 	int wishX = 0;
@@ -66,4 +68,8 @@ void EightDirectionsMovement::Update(float deltaTime) {
 
 	Instance->X += xDifference;
 	Instance->Y += yDifference;
+
+	if (!((Active*)Instance)->AutomaticRotation ) {
+		((Active*)Instance)->Animations.SetCurrentDirection(movementDirection);
+	}
 }

@@ -219,6 +219,13 @@ public class ExpressionConverter
 				else
 					result += $"({GetSelector(expression.ObjectInfo)}->Count() > 0 ? ((Active*)*({GetSelector(expression.ObjectInfo)}->begin()))->Movements.GetCurrentMovement()->GetRealSpeed() : 0)";
 			}
+			else if (expression.ObjectType > 0 && expression.Num == 6) // Animation Direction
+			{
+				if (expression.ObjectInfo == eventBase.ObjectInfo && expression.ObjectInfoList == eventBase.ObjectInfoList)
+					result += "((Active*)instance)->Animations.GetCurrentDirection()";
+				else
+					result += $"({GetSelector(expression.ObjectInfo)}->Count() > 0 ? ((Active*)*({GetSelector(expression.ObjectInfo)}->begin()))->Animations.GetCurrentDirection() : 0)";
+			}
 			else if (expression.ObjectType > 0 && expression.Num == 11) // X Position
 			{
 				if (expression.ObjectInfo == eventBase.ObjectInfo && expression.ObjectInfoList == eventBase.ObjectInfoList)

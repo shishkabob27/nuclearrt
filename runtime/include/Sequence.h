@@ -5,8 +5,8 @@
 
 class Sequence {
 public:
-    Sequence(const std::vector<Direction*>& directions)
+    Sequence(const std::unordered_map<int, Direction*>& directions)
         : Directions(directions) {}
 
-    std::vector<Direction*> Directions;
+    std::unordered_map<int, Direction*> Directions;
 }; 

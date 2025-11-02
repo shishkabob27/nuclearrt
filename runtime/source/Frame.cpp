@@ -106,9 +106,8 @@ void Frame::DrawLayer(Layer& layer, unsigned int index)
 			if (!((Active*)instance)->Visible) continue;
 
 			auto& imageBank = ImageBank::Instance();
-			unsigned int imageId = 0;
-				
-			imageId = ((Active*)instance)->Animations.GetCurrentImageHandle();
+			auto& animations = ((Active*)instance)->Animations;
+			unsigned int imageId = animations.GetCurrentImageHandle();
 
 			int scrollXOffset = 0;
 			int scrollYOffset = 0;
@@ -125,9 +124,13 @@ void Frame::DrawLayer(Layer& layer, unsigned int index)
 				if (((Active*)instance)->AutomaticRotation)
 				{
 					auto movement = ((Active*)instance)->Movements.GetCurrentMovement();
-					if (movement != nullptr)
+					if (movement != nullptr && !animations.IsDirectionForced())
 					{
 						angle += movement->GetMovementDirection() * 180 / 16;
+					}
+					else
+					{
+						angle += animations.GetAutomaticRotationDirection() * 180 / 16;
 					}
 				}
 
@@ -364,6 +367,8 @@ ObjectInstance* Frame::CreateInstance(ObjectInstance* createdInstance, short x, 
 			movement->Instance = createdInstance;
 			movement->Initialize();
 		}
+
+		((Active*)createdInstance)->Animations.AutomaticRotation = ((Active*)createdInstance)->AutomaticRotation;
 	}
 	else if (createdInstance->Type >= 32) // Extension
 	{

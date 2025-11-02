@@ -16,7 +16,6 @@ public:
 	int Directions;
 
 	float realSpeed = 0;
-	int movementDirection = 0;
 
 	int GetRealSpeed() override { return static_cast<int>(realSpeed); }
 	int GetMovementDirection() override { return movementDirection; }

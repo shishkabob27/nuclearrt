@@ -225,16 +225,16 @@ public class ObjectInfoExporter : BaseExporter
 			var sequenceStr = new StringBuilder();
 			sequenceStr.Append($"std::pair<int, Sequence*>({sequence.Key}, ");
 			sequenceStr.Append($"new Sequence(");
-			sequenceStr.Append("std::vector<Direction*>{");
+			sequenceStr.Append("std::unordered_map<int, Direction*>{");
 
 			var directions = new List<string>();
 			foreach (var direction in sequence.Value.DirectionDict.Values)
 			{
-				int index = sequence.Value.DirectionDict.Values.ToList().IndexOf(direction);
+				int index = sequence.Value.DirectionDict.FirstOrDefault(x => x.Value == direction).Key;
 					directions.Add(
-						"new Direction(" + index + ", " + direction.MinSpeed + ", " +
+						"std::pair<int, Direction*>(" + index + ", new Direction(" + index + ", " + direction.MinSpeed + ", " +
 						direction.MaxSpeed + ", " + (direction.Repeat == 0).ToString().ToLower() + ", " + direction.BackTo + ", " +
-						"std::vector<unsigned int>{" + string.Join(",", direction.Frames) + "})"
+						"std::vector<unsigned int>{" + string.Join(",", direction.Frames) + "}))"
 					);
 			}
 
