@@ -127,7 +127,7 @@ void SDL3Backend::Initialize() {
 							ImGui::Text("Type: %d", instance->Type);
 							ImGui::Text("RGB Coefficient: %d", instance->RGBCoefficient);
 							ImGui::Text("Effect: %d", instance->Effect);
-							ImGui::Text("Blend Coefficient: %d", instance->BlendCoefficient);
+							ImGui::Text("Blend Coefficient: %d", instance->GetBlendCoefficient());
 							ImGui::Text("Effect Parameter: %d", instance->EffectParameter);
 							ImGui::TreePop();
 						}
@@ -318,7 +318,7 @@ void SDL3Backend::UnloadTexture(int id) {
 	}
 }
 
-void SDL3Backend::DrawTexture(int id, int x, int y, int offsetX, int offsetY, int angle, float scale, int color, char blendCoefficient, int effect, unsigned int effectParam)
+void SDL3Backend::DrawTexture(int id, int x, int y, int offsetX, int offsetY, int angle, float scale, int color, unsigned char blendCoefficient, int effect, unsigned int effectParam)
 {
 	SDL_Texture* texture = textures[id];
 	if (texture == nullptr) {

@@ -133,7 +133,7 @@ void SDL2Backend::Initialize() {
 							ImGui::Text("Type: %d", instance->OI->Type);
 							ImGui::Text("RGB Coefficient: %d", instance->OI->RGBCoefficient);
 							ImGui::Text("Effect: %d", instance->OI->Effect);
-							ImGui::Text("Blend Coefficient: %d", instance->OI->BlendCoefficient);
+							ImGui::Text("Blend Coefficient: %d", instance->OI->GetBlendCoefficient());
 							ImGui::Text("Effect Parameter: %d", instance->OI->EffectParameter);
 							ImGui::TreePop();
 						}

@@ -99,7 +99,7 @@ void Frame::DrawLayer(Layer& layer, unsigned int index)
 
 			Application::Instance().GetBackend()->DrawTexture(
 				imageId, instance->X - (scrollX * layer.XCoefficient), instance->Y - (scrollY * layer.YCoefficient),
-				0, 0, 0, 1.0f, instance->RGBCoefficient, instance->BlendCoefficient, instance->Effect, instance->EffectParameter);
+				0, 0, 0, 1.0f, instance->RGBCoefficient, instance->GetBlendCoefficient(), instance->Effect, instance->EffectParameter);
 		}
 		else if (instance->Type == 2)
 		{
@@ -137,7 +137,7 @@ void Frame::DrawLayer(Layer& layer, unsigned int index)
 				Application::Instance().GetBackend()->DrawTexture(
 					imageId, instance->X - scrollXOffset, instance->Y - scrollYOffset,
 					imageInfo->HotspotX, imageInfo->HotspotY, 
-					angle, 1.0f, instance->RGBCoefficient, instance->BlendCoefficient, instance->Effect, instance->EffectParameter);
+					angle, 1.0f, instance->RGBCoefficient, instance->GetBlendCoefficient(), instance->Effect, instance->EffectParameter);
 			}
 		}
 		else if (instance->Type == 3) // Text

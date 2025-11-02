@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <memory>
 #include <string>
 #include <vector>
@@ -25,8 +26,15 @@ public:
 
 	int RGBCoefficient = 0xFFFFFF;
 	int Effect = 0;
-	unsigned char BlendCoefficient = 0; // Alpha
 	unsigned int EffectParameter = 0; 
+
+	unsigned char GetBlendCoefficient() const {
+		return BlendCoefficient;
+	}
+	
+	void SetBlendCoefficient(int blendCoefficient) {
+		BlendCoefficient = static_cast<unsigned char>(std::clamp(blendCoefficient, 0, 255));
+	}
 	
 	unsigned int GetAngle() const {
 		return Angle;
@@ -49,4 +57,5 @@ public:
 
 private:
 	unsigned int Angle = 0;
+	unsigned char BlendCoefficient = 0; // Alpha
 };
