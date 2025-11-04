@@ -7,7 +7,8 @@
 struct FontInfo {
     unsigned int Handle;
 
-    std::string Name;
+    std::string FontName;
+    std::string FontFileName;
 
     int Width;
     int Height;
@@ -19,8 +20,8 @@ struct FontInfo {
     bool Underline;
     bool Strikeout;
 
-    FontInfo(unsigned int handle, const std::string& name, int width, int height, int escapment, int orientation, int weight, bool italic, bool underline, bool strikeout)
-        : Handle(handle), Name(name), Width(width), Height(height), Escapment(escapment), Orientation(orientation), Weight(weight), Italic(italic), Underline(underline), Strikeout(strikeout) {}
+    FontInfo(unsigned int handle, const std::string& fontName, const std::string& fontFileName, int width, int height, int escapment, int orientation, int weight, bool italic, bool underline, bool strikeout)
+        : Handle(handle), FontName(fontName), FontFileName(fontFileName), Width(width), Height(height), Escapment(escapment), Orientation(orientation), Weight(weight), Italic(italic), Underline(underline), Strikeout(strikeout) {}
 };
 
 class FontBank {
@@ -30,7 +31,7 @@ public:
         return instance;
     }
     
-    std::shared_ptr<FontInfo> GetFont(unsigned int handle) const {
+    FontInfo* GetFont(unsigned int handle) const {
         auto it = Fonts.find(handle);
         if (it != Fonts.end()) {
             return it->second;
@@ -41,5 +42,5 @@ public:
 private:
     FontBank();
     
-    std::unordered_map<unsigned int, std::shared_ptr<FontInfo>> Fonts;
+    std::unordered_map<unsigned int, FontInfo*> Fonts;
 }; 

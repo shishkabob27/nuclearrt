@@ -483,23 +483,28 @@ void SDL3Backend::LoadFont(int id)
 	}
 
 	//get font info
-	std::shared_ptr<FontInfo> fontInfo = FontBank::Instance().GetFont(id);
+	FontInfo* fontInfo = FontBank::Instance().GetFont(id);
 	if (fontInfo == nullptr) {
 		std::cerr << "FontBank::GetFont Error: " << "Font with id " << id << " not found" << std::endl;
 		return;
 	}
 
-	std::shared_ptr<std::vector<uint8_t>> buffer = std::make_shared<std::vector<uint8_t>>(pakFile.GetData("fonts/" + std::to_string(id) + ".ttf"));
-	if (buffer->empty()) {
-		std::cerr << "PakFile::GetData Error: " << "Font with id " << id << " not found" << std::endl;
-		return;
-	}
+	SDL_IOStream* stream;
 
-	SDL_IOStream* stream = SDL_IOFromMem(buffer->data(), buffer->size());
-	if (!stream) {
-        std::cerr << "SDL_IOFromMem Error: " << SDL_GetError() << std::endl;
-        return;
-    }
+	//if buffer is already loaded, use it
+	if (fontBuffers.find(fontInfo->FontFileName) != fontBuffers.end()) {
+		stream = SDL_IOFromMem(fontBuffers[fontInfo->FontFileName]->data(), fontBuffers[fontInfo->FontFileName]->size());
+	}
+	else {
+		//load buffer from pak file
+		std::shared_ptr<std::vector<uint8_t>> buffer = std::make_shared<std::vector<uint8_t>>(pakFile.GetData("fonts/" + fontInfo->FontFileName));
+		if (buffer->empty()) {
+			std::cerr << "PakFile::GetData Error: " << "Font with file name " << fontInfo->FontFileName << " not found" << std::endl;
+			return;
+		}
+		stream = SDL_IOFromMem(buffer->data(), buffer->size());
+		fontBuffers[fontInfo->FontFileName] = buffer;
+	}
 
 	TTF_Font* font = TTF_OpenFontIO(stream, true, static_cast<float>(fontInfo->Height));
 	if (!font) {
@@ -509,7 +514,7 @@ void SDL3Backend::LoadFont(int id)
 	
 	//render flags
 	int renderFlags = TTF_STYLE_NORMAL;
-	if (fontInfo->Weight > 500) {
+	if (fontInfo->Weight > 400) {
 		renderFlags |= TTF_STYLE_BOLD;
 	}
 	if (fontInfo->Italic) {
@@ -525,16 +530,33 @@ void SDL3Backend::LoadFont(int id)
 	TTF_SetFontStyle(font, renderFlags);
 
 	fonts[id] = font;
-	fontBuffers[id] = buffer;
 }
 
 void SDL3Backend::UnloadFont(int id)
 {
 	auto it = fonts.find(id);
 	if (it != fonts.end()) {
+		// Find the FontInfo associated with this font id to remove buffer
+		FontInfo* fontInfo = FontBank::Instance().GetFont(id);
+		if (fontInfo != nullptr) {
+			// Check if any other loaded font is using the same buffer
+			bool bufferUsedByOtherFont = false;
+			for (const auto& pair : fonts) {
+				if (pair.first != id) {
+					FontInfo* otherFontInfo = FontBank::Instance().GetFont(pair.first);
+					if (otherFontInfo && otherFontInfo->FontFileName == fontInfo->FontFileName) {
+						bufferUsedByOtherFont = true;
+						break;
+					}
+				}
+			}
+			if (!bufferUsedByOtherFont) {
+				fontBuffers.erase(fontInfo->FontFileName);
+			}
+		}
+		
 		TTF_CloseFont(it->second);
 		fonts.erase(it);
-		fontBuffers.erase(id);
 	}
 }
 
@@ -565,8 +587,18 @@ void SDL3Backend::DrawText(FontInfo* fontInfo, int x, int y, int color, const st
 		return;
 	}
 
-	SDL_Surface* surface = TTF_RenderText_Blended_Wrapped(font, modifiedText.c_str(), 0, RGBToSDLColor(color), fontInfo->Width);
+	SDL_Surface* surface = TTF_RenderText_Blended_Wrapped(font, modifiedText.c_str(), 0, RGBToSDLColor(color), 0);
+	if (surface == nullptr) {
+		std::cerr << "TTF_RenderText_Blended_Wrapped Error: " << SDL_GetError() << std::endl;
+		return;
+	}
+
 	SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
+	if (texture == nullptr) {
+		std::cerr << "SDL_CreateTextureFromSurface Error: " << SDL_GetError() << std::endl;
+		return;
+	}
+
 	SDL_FRect rect = { static_cast<float>(x), static_cast<float>(y), static_cast<float>(surface->w), static_cast<float>(surface->h) };
 	SDL_RenderTexture(renderer, texture, nullptr, &rect);
 	SDL_DestroySurface(surface);
