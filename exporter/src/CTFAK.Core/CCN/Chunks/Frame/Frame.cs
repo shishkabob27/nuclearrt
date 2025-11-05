@@ -27,21 +27,12 @@ namespace CTFAK.CCN.Chunks.Frame
 		{
 			handle = reader.ReadUInt16();
 			objectInfo = reader.ReadUInt16();
-
-			if (Settings.Old)
-			{
-				y = reader.ReadInt16();
-				x = reader.ReadInt16();
-			}
-			else
-			{
-				x = reader.ReadInt32();
-				y = reader.ReadInt32();
-			}
+			x = reader.ReadInt32();
+			y = reader.ReadInt32();
 			parentType = reader.ReadInt16();
-			parentHandle = reader.ReadInt16();
-			layer = reader.ReadInt16();
 			instance = reader.ReadInt16();
+			layer = reader.ReadInt16();
+			parentHandle = reader.ReadInt16();
 		}
 	}
 	public class VirtualRect : ChunkLoader

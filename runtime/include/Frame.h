@@ -7,6 +7,7 @@
 #include <vector>
 #include <memory>
 #include "Layer.h"
+#include "CounterBase.h"
 
 class Frame {
 public:
@@ -23,7 +24,9 @@ public:
 
 	std::vector<Layer> Layers;
 
-	std::vector<std::shared_ptr<ObjectInstance>> ObjectInstances;
+	std::unordered_map<unsigned int, ObjectInstance*> ObjectInstances;
+	unsigned int MaxObjectInstanceHandle = 0;
+	
 	Timer GameTimer;
 
 	bool IsGroupActive(unsigned int groupId) {
@@ -58,20 +61,18 @@ public:
 
 	void DeleteMarkedInstances() {
 		for (auto& handle : instancesMarkedForDeletion) {
-			auto it = std::remove_if(ObjectInstances.begin(), ObjectInstances.end(),
-				[handle](const std::shared_ptr<ObjectInstance>& instance) { return instance->Handle == handle; });
-			ObjectInstances.erase(it, ObjectInstances.end());
+			auto it = ObjectInstances.erase(handle);
 		}
 		instancesMarkedForDeletion.clear();
 	}
 
 	virtual void DrawLayer(Layer& layer, unsigned int index);
-	virtual void DrawCounterNumbers(Counter& counter, int value, int x, int y);
+	void DrawCounterNumbers(CounterBase *counter, int value, int x, int y);
 
 	std::vector<unsigned int> GetImagesUsed();
 	std::vector<unsigned int> GetFontsUsed();
 
-	void CreateInstance(short x, short y, unsigned int layer, unsigned int objectInfoHandle, short angle, ObjectInstance* parentInstance = nullptr);
+	ObjectInstance* CreateInstance(ObjectInstance* createdInstance, short x, short y, unsigned int layer, short instanceValue, unsigned int objectInfoHandle, short angle, ObjectInstance* parentInstance = nullptr);
 
 	int GetMouseX();
 	int GetMouseY();
@@ -87,8 +88,6 @@ public:
 	std::string StringRight(std::string str, int length) {
 		return str.substr(str.length() - length);
 	}
-
-	int NumberOfThisObject(unsigned int objectInfoHandle);
 
 	//Collision detection
 	bool IsCollidingWithBackground(ObjectInstance* instance);

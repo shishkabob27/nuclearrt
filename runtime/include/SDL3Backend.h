@@ -33,8 +33,8 @@ public:
 
 	void LoadTexture(int id) override;
 	void UnloadTexture(int id) override;
-	void DrawTexture(int id, int x, int y, int offsetX, int offsetY, int angle, float scale, int color, char blendCoefficient, int effect, unsigned int effectParam) override;
-	void DrawQuickBackdrop(int x, int y, int width, int height, std::shared_ptr<Shape> shape) override;
+	void DrawTexture(int id, int x, int y, int offsetX, int offsetY, int angle, float scale, int color, unsigned char blendCoefficient, int effect, unsigned int effectParam) override;
+	void DrawQuickBackdrop(int x, int y, int width, int height, Shape* shape) override;
 	
 	void DrawRectangle(int x, int y, int width, int height, int color) override;
 	void DrawRectangleLines(int x, int y, int width, int height, int color) override;
@@ -49,6 +49,8 @@ public:
 
 	int GetMouseX() override;
 	int GetMouseY() override;
+	void SetMouseX(int x) override;
+	void SetMouseY(int y) override;
 	int GetMouseWheelMove() override;
 	uint32_t GetMouseState() override;
 	void HideMouseCursor() override;
@@ -84,7 +86,7 @@ private:
 	std::unordered_map<int, SDL_Texture*> textures;
 
 	std::unordered_map<int, TTF_Font*> fonts;
-	std::unordered_map<int, std::shared_ptr<std::vector<uint8_t>>> fontBuffers;
+	std::unordered_map<std::string, std::shared_ptr<std::vector<uint8_t>>> fontBuffers;
 
 	int FusionToSDLKey(short key);
 }; 

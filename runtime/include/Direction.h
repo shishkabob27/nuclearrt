@@ -4,7 +4,7 @@
 
 class Direction {
 public:
-    Direction(int index, int minimumSpeed, int maximumSpeed, bool repeat, int repeatFrame, const std::vector<unsigned int>& frames)
+    Direction(int index, int minimumSpeed, int maximumSpeed, bool repeat, int repeatFrame, std::vector<unsigned int> frames)
         : Index(index), MinimumSpeed(minimumSpeed), MaximumSpeed(maximumSpeed), 
           Repeat(repeat), RepeatFrame(repeatFrame), Frames(frames) {}
 

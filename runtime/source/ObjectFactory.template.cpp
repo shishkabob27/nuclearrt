@@ -1,10 +1,11 @@
 #include "ObjectFactory.h"
 
-std::shared_ptr<ObjectInfo> ObjectFactory::GetObjectInfo(unsigned int handle) {
+ObjectInstance* ObjectFactory::CreateInstance(unsigned int handle) {
     switch (handle) {
         {{ OBJECT_INFO_CASES }}
+        default:
+            return nullptr;
     }
-    return nullptr;
 }
 
 {{ OBJECT_INFO_FUNCTIONS }}

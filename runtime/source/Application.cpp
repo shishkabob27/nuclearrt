@@ -140,6 +140,8 @@ void Application::LoadFrame(int frameIndex)
 
 	currentFrame = FrameFactory::CreateFrame(frameIndex);
 	currentFrame->Initialize();
+	
+	backend->ShowMouseCursor();
 
 	std::vector<unsigned int> newImagesUsed = currentFrame->GetImagesUsed();
 	std::vector<unsigned int> newFontsUsed = currentFrame->GetFontsUsed();

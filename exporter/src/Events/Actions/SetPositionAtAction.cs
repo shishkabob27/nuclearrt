@@ -24,8 +24,10 @@ public class SetPositionAtAction : ActionBase
 		{
 			//get the object
 			result.AppendLine($"    auto parent = {GetSelector((int)position.ObjectInfoParent)}->At(it.index());");
-			result.AppendLine($"    instance->X = {position.X} + parent->X;");
-			result.AppendLine($"    instance->Y = {position.Y} + parent->Y;");
+			result.AppendLine($"    if (parent != nullptr) {{");
+			result.AppendLine($"        instance->X = {position.X} + parent->X;");
+			result.AppendLine($"        instance->Y = {position.Y} + parent->Y;");
+			result.AppendLine($"    }}");
 		}
 		result.AppendLine("}");
 

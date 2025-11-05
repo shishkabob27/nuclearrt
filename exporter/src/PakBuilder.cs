@@ -1,5 +1,7 @@
+using System.Drawing.Text;
 using CTFAK.FileReaders;
 using CTFAK.Memory;
+using CTFAK.Utils;
 
 public class PakBuilder
 {
@@ -13,7 +15,7 @@ public class PakBuilder
 		//images
 		foreach (var image in gameData.Images.Items)
 		{
-			var entry = new PakEntry { Type = PakAssetType.Image, ID = (uint)image.Key };
+			var entry = new PakEntry { Path = $"images/{image.Key}.png" };
 
 			using var imageStream = new MemoryStream();
 			image.Value.bitmap.Save(imageStream, System.Drawing.Imaging.ImageFormat.Png);
@@ -25,41 +27,52 @@ public class PakBuilder
 		//sounds
 		foreach (var sound in gameData.Sounds.Items)
 		{
-			var entry = new PakEntry { Type = PakAssetType.Sound, ID = (uint)sound.Handle };
+			var entry = new PakEntry { Path = $"sounds/{sound.Handle}.{GetAudioExtension(sound.Data[0..4])}" };
 			entry.Size = (uint)sound.Data.Length;
 			entry.Data = sound.Data;
 			entries.Add(entry);
 		}
 
 		//fonts
-		//TODO: this is bad, redo this
+		Dictionary<string, List<string>> fontNames = new Dictionary<string, List<string>>(); // font family name, font file names
 		var fontsFolder = new DirectoryInfo(Environment.GetFolderPath(Environment.SpecialFolder.Fonts));
-		FileInfo[] fontFiles = fontsFolder.GetFiles("*.ttf");
-		foreach (var font in gameData.Fonts.Items)
+		FileInfo[] fontFiles = fontsFolder.GetFiles();
+		foreach (var fontFile in fontFiles)
 		{
-			var entry = new PakEntry { Type = PakAssetType.Font, ID = font.Handle };
-			string fontName = font.Value.FaceName.Replace("\0", string.Empty);
-
-			bool found = false;
-			foreach (var fontFile in fontFiles)
+			//go through each file and try to find one with the same name as a Application Font
+			List<string> appFontNames = [];
+			using (PrivateFontCollection fontCollection = new PrivateFontCollection())
 			{
-				if (fontFile.Name.StartsWith(fontName, StringComparison.OrdinalIgnoreCase))
+				fontCollection.AddFontFile(fontFile.FullName);
+				foreach (var font in fontCollection.Families)
 				{
-					entry.Data = File.ReadAllBytes(fontFile.FullName);
-					entry.Size = (uint)entry.Data.Length;
-					found = true;
-					break;
+					if (!fontNames.TryGetValue(font.Name, out List<string> fontFileNames))
+					{
+						fontFileNames = [];
+						fontNames.Add(font.Name, fontFileNames);
+					}
+
+					fontFileNames.Add(fontFile.Name);
 				}
 			}
-
-			if (!found)
-			{
-				Console.WriteLine($"Font {fontName} not found");
-				continue;
-			}
-
-			entries.Add(entry);
 		}
+
+		foreach (var font in gameData.Fonts.Items)
+		{
+			if (fontNames.TryGetValue(font.Value.FaceName.Replace("\0", string.Empty), out List<string> fontFileNames))
+			{
+				foreach (var fontFileName in fontFileNames)
+				{
+					var entry = new PakEntry { Path = $"fonts/{fontFileName}" };
+					entry.Data = File.ReadAllBytes(Path.Combine(fontsFolder.FullName, fontFileName));
+					entry.Size = (uint)entry.Data.Length;
+					entries.Add(entry);
+				}
+			}
+		}
+
+		//clear any duplicates
+		entries = entries.DistinctBy(e => e.Path).ToList();
 
 		//calculate offsets
 		uint dataOffset = 12; // header size
@@ -87,16 +100,8 @@ public class PakBuilder
 		//write directory
 		foreach (var entry in entries)
 		{
-			string fileName = entry.Type switch
-			{
-				PakAssetType.Image => $"images/{entry.ID}.png",
-				PakAssetType.Sound => $"sounds/{entry.ID}.{GetAudioExtension(entry.Data[0..4])}",
-				PakAssetType.Font => $"fonts/{entry.ID}.ttf",
-				_ => $"binary/{entry.ID}.bin"
-			};
-
 			//pad filename to 56 bytes
-			byte[] fileNameBytes = System.Text.Encoding.ASCII.GetBytes(fileName);
+			byte[] fileNameBytes = System.Text.Encoding.ASCII.GetBytes(entry.Path);
 			byte[] paddedFileName = new byte[56];
 			Array.Copy(fileNameBytes, paddedFileName, Math.Min(fileNameBytes.Length, 56));
 			writer.WriteBytes(paddedFileName);
@@ -109,7 +114,7 @@ public class PakBuilder
 		pak.Close();
 	}
 
-	string GetAudioExtension(byte[] magic)
+	static string GetAudioExtension(byte[] magic)
 	{
 		if (magic[0] == 0xFF && magic[1] == 0xFB ||
 			magic[0] == 0xFF && magic[1] == 0xF3 ||
@@ -128,18 +133,9 @@ public class PakBuilder
 	}
 }
 
-public enum PakAssetType
-{
-	Image = 0,
-	Sound = 1,
-	Font = 2,
-	Binary = 3
-}
-
 public class PakEntry
 {
-	public PakAssetType Type { get; set; }
-	public uint ID { get; set; }
+	public string Path { get; set; }
 	public uint Offset { get; set; }
 	public uint Size { get; set; }
 	public byte[] Data { get; set; } = [];

@@ -13,8 +13,7 @@ public class MakeInvisibleAction : ActionBase
 
 		result.AppendLine($"for (ObjectIterator it(*{GetSelector(eventBase.ObjectInfo)}); !it.end(); ++it) {{");
 		result.AppendLine($"    auto instance = *it;");
-		result.AppendLine($"    auto commonProperties = std::dynamic_pointer_cast<CommonProperties>(instance->OI->Properties);");
-		result.AppendLine($"    commonProperties->Visible = {(eventBase.Num == 26 ? false : true).ToString().ToLower()};");
+		result.AppendLine($"    (({ExpressionConverter.GetObjectClassName(eventBase.ObjectInfo, IsGlobal)}*)instance)->Visible = {(eventBase.Num == 26 ? false : true).ToString().ToLower()};");
 		result.AppendLine("}");
 
 		return result.ToString();
@@ -34,4 +33,14 @@ public class CounterMakeInvisibleAction : MakeInvisibleAction
 public class CounterReappearAction : ReappearAction
 {
 	public override int ObjectType { get; set; } = 7;
+}
+
+public class StringMakeInvisibleAction : MakeInvisibleAction
+{
+	public override int ObjectType { get; set; } = 3;
+}
+
+public class StringReappearAction : ReappearAction
+{
+	public override int ObjectType { get; set; } = 3;
 }

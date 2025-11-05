@@ -135,19 +135,19 @@ void SDL3Backend::Initialize() {
 
 			if (ImGui::TreeNode("Object Instances")) {
 				int i = 0;
-				for (auto& instance : currentFrame->ObjectInstances) {					
-					if (ImGui::TreeNode(std::string(instance->OI->Name + "##" + std::to_string(i)).c_str())) {
-						ImGui::Text("Handle: %d", instance->Handle);
+				for (auto& [handle, instance] : currentFrame->ObjectInstances) {					
+					if (ImGui::TreeNode(std::string(instance->Name + "##" + std::to_string(handle)).c_str())) {
+						ImGui::Text("Handle: %d", handle);
 						ImGui::Text("X: %d", instance->X);
 						ImGui::Text("Y: %d", instance->Y);
 
 						if (ImGui::TreeNode("OI")) {
-							ImGui::Text("Handle: %d", instance->OI->Handle);
-							ImGui::Text("Type: %d", instance->OI->Type);
-							ImGui::Text("RGB Coefficient: %d", instance->OI->RGBCoefficient);
-							ImGui::Text("Effect: %d", instance->OI->Effect);
-							ImGui::Text("Blend Coefficient: %d", instance->OI->BlendCoefficient);
-							ImGui::Text("Effect Parameter: %d", instance->OI->EffectParameter);
+							ImGui::Text("Handle: %d", handle);
+							ImGui::Text("Type: %d", instance->Type);
+							ImGui::Text("RGB Coefficient: %d", instance->RGBCoefficient);
+							ImGui::Text("Effect: %d", instance->Effect);
+							ImGui::Text("Blend Coefficient: %d", instance->GetBlendCoefficient());
+							ImGui::Text("Effect Parameter: %d", instance->EffectParameter);
 							ImGui::TreePop();
 						}
 
@@ -337,7 +337,7 @@ void SDL3Backend::UnloadTexture(int id) {
 	}
 }
 
-void SDL3Backend::DrawTexture(int id, int x, int y, int offsetX, int offsetY, int angle, float scale, int color, char blendCoefficient, int effect, unsigned int effectParam)
+void SDL3Backend::DrawTexture(int id, int x, int y, int offsetX, int offsetY, int angle, float scale, int color, unsigned char blendCoefficient, int effect, unsigned int effectParam)
 {
 	SDL_Texture* texture = textures[id];
 	if (texture == nullptr) {
@@ -387,7 +387,7 @@ void SDL3Backend::DrawTexture(int id, int x, int y, int offsetX, int offsetY, in
 	SDL_SetTextureBlendMode(texture, origBlendMode);
 }
 
-void SDL3Backend::DrawQuickBackdrop(int x, int y, int width, int height, std::shared_ptr<Shape> shape)
+void SDL3Backend::DrawQuickBackdrop(int x, int y, int width, int height, Shape* shape)
 {
 	//TODO: Borders
 	//TODO: Ellipse masks
@@ -502,23 +502,28 @@ void SDL3Backend::LoadFont(int id)
 	}
 
 	//get font info
-	std::shared_ptr<FontInfo> fontInfo = FontBank::Instance().GetFont(id);
+	FontInfo* fontInfo = FontBank::Instance().GetFont(id);
 	if (fontInfo == nullptr) {
 		std::cerr << "FontBank::GetFont Error: " << "Font with id " << id << " not found" << std::endl;
 		return;
 	}
 
-	std::shared_ptr<std::vector<uint8_t>> buffer = std::make_shared<std::vector<uint8_t>>(pakFile.GetData("fonts/" + std::to_string(id) + ".ttf"));
-	if (buffer->empty()) {
-		std::cerr << "PakFile::GetData Error: " << "Font with id " << id << " not found" << std::endl;
-		return;
-	}
+	SDL_IOStream* stream;
 
-	SDL_IOStream* stream = SDL_IOFromMem(buffer->data(), buffer->size());
-	if (!stream) {
-        std::cerr << "SDL_IOFromMem Error: " << SDL_GetError() << std::endl;
-        return;
-    }
+	//if buffer is already loaded, use it
+	if (fontBuffers.find(fontInfo->FontFileName) != fontBuffers.end()) {
+		stream = SDL_IOFromMem(fontBuffers[fontInfo->FontFileName]->data(), fontBuffers[fontInfo->FontFileName]->size());
+	}
+	else {
+		//load buffer from pak file
+		std::shared_ptr<std::vector<uint8_t>> buffer = std::make_shared<std::vector<uint8_t>>(pakFile.GetData("fonts/" + fontInfo->FontFileName));
+		if (buffer->empty()) {
+			std::cerr << "PakFile::GetData Error: " << "Font with file name " << fontInfo->FontFileName << " not found" << std::endl;
+			return;
+		}
+		stream = SDL_IOFromMem(buffer->data(), buffer->size());
+		fontBuffers[fontInfo->FontFileName] = buffer;
+	}
 
 	TTF_Font* font = TTF_OpenFontIO(stream, true, static_cast<float>(fontInfo->Height));
 	if (!font) {
@@ -528,7 +533,7 @@ void SDL3Backend::LoadFont(int id)
 	
 	//render flags
 	int renderFlags = TTF_STYLE_NORMAL;
-	if (fontInfo->Weight > 500) {
+	if (fontInfo->Weight > 400) {
 		renderFlags |= TTF_STYLE_BOLD;
 	}
 	if (fontInfo->Italic) {
@@ -544,16 +549,33 @@ void SDL3Backend::LoadFont(int id)
 	TTF_SetFontStyle(font, renderFlags);
 
 	fonts[id] = font;
-	fontBuffers[id] = buffer;
 }
 
 void SDL3Backend::UnloadFont(int id)
 {
 	auto it = fonts.find(id);
 	if (it != fonts.end()) {
+		// Find the FontInfo associated with this font id to remove buffer
+		FontInfo* fontInfo = FontBank::Instance().GetFont(id);
+		if (fontInfo != nullptr) {
+			// Check if any other loaded font is using the same buffer
+			bool bufferUsedByOtherFont = false;
+			for (const auto& pair : fonts) {
+				if (pair.first != id) {
+					FontInfo* otherFontInfo = FontBank::Instance().GetFont(pair.first);
+					if (otherFontInfo && otherFontInfo->FontFileName == fontInfo->FontFileName) {
+						bufferUsedByOtherFont = true;
+						break;
+					}
+				}
+			}
+			if (!bufferUsedByOtherFont) {
+				fontBuffers.erase(fontInfo->FontFileName);
+			}
+		}
+		
 		TTF_CloseFont(it->second);
 		fonts.erase(it);
-		fontBuffers.erase(id);
 	}
 }
 
@@ -584,8 +606,18 @@ void SDL3Backend::DrawText(FontInfo* fontInfo, int x, int y, int color, const st
 		return;
 	}
 
-	SDL_Surface* surface = TTF_RenderText_Blended_Wrapped(font, modifiedText.c_str(), 0, RGBToSDLColor(color), fontInfo->Width);
+	SDL_Surface* surface = TTF_RenderText_Blended_Wrapped(font, modifiedText.c_str(), 0, RGBToSDLColor(color), 0);
+	if (surface == nullptr) {
+		std::cerr << "TTF_RenderText_Blended_Wrapped Error: " << SDL_GetError() << std::endl;
+		return;
+	}
+
 	SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
+	if (texture == nullptr) {
+		std::cerr << "SDL_CreateTextureFromSurface Error: " << SDL_GetError() << std::endl;
+		return;
+	}
+
 	SDL_FRect rect = { static_cast<float>(x), static_cast<float>(y), static_cast<float>(surface->w), static_cast<float>(surface->h) };
 	SDL_RenderTexture(renderer, texture, nullptr, &rect);
 	SDL_DestroySurface(surface);
@@ -679,6 +711,20 @@ int SDL3Backend::GetMouseY()
 	int windowHeight = std::min(Application::Instance().GetAppData()->GetWindowHeight(), Application::Instance().GetCurrentFrame()->Height);
 	float relativeY = (mouseY - rect.y) * (windowHeight / rect.h);
 	return static_cast<int>(relativeY);
+}
+
+void SDL3Backend::SetMouseX(int x)
+{
+	float y;
+	SDL_GetMouseState(NULL, &y);
+	SDL_WarpMouseInWindow(window, x, y);
+}
+
+void SDL3Backend::SetMouseY(int y)
+{
+	float x;
+	SDL_GetMouseState(&x, NULL);
+	SDL_WarpMouseInWindow(window, x, y);
 }
 
 int SDL3Backend::GetMouseWheelMove()

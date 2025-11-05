@@ -2,12 +2,11 @@
 
 #include "Direction.h"
 #include <vector>
-#include <memory>
 
 class Sequence {
 public:
-    Sequence(const std::vector<std::shared_ptr<Direction>>& directions)
+    Sequence(const std::unordered_map<int, Direction*>& directions)
         : Directions(directions) {}
 
-    std::vector<std::shared_ptr<Direction>> Directions;
+    std::unordered_map<int, Direction*> Directions;
 }; 

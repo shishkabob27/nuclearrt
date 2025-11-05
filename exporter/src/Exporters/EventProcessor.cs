@@ -41,6 +41,10 @@ public class EventProcessor
 				result.Append("}\n");
 				continue;
 			}
+			else if (evt.Conditions[0].IsOfType(new CommentCondition()))
+			{
+				continue;
+			}
 
 			//only add event to normal event loop if it doesn't have a loop condition
 			if (DoesEventHaveLoop(evt) == null && IsTimerEvent(evt) == isTimerUpdateLoop) result.Append($"{eventName}();\n");
@@ -56,7 +60,7 @@ public class EventProcessor
 		{
 			var evt = _exporter.MfaData.Frames[frameIndex].Events.Items[j];
 
-			if (evt.Conditions[0].IsOfType(new GroupStartCondition()) || evt.Conditions[0].IsOfType(new GroupEndCondition())) continue; //if this event is a group start or end, don't include it in the event includes
+			if (evt.Conditions[0].IsOfType(new GroupStartCondition()) || evt.Conditions[0].IsOfType(new GroupEndCondition()) || evt.Conditions[0].IsOfType(new CommentCondition())) continue; //if this event is a group start or end, don't include it in the event includes
 
 			result.AppendLine($"void GeneratedFrame{frameIndex}::Event_{j}()");
 			result.AppendLine("{");
@@ -319,7 +323,7 @@ public class EventProcessor
 		{
 			var evt = _exporter.MfaData.Frames[frameIndex].Events.Items[j];
 
-			if (evt.Conditions[0].IsOfType(new GroupStartCondition()) || evt.Conditions[0].IsOfType(new GroupEndCondition())) continue; //if this event is a group start or end, don't include it in the event includes
+			if (evt.Conditions[0].IsOfType(new GroupStartCondition()) || evt.Conditions[0].IsOfType(new GroupEndCondition()) || evt.Conditions[0].IsOfType(new CommentCondition())) continue; //if this event is a group start or end, don't include it in the event includes
 
 			result.AppendLine($"void Event_{j}();");
 		}

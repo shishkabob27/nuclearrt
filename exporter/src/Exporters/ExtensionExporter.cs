@@ -68,17 +68,17 @@ public abstract class ExtensionExporter
 
 	protected string CreateExtension(string parameters)
 	{
-		return $"std::make_shared<{CppClassName}>({parameters})";
+		return parameters;
 	}
 
 	protected string GetExtensionInstance(int objectInfo, bool isGlobal = false)
 	{
 		string selector = ExpressionConverter.GetSelector(objectInfo, isGlobal);
-		return $"std::dynamic_pointer_cast<{CppClassName}>(std::dynamic_pointer_cast<CommonProperties>((*{selector}->begin())->OI->Properties)->oExtension)";
+		return $"(({CppClassName}*)*({selector}->begin()))";
 	}
 
 	protected string GetExtensionInstanceLoop()
 	{
-		return $"std::dynamic_pointer_cast<{CppClassName}>(std::dynamic_pointer_cast<CommonProperties>(instance->OI->Properties)->oExtension)";
+		return $"(({CppClassName}*)instance)";
 	}
 }
