@@ -281,7 +281,7 @@ void SDL3Backend::EndDrawing()
 
 void SDL3Backend::Clear(int color)
 {
-	SDL_SetRenderDrawColor(renderer, (color >> 16) & 0xFF, (color >> 8) & 0xFF, color & 0xFF, (color >> 24) & 0xFF);
+	SDL_SetRenderDrawColor(renderer, (color >> 16) & 0xFF, (color >> 8) & 0xFF, color & 0xFF, SDL_ALPHA_OPAQUE);
 	SDL_RenderClear(renderer);
 }
 
