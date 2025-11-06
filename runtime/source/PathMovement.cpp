@@ -1,5 +1,7 @@
 #include "PathMovement.h"
 
+#include <cmath>
+
 void PathMovement::Initialize() {
 	originX = Instance->X;
 	originY = Instance->Y;
