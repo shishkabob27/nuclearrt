@@ -208,23 +208,23 @@ public class ExpressionConverter
 			else if (expression.ObjectType > 0 && expression.Num == 2) // Image
 			{
 				if (expression.ObjectInfo == eventBase.ObjectInfo && expression.ObjectInfoList == eventBase.ObjectInfoList)
-					result += "((Active*)instance)->Animations.GetCurrentFrameIndex()";
+					result += "((Active*)instance)->animations.GetCurrentFrameIndex()";
 				else
-					result += $"({GetSelector(expression.ObjectInfo)}->Count() > 0 ? ((Active*)*({GetSelector(expression.ObjectInfo)}->begin()))->Animations.GetCurrentFrameIndex() : 0)";
+					result += $"({GetSelector(expression.ObjectInfo)}->Count() > 0 ? ((Active*)*({GetSelector(expression.ObjectInfo)}->begin()))->animations.GetCurrentFrameIndex() : 0)";
 			}
 			else if (expression.ObjectType > 0 && expression.Num == 3) // Real Movement Speed
 			{
 				if (expression.ObjectInfo == eventBase.ObjectInfo && expression.ObjectInfoList == eventBase.ObjectInfoList)
-					result += "((Active*)instance)->Movements.GetCurrentMovement()->GetRealSpeed()";
+					result += "((Active*)instance)->movements.GetCurrentMovement()->GetRealSpeed()";
 				else
-					result += $"({GetSelector(expression.ObjectInfo)}->Count() > 0 ? ((Active*)*({GetSelector(expression.ObjectInfo)}->begin()))->Movements.GetCurrentMovement()->GetRealSpeed() : 0)";
+					result += $"({GetSelector(expression.ObjectInfo)}->Count() > 0 ? ((Active*)*({GetSelector(expression.ObjectInfo)}->begin()))->movements.GetCurrentMovement()->GetRealSpeed() : 0)";
 			}
 			else if (expression.ObjectType > 0 && expression.Num == 6) // Animation Direction
 			{
 				if (expression.ObjectInfo == eventBase.ObjectInfo && expression.ObjectInfoList == eventBase.ObjectInfoList)
-					result += "((Active*)instance)->Animations.GetCurrentDirection()";
+					result += "((Active*)instance)->animations.GetCurrentDirection()";
 				else
-					result += $"({GetSelector(expression.ObjectInfo)}->Count() > 0 ? ((Active*)*({GetSelector(expression.ObjectInfo)}->begin()))->Animations.GetCurrentDirection() : 0)";
+					result += $"({GetSelector(expression.ObjectInfo)}->Count() > 0 ? ((Active*)*({GetSelector(expression.ObjectInfo)}->begin()))->animations.GetCurrentDirection() : 0)";
 			}
 			else if (expression.ObjectType > 0 && expression.Num == 11) // X Position
 			{
@@ -240,9 +240,9 @@ public class ExpressionConverter
 			else if (expression.ObjectType > 0 && expression.Num == 14) // Animation Number
 			{
 				if (expression.ObjectInfo == eventBase.ObjectInfo && expression.ObjectInfoList == eventBase.ObjectInfoList)
-					result += "((Active*)instance)->Animations.GetCurrentSequenceIndex()";
+					result += "((Active*)instance)->animations.GetCurrentSequenceIndex()";
 				else
-					result += $"({GetSelector(expression.ObjectInfo)}->Count() > 0 ? ((Active*)*({GetSelector(expression.ObjectInfo)}->begin()))->Animations.GetCurrentSequenceIndex() : 0)";
+					result += $"({GetSelector(expression.ObjectInfo)}->Count() > 0 ? ((Active*)*({GetSelector(expression.ObjectInfo)}->begin()))->animations.GetCurrentSequenceIndex() : 0)";
 			}
 			else if (expression.ObjectType > 0 && expression.Num == 15) // Number of this Object
 			{

@@ -13,7 +13,7 @@ public class RestoreAnimationDirectionAction : ActionBase
 
 		result.AppendLine($"for (ObjectIterator it(*{GetSelector(eventBase.ObjectInfo)}); !it.end(); ++it) {{");
 		result.AppendLine($"    auto instance = *it;");
-		result.AppendLine($"    ((Active*)instance)->Animations.RestoreForcedDirection();");
+		result.AppendLine($"    ((Active*)instance)->animations.RestoreForcedDirection();");
 		result.AppendLine("}");
 
 		return result.ToString();

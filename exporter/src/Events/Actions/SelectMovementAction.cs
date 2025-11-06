@@ -24,7 +24,7 @@ public class SelectMovementAction : ActionBase
 			movementIndex = ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[0].Loader, eventBase);
 		}
 
-		result.AppendLine($"    ((Active*)instance)->Movements.SetMovement({movementIndex});");
+		result.AppendLine($"    ((Active*)instance)->movements.SetMovement({movementIndex});");
 		result.AppendLine("}");
 		return result.ToString();
 	}

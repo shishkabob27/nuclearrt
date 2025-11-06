@@ -70,6 +70,6 @@ void EightDirectionsMovement::Update(float deltaTime) {
 	Instance->Y += yDifference;
 
 	if (!((Active*)Instance)->AutomaticRotation ) {
-		((Active*)Instance)->Animations.SetCurrentDirection(movementDirection);
+		((Active*)Instance)->animations.SetCurrentDirection(movementDirection);
 	}
 }

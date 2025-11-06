@@ -25,8 +25,8 @@ void Frame::Update()
 		//Animation update
 		if (instance->Type == 2) // Common object with possible animation
 		{
-			((Active*)instance)->Movements.Update(deltaTime);
-			((Active*)instance)->Animations.Update(deltaTime);
+			((Active*)instance)->movements.Update(deltaTime);
+			((Active*)instance)->animations.Update(deltaTime);
 		}
 		else if (instance->Type >= 32) // Extension
 		{
@@ -106,7 +106,7 @@ void Frame::DrawLayer(Layer& layer, unsigned int index)
 			if (!((Active*)instance)->Visible) continue;
 
 			auto& imageBank = ImageBank::Instance();
-			auto& animations = ((Active*)instance)->Animations;
+			auto& animations = ((Active*)instance)->animations;
 			unsigned int imageId = animations.GetCurrentImageHandle();
 
 			int scrollXOffset = 0;
@@ -123,7 +123,7 @@ void Frame::DrawLayer(Layer& layer, unsigned int index)
 				int angle = ((Active*)instance)->GetAngle();
 				if (((Active*)instance)->AutomaticRotation)
 				{
-					auto movement = ((Active*)instance)->Movements.GetCurrentMovement();
+					auto movement = ((Active*)instance)->movements.GetCurrentMovement();
 					if (movement != nullptr && !animations.IsDirectionForced())
 					{
 						angle += movement->GetMovementDirection() * 180 / 16;
@@ -195,7 +195,7 @@ void Frame::DrawLayer(Layer& layer, unsigned int index)
 		{
 			int scrollXOffset = scrollX * layer.XCoefficient;
 			int scrollYOffset = scrollY * layer.YCoefficient;
-			Application::Instance().GetBackend()->DrawQuickBackdrop(instance->X - scrollXOffset, instance->Y - scrollYOffset, ((QuickBackdrop*)instance)->Width, ((QuickBackdrop*)instance)->Height, &((QuickBackdrop*)instance)->Shape);
+			Application::Instance().GetBackend()->DrawQuickBackdrop(instance->X - scrollXOffset, instance->Y - scrollYOffset, ((QuickBackdrop*)instance)->Width, ((QuickBackdrop*)instance)->Height, &((QuickBackdrop*)instance)->shape);
 		}
 		else if (instance->Type >= 32) // Extension
 		{
@@ -362,13 +362,13 @@ ObjectInstance* Frame::CreateInstance(ObjectInstance* createdInstance, short x, 
 	//init movement and extensions
 	if (createdInstance->Type == 2) // Common object
 	{
-		for (auto& [handle, movement] : ((Active*)createdInstance)->Movements.items)
+		for (auto& [handle, movement] : ((Active*)createdInstance)->movements.items)
 		{
 			movement->Instance = createdInstance;
 			movement->Initialize();
 		}
 
-		((Active*)createdInstance)->Animations.AutomaticRotation = ((Active*)createdInstance)->AutomaticRotation;
+		((Active*)createdInstance)->animations.AutomaticRotation = ((Active*)createdInstance)->AutomaticRotation;
 	}
 	else if (createdInstance->Type >= 32) // Extension
 	{
@@ -459,7 +459,7 @@ bool Frame::IsColliding(ObjectInstance *instance1, ObjectInstance *instance2)
 	// Get information for instance1
 	if (instance1->Type == 0) // Quick backdrop
 	{
-		imageId1 = ((QuickBackdrop*)instance1)->Shape.Image;
+		imageId1 = ((QuickBackdrop*)instance1)->shape.Image;
 		
 		// Position exactly as in DrawLayer for quick backdrops
 		drawX1 = instance1->X - (scrollX * Layers[instance1->Layer].XCoefficient);
@@ -475,7 +475,7 @@ bool Frame::IsColliding(ObjectInstance *instance1, ObjectInstance *instance2)
 	}
 	else // Common object
 	{
-		imageId1 = ((Active*)instance1)->Animations.GetCurrentImageHandle();
+		imageId1 = ((Active*)instance1)->animations.GetCurrentImageHandle();
 		
 		// Position exactly as in DrawLayer for common objects
 		int scrollXOffset = 0;
@@ -500,7 +500,7 @@ bool Frame::IsColliding(ObjectInstance *instance1, ObjectInstance *instance2)
 	// Get information for instance2
 	if (instance2->Type == 0) // Quick backdrop
 	{
-		imageId2 = ((QuickBackdrop*)instance2)->Shape.Image;
+		imageId2 = ((QuickBackdrop*)instance2)->shape.Image;
 		
 		// Position exactly as in DrawLayer for quick backdrops
 		drawX2 = instance2->X - (scrollX * Layers[instance2->Layer].XCoefficient);
@@ -516,7 +516,7 @@ bool Frame::IsColliding(ObjectInstance *instance1, ObjectInstance *instance2)
 	}
 	else // Common object
 	{
-		imageId2 = ((Active*)instance2)->Animations.GetCurrentImageHandle();
+		imageId2 = ((Active*)instance2)->animations.GetCurrentImageHandle();
 		
 		// Position exactly as in DrawLayer for common objects
 		int scrollXOffset = 0;
@@ -695,7 +695,7 @@ bool Frame::IsColliding(ObjectInstance *instance, int x, int y)
 	}
 	else if (instance->Type == 0) // Quick backdrop
 	{
-		imageId = ((QuickBackdrop*)instance)->Shape.Image;
+		imageId = ((QuickBackdrop*)instance)->shape.Image;
 		
 		// Position exactly as in DrawLayer for quick backdrops
 		drawX = instance->X - (scrollX * Layers[instance->Layer].XCoefficient);
@@ -703,7 +703,7 @@ bool Frame::IsColliding(ObjectInstance *instance, int x, int y)
 	}
 	else // Common object
 	{
-		imageId = ((Active*)instance)->Animations.GetCurrentImageHandle();
+		imageId = ((Active*)instance)->animations.GetCurrentImageHandle();
 		
 		fineDetection = ((Active*)instance)->FineDetection;
 		

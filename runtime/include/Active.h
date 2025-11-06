@@ -15,11 +15,11 @@ public:
 	Active(unsigned int objectInfoHandle, int type, std::string name)
 		: ObjectInstance(objectInfoHandle, type, name) {}
 
-	Animations Animations;
+	Animations animations;
 	AlterableValues Values;
 	AlterableStrings Strings;
 	AlterableFlags Flags;
-	Movements Movements;
+	Movements movements;
 
 	bool Visible = true;
 	bool FollowFrame = false;
@@ -27,7 +27,7 @@ public:
 	bool FineDetection = false;
 
 	std::vector<unsigned int> GetImagesUsed() override {
-		return Animations.GetImagesUsed();
+		return animations.GetImagesUsed();
 	}
 };
 

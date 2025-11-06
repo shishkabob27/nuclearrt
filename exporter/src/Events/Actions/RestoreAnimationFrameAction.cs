@@ -13,7 +13,7 @@ public class RestoreAnimationFrameAction : ActionBase
 
 		result.AppendLine($"for (ObjectIterator it(*{GetSelector(eventBase.ObjectInfo)}); !it.end(); ++it) {{");
 		result.AppendLine($"    auto instance = *it;");
-		result.AppendLine($"    ((Active*)instance)->Animations.RestoreForcedFrame();");
+		result.AppendLine($"    ((Active*)instance)->animations.RestoreForcedFrame();");
 		result.AppendLine("}");
 
 		return result.ToString();
