@@ -17,33 +17,16 @@
 #include "DebugUI.h"
 #include <imgui_impl_sdl3.h>
 #endif
-
+SDL_AudioDeviceID SDL3Backend::audio_device = NULL;
+Sample samples[32];
 SDL3Backend::SDL3Backend() {
 }
 
 SDL3Backend::~SDL3Backend() {
 	Deinitialize();
 }
-void SDL3Backend::HideWindow() {
-	SDL_HideWindow(window);
-}
-void SDL3Backend::Fullscreen(bool fullscreenDesktop) {
-	if (fullscreenDesktop) SDL_SetWindowFullscreen(window, true);
-	else SDL_SetWindowFullscreen(window, false);
-}
-void SDL3Backend::Windowed() { SDL_SetWindowFullscreen(window, 0); }
-void SDL3Backend::ShowWindow() {
-	SDL_ShowWindow(window);
-}
-void SDL3Backend::ChangeWindowPosX(int x) {
-	SDL_SetWindowPosition(window, x, SDL_WINDOWPOS_UNDEFINED);
-}
-void SDL3Backend::ChangeWindowPosY(int y) {
-	SDL_SetWindowPosition(window, SDL_WINDOWPOS_UNDEFINED, y);
-}
-void SDL3Backend::SetTitle(const char* name) {
-	SDL_SetWindowTitle(window, name);
-}
+
+
 void SDL3Backend::Initialize() {
 	int windowWidth = Application::Instance().GetAppData()->GetWindowWidth();
 	int windowHeight = Application::Instance().GetAppData()->GetWindowHeight();
@@ -67,7 +50,12 @@ void SDL3Backend::Initialize() {
 		std::cerr << "SDL_CreateWindow Error: " << SDL_GetError() << std::endl;
 		return;
 	}
-
+	// Create the Audio Device
+	audio_device = SDL_OpenAudioDevice(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &spec);
+    if (!audio_device) {
+        std::cerr << "SDL_OpenAudioDevice Error : " << SDL_GetError() << std::endl;
+        return;
+    }
 	// Create the renderer
 	renderer = SDL_CreateRenderer(window, nullptr);
 	if (renderer == nullptr) {
@@ -185,7 +173,14 @@ void SDL3Backend::Deinitialize()
 	}
 	fonts.clear();
 	fontBuffers.clear();
-
+	
+	// Close the Audio Device
+	SDL_CloseAudioDevice(audio_device);
+	// cleanup audio
+	for (int i; i <= 32; i++) {
+		if (samples[i].stream != nullptr) SDL_DestroyAudioStream(samples[i].stream);
+		SDL_free(samples[i].wav_data);
+	}
 	if (renderTarget != nullptr) {
 		SDL_DestroyTexture(renderTarget);
 		renderTarget = nullptr;
@@ -624,6 +619,32 @@ void SDL3Backend::DrawText(FontInfo* fontInfo, int x, int y, int color, const st
 	SDL_DestroyTexture(texture);
 }
 
+void SDL3Backend::LoadSample(int id) {
+	std::vector<uint8_t> data = pakFile.GetData("sounds/" + std::to_string(id) + ".wav");
+	if (data.empty()) {
+		std::cerr << "PakFile::GetData Error: Sample with id " << id << " not found" << std::endl;
+		return;
+	}
+	SDL_IOStream* stream = SDL_IOFromMem(data.data(), data.size());
+	if (!SDL_LoadWAV_IO(stream, true, &samples[id].spec, &samples[id].wav_data, &samples[id].wav_data_len)) {
+		std::cout << "SDL_LoadWAV_IO Error : " << SDL_GetError() << std::endl;
+		return;
+	}
+	samples[id].stream = SDL_CreateAudioStream(&samples[id].spec, NULL);
+	if (!samples[id].stream) {
+		std::cout << "SDL_CreateAudioStream Error : " << SDL_GetError() << std::endl;
+		return;
+	}
+	else if (!SDL_BindAudioStream(audio_device, samples[id].stream)) {
+		std::cout << "SDL_BindAudioStream Error : " << SDL_GetError() << std::endl;
+		return;
+	}
+}
+void SDL3Backend::PlaySample(int id, int channel, int loops, int freq, bool interruptable) {
+	if (samples[id].stream) samples[id].active = true;
+	else return;
+
+}
 const uint8_t* SDL3Backend::GetKeyboardState()
 {
 	//return the keyboard state in a new array which matches the Fusion key codes
@@ -981,6 +1002,13 @@ float SDL3Backend::GetTimeDelta()
 
 void SDL3Backend::Delay(unsigned int ms)
 {
+    for (int i = 0; i < SDL_arraysize(samples); i++) {
+        if (SDL_GetAudioStreamQueued(samples[i].stream) < ((int)samples[i].wav_data_len) && samples[i].active)
+            SDL_PutAudioStreamData(samples[i].stream, samples[i].wav_data, samples[i].wav_data_len);
+        if (SDL_GetAudioStreamQueued(samples[i].stream) == ((int)samples[i].wav_data_len)) {
+            samples[i].active = false;
+        }
+    }
 	SDL_Delay(ms);
 }
 

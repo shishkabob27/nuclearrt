@@ -11,7 +11,14 @@
 #ifdef _DEBUG
 #include "DebugUI.h"
 #endif
-
+typedef struct Sample {
+	Uint8 *wav_data;
+	Uint32 wav_data_len;
+	SDL_AudioStream *stream;
+	SDL_AudioSpec spec;
+	bool active;
+} Sample;
+extern Sample samples[32];
 class SDL3Backend : public Backend {
 public:
 	SDL3Backend();
@@ -45,6 +52,9 @@ public:
 	void UnloadFont(int id) override;
 	void DrawText(FontInfo* fontInfo, int x, int y, int color, const std::string& text) override;
 
+	void LoadSample(int id) override;
+	void PlaySample(int id, int channel, int loops, int freq, bool interruptable);
+
 	const uint8_t* GetKeyboardState() override;
 
 	int GetMouseX() override;
@@ -62,13 +72,16 @@ public:
 
 	bool IsPixelTransparent(int textureId, int x, int y) override;
 	void GetTextureDimensions(int textureId, int& width, int& height) override;
-	void SetTitle(const char* name) override;
-	void HideWindow() override;
-	void ShowWindow() override;
-	void ChangeWindowPosX(int x) override;
-	void ChangeWindowPosY(int y) override;
-	void Fullscreen(bool fullscreenDesktop) override;
-	void Windowed() override;
+	void SetTitle(const char* name) override {SDL_SetWindowTitle(window, name);};
+	void HideWindow() override {SDL_HideWindow(window);};
+	void ShowWindow() override {SDL_ShowWindow(window);};
+	void ChangeWindowPosX(int x) override {SDL_SetWindowPosition(window, x, SDL_WINDOWPOS_UNDEFINED);};
+	void ChangeWindowPosY(int y) override {SDL_SetWindowPosition(window, SDL_WINDOWPOS_UNDEFINED, y);};
+	void Fullscreen(bool fullscreenDesktop) override {
+		if (fullscreenDesktop) SDL_SetWindowFullscreen(window, true);
+		else SDL_SetWindowFullscreen(window, false);
+	};
+	void Windowed() override {SDL_SetWindowFullscreen(window, false);};
 #ifdef _DEBUG
 	void ToggleDebugUI() { DEBUG_UI.ToggleEnabled(); }
 	bool IsDebugUIEnabled() { return DEBUG_UI.IsEnabled(); }
@@ -78,7 +91,8 @@ private:
 	SDL_Window* window;
 	SDL_Renderer* renderer;
 	SDL_Texture* renderTarget;
-
+	SDL_AudioSpec spec;
+	static SDL_AudioDeviceID audio_device;
 	SDL_FRect CalculateRenderTargetRect();
 	SDL_Color RGBToSDLColor(int color);
 	SDL_Color RGBAToSDLColor(int color);
@@ -87,7 +101,7 @@ private:
 
 	std::unordered_map<int, TTF_Font*> fonts;
 	std::unordered_map<std::string, std::shared_ptr<std::vector<uint8_t>>> fontBuffers;
-
+	
 	int FusionToSDLKey(short key);
 }; 
 #endif

@@ -43,6 +43,9 @@ public:
 	virtual void UnloadFont(int id) {}
 	virtual void DrawText(FontInfo* fontInfo, int x, int y, int color, const std::string& text) {}
 
+	virtual void LoadSample(int id) {}
+	virtual void PlaySample(int id, int channel, int loops, int freq, bool interruptable) {}
+
 	virtual const uint8_t* GetKeyboardState() { return nullptr; }
 
 	virtual int GetMouseX() { return 0; }

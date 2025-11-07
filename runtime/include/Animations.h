@@ -113,7 +113,7 @@ public:
 			return;
 		}
 
-		auto& currentDirection = Sequences.at(CurrentSequenceIndex)->Directions.find(CurrentDirection);
+		auto currentDirection = Sequences.at(CurrentSequenceIndex)->Directions.find(CurrentDirection);
 		if (index >= 0 && currentDirection != Sequences.at(CurrentSequenceIndex)->Directions.end() && index < static_cast<int>(currentDirection->second->Frames.size())) {
 			CurrentFrameIndex = index;
 			CurrentFrameTime = 0.0f; // Reset frame time

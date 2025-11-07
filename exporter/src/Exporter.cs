@@ -16,6 +16,7 @@ public class Exporter
 	private readonly ObjectInfoExporter _objectInfoExporter;
 	private readonly ImageBankExporter _imageBankExporter;
 	private readonly FontBankExporter _fontBankExporter;
+	private readonly SoundBankExporter _soundBankExporter;
 	private readonly FrameExporter _frameExporter;
 	private readonly ProjectFileExporter _projectFileExporter;
 	private readonly ExtensionFolderExporter _extensionFolderExporter;
@@ -38,6 +39,7 @@ public class Exporter
 		_appDataExporter = new AppDataExporter(this);
 		_objectInfoExporter = new ObjectInfoExporter(this);
 		_imageBankExporter = new ImageBankExporter(this);
+		_soundBankExporter = new SoundBankExporter(this);
 		_fontBankExporter = new FontBankExporter(this);
 		_frameExporter = new FrameExporter(this);
 		_projectFileExporter = new ProjectFileExporter(this);
@@ -54,6 +56,7 @@ public class Exporter
 		_appDataExporter.Export();
 		_objectInfoExporter.Export();
 		_imageBankExporter.Export();
+		_soundBankExporter.Export();
 		_fontBankExporter.Export();
 		_frameExporter.Export();
 	}

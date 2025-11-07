@@ -1,6 +1,6 @@
 #include "EightDirectionsMovement.h"
 #include "Application.h"
-
+#include <cmath>
 #include "Active.h"
 
 void EightDirectionsMovement::Update(float deltaTime) {
