@@ -1,5 +1,3 @@
-#pragma once
-
 #include "Animations.h"
 
 #include <algorithm>
@@ -11,12 +9,25 @@
 Animations::Animations(const std::unordered_map<int, Sequence*> sequences) {
 	Sequences = sequences;
 
-	//set current sequence to the first one in the map
+	//set current sequence to the one with the lowest index
 	if (!Sequences.empty()) {
-		CurrentSequenceIndex = Sequences.begin()->first;
+		int minIndex = Sequences.begin()->first;
+		for (const auto& pair : Sequences) {
+			if (pair.first < minIndex) {
+				minIndex = pair.first;
+			}
+		}
+		CurrentSequenceIndex = minIndex;
+		auto* firstSequence = Sequences.at(minIndex);
+		// find the direction with the lowest index
+		int minDirectionIndex = firstSequence->Directions.begin()->second->Index;
+		for (const auto& dirPair : firstSequence->Directions) {
+			if (dirPair.second->Index < minDirectionIndex) {
+				minDirectionIndex = dirPair.second->Index;
+			}
+		}
+		CurrentDirection = minDirectionIndex;
 	}
-	
-	CurrentDirection = Sequences.begin()->second->Directions.begin()->second->Index;
 }
 
 bool Animations::IsSequenceOver(int sequence) const {
@@ -48,11 +59,21 @@ unsigned int Animations::GetCurrentImageHandle() const {
 	int displayDirection = forcedDirection != -1 ? forcedDirection : CurrentDirection;
 	int displayFrame = forcedFrame != -1 ? forcedFrame : CurrentFrameIndex;
 
-	if (Sequences.at(displaySequence)->Directions.find(displayDirection) == Sequences.at(displaySequence)->Directions.end() || AutomaticRotation) {
-		displayDirection = Sequences.at(displaySequence)->Directions.begin()->second->Index;
+	auto* sequence = Sequences.at(displaySequence);
+
+	if (sequence->Directions.find(displayDirection) == sequence->Directions.end() || AutomaticRotation) {
+		// find the direction with the lowest index
+		int minDirectionIndex = sequence->Directions.begin()->second->Index;
+		for (const auto& dirPair : sequence->Directions) {
+			if (dirPair.second->Index < minDirectionIndex) {
+				minDirectionIndex = dirPair.second->Index;
+			}
+		}
+		displayDirection = minDirectionIndex;
 	}
 	
-	return Sequences.at(displaySequence)->Directions.at(displayDirection)->Frames.at(displayFrame);
+	auto* direction = sequence->Directions.at(displayDirection);
+	return direction->Frames.at(displayFrame);
 }
 
 unsigned int Animations::GetCurrentSequenceIndex() const {
@@ -88,7 +109,15 @@ void Animations::SetCurrentSequenceIndex(int index) {
 	}
 
 	CurrentSequenceIndex = index;
-	CurrentDirection = Sequences.at(index)->Directions.begin()->second->Index;
+	auto* sequence = Sequences.at(index);
+	// find the direction with the lowest index
+	int minDirectionIndex = sequence->Directions.begin()->second->Index;
+	for (const auto& dirPair : sequence->Directions) {
+		if (dirPair.second->Index < minDirectionIndex) {
+			minDirectionIndex = dirPair.second->Index;
+		}
+	}
+	CurrentDirection = minDirectionIndex;
 	CurrentFrameIndex = 0;
 	CurrentFrameTime = 0.0f;
 }
@@ -204,7 +233,14 @@ void Animations::Update(float deltaTime) {
 	//if the direction doesn't exist, set to the first direction
 	if (currentSequence->Directions.find(displayDirection) == currentSequence->Directions.end()) {
 		forcedDirection = -1;
-		displayDirection = currentSequence->Directions.begin()->second->Index;
+		// find the direction with the lowest index
+		int minDirectionIndex = currentSequence->Directions.begin()->second->Index;
+		for (const auto& dirPair : currentSequence->Directions) {
+			if (dirPair.second->Index < minDirectionIndex) {
+				minDirectionIndex = dirPair.second->Index;
+			}
+		}
+		displayDirection = minDirectionIndex;
 		CurrentDirection = displayDirection;
 		CurrentFrameIndex = 0;
 		CurrentFrameTime = 0.0f;
@@ -238,7 +274,14 @@ void Animations::Update(float deltaTime) {
 			} else {
 				
 				// If animation is not the first one (stopped), change to that animation
+				// find the sequence with the lowest index (the "first" sequence)
 				int firstSequenceIndex = Sequences.begin()->first;
+				for (const auto& pair : Sequences) {
+					if (pair.first < firstSequenceIndex) {
+						firstSequenceIndex = pair.first;
+					}
+				}
+				
 				if (CurrentSequenceIndex != firstSequenceIndex) {
 					//set sequence over event
 					SequenceOverEvents[CurrentSequenceIndex] = true;
