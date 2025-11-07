@@ -39,7 +39,7 @@ public:
 	char FloatWholeCount;
 	char FloatDecimalCount;
 
-	Shape oShape;
+	Shape shape;
 
 	std::vector<unsigned int> Frames;
 

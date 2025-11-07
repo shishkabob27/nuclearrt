@@ -13,7 +13,7 @@ public class AnimationOverCondition : ConditionBase
 
 		result.AppendLine($"for (ObjectIterator it(*{GetSelector(eventBase.ObjectInfo)}); !it.end(); ++it) {{");
 		result.AppendLine($"    auto instance = *it;");
-		result.AppendLine($"    if (!((Active*)instance)->Animations.IsSequenceOver({((Short)eventBase.Items[0].Loader).Value})) it.deselect();");
+		result.AppendLine($"    if (!((Active*)instance)->animations.IsSequenceOver({((Short)eventBase.Items[0].Loader).Value})) it.deselect();");
 		result.AppendLine("}");
 
 		result.AppendLine($"if ({GetSelector(eventBase.ObjectInfo)}->Count() == 0) goto {nextLabel};");

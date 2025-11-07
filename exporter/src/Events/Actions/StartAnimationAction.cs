@@ -13,7 +13,7 @@ public class StartAnimationAction : ActionBase
 
 		result.AppendLine($"for (ObjectIterator it(*{GetSelector(eventBase.ObjectInfo)}); !it.end(); ++it) {{");
 		result.AppendLine($"    auto instance = *it;");
-		result.AppendLine($"    ((Active*)instance)->Animations.Start();");
+		result.AppendLine($"    ((Active*)instance)->animations.Start();");
 		result.AppendLine("}");
 
 		return result.ToString();

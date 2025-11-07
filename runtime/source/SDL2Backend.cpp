@@ -216,6 +216,20 @@ bool SDL2Backend::ShouldQuit()
 		}
 #endif
 
+#ifdef INPUT_TOUCH
+		// handle touch events
+		if (event.type == SDL_FINGERDOWN || event.type == SDL_FINGERMOTION) {
+			int windowWidth, windowHeight;
+			SDL_GetWindowSize(window, &windowWidth, &windowHeight);
+			touchX = static_cast<int>(event.tfinger.x * windowWidth);
+			touchY = static_cast<int>(event.tfinger.y * windowHeight);
+			touchDown = true;
+		}
+		else if (event.type == SDL_FINGERUP) {
+			touchDown = false;
+		}
+#endif
+
 		if (event.type == SDL_QUIT) {
 			return true;
 		}
@@ -304,7 +318,7 @@ void SDL2Backend::UnloadTexture(int id) {
 	textures.erase(id);
 }
 
-void SDL2Backend::DrawTexture(int id, int x, int y, int offsetX, int offsetY, int angle, float scale, int color, char blendCoefficient, int effect, unsigned int effectParam)
+void SDL2Backend::DrawTexture(int id, int x, int y, int offsetX, int offsetY, int angle, float scale, int color, unsigned char blendCoefficient, int effect, unsigned int effectParam)
 {
 	SDL_Texture* texture = textures[id];
 	if (texture == nullptr) {
@@ -469,22 +483,27 @@ void SDL2Backend::LoadFont(int id)
 	}
 
 	//get font info
-	std::shared_ptr<FontInfo> fontInfo = FontBank::Instance().GetFont(id);
+	FontInfo* fontInfo = FontBank::Instance().GetFont(id);
 	if (fontInfo == nullptr) {
 		std::cerr << "FontBank::GetFont Error: " << "Font with id " << id << " not found" << std::endl;
 		return;
 	}
 
-	std::shared_ptr<std::vector<uint8_t>> buffer = std::make_shared<std::vector<uint8_t>>(pakFile.GetData("fonts/" + std::to_string(id) + ".ttf"));
-	if (buffer->empty()) {
-		std::cerr << "PakFile::GetData Error: " << "Font with id " << id << " not found" << std::endl;
-		return;
-	}
+	SDL_RWops* stream;
 
-	SDL_RWops* stream = SDL_RWFromMem(buffer->data(), buffer->size());
-	if (!stream) {
-		std::cerr << "SDL_RWFromMem Error: " << SDL_GetError() << std::endl;
-		return;
+	//if buffer is already loaded, use it
+	if (fontBuffers.find(fontInfo->FontFileName) != fontBuffers.end()) {
+		stream = SDL_RWFromMem(fontBuffers[fontInfo->FontFileName]->data(), fontBuffers[fontInfo->FontFileName]->size());
+	}
+	else {
+		//load buffer from pak file
+		std::shared_ptr<std::vector<uint8_t>> buffer = std::make_shared<std::vector<uint8_t>>(pakFile.GetData("fonts/" + fontInfo->FontFileName));
+		if (buffer->empty()) {
+			std::cerr << "PakFile::GetData Error: " << "Font with file name " << fontInfo->FontFileName << " not found" << std::endl;
+			return;
+		}
+		stream = SDL_RWFromMem(buffer->data(), buffer->size());
+		fontBuffers[fontInfo->FontFileName] = buffer;
 	}
 
 	TTF_Font* font = TTF_OpenFontRW(stream, true, static_cast<float>(fontInfo->Height));
@@ -511,16 +530,33 @@ void SDL2Backend::LoadFont(int id)
 	TTF_SetFontStyle(font, renderFlags);
 
 	fonts[id] = font;
-	fontBuffers[id] = buffer;
 }
 
 void SDL2Backend::UnloadFont(int id)
 {
 	auto it = fonts.find(id);
 	if (it != fonts.end()) {
+		// Find the FontInfo associated with this font id to remove buffer
+		FontInfo* fontInfo = FontBank::Instance().GetFont(id);
+		if (fontInfo != nullptr) {
+			// Check if any other loaded font is using the same buffer
+			bool bufferUsedByOtherFont = false;
+			for (const auto& pair : fonts) {
+				if (pair.first != id) {
+					FontInfo* otherFontInfo = FontBank::Instance().GetFont(pair.first);
+					if (otherFontInfo && otherFontInfo->FontFileName == fontInfo->FontFileName) {
+						bufferUsedByOtherFont = true;
+						break;
+					}
+				}
+			}
+			if (!bufferUsedByOtherFont) {
+				fontBuffers.erase(fontInfo->FontFileName);
+			}
+		}
+		
 		TTF_CloseFont(it->second);
 		fonts.erase(it);
-		fontBuffers.erase(id);
 	}
 }
 
@@ -569,6 +605,11 @@ const uint8_t* SDL2Backend::GetKeyboardState()
 
 int SDL2Backend::GetMouseX()
 {
+#ifdef INPUT_TOUCH
+	if (touchDown) {
+		return touchX;
+	}
+#endif
 	int x, windowX;
 	SDL_GetWindowPosition(window, &windowX, nullptr);
 	SDL_GetGlobalMouseState(&x, nullptr);
@@ -577,6 +618,11 @@ int SDL2Backend::GetMouseX()
 
 int SDL2Backend::GetMouseY()
 {
+#ifdef INPUT_TOUCH
+	if (touchDown) {
+		return touchY;
+	}
+#endif
 	int y, windowY;
 	SDL_GetWindowPosition(window, nullptr, &windowY);
 	SDL_GetGlobalMouseState(nullptr, &y);
@@ -596,6 +642,11 @@ int SDL2Backend::GetMouseWheelMove()
 
 uint32_t SDL2Backend::GetMouseState()
 {
+#ifdef INPUT_TOUCH
+	if (touchDown) {
+		return SDL_BUTTON(SDL_BUTTON_LEFT);
+	}
+#endif
 	return SDL_GetMouseState(nullptr, nullptr);
 }
 

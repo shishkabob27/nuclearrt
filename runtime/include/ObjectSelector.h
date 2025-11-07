@@ -39,6 +39,8 @@ public:
 				AllSelectorObjectInstances.push_back(instance->Handle);
 			}
 		}
+
+		std::sort(AllSelectorObjectInstances.begin(), AllSelectorObjectInstances.end());
 	}
 
 	// Called during a event to scope all objects that are relevant to the event
@@ -53,6 +55,10 @@ public:
 				RemoveInstance(handle);
 			}
 		}
+
+		std::sort(SelectedInstances.begin(), SelectedInstances.end(), [](ObjectInstance* a, ObjectInstance* b) {
+			return a->Handle < b->Handle;
+		});
 	}
 
 	// Called when an object is destroyed
@@ -63,8 +69,15 @@ public:
 	void AddInstance(ObjectInstance* instance) {
 		if (std::find(AllSelectorObjectInstances.begin(), AllSelectorObjectInstances.end(), instance->Handle) == AllSelectorObjectInstances.end()) {
 			AllSelectorObjectInstances.push_back(instance->Handle);
+			
+			std::sort(AllSelectorObjectInstances.begin(), AllSelectorObjectInstances.end());
+			
 			if (std::find(SelectedInstances.begin(), SelectedInstances.end(), instance) == SelectedInstances.end()) {
 				SelectedInstances.push_back(instance);
+
+				std::sort(SelectedInstances.begin(), SelectedInstances.end(), [](ObjectInstance* a, ObjectInstance* b) {
+					return a->Handle < b->Handle;
+				});
 			}
 		}
 	}
@@ -81,6 +94,10 @@ public:
 		if (instance->ObjectInfoHandle == ObjectInfoId && 
 			std::find(SelectedInstances.begin(), SelectedInstances.end(), instance) == SelectedInstances.end()) {
 			SelectedInstances.push_back(instance);
+
+			std::sort(SelectedInstances.begin(), SelectedInstances.end(), [](ObjectInstance* a, ObjectInstance* b) {
+				return a->Handle < b->Handle;
+			});
 		}
 	}
 

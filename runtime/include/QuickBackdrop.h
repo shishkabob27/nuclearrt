@@ -15,9 +15,9 @@ public:
 	unsigned int CollisionType;
 	int Width;
     int Height;
-	Shape Shape;
+	Shape shape;
 
 	std::vector<unsigned int> GetImagesUsed() override {
-		return { Shape.Image };
+		return { shape.Image };
 	}
 };

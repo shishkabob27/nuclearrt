@@ -1,7 +1,9 @@
 #include "EightDirectionsMovement.h"
-#include "Application.h"
+
 #include <cmath>
+
 #include "Active.h"
+#include "Application.h"
 
 void EightDirectionsMovement::Update(float deltaTime) {
 	bool moved = false;
@@ -70,6 +72,6 @@ void EightDirectionsMovement::Update(float deltaTime) {
 	Instance->Y += yDifference;
 
 	if (!((Active*)Instance)->AutomaticRotation ) {
-		((Active*)Instance)->Animations.SetCurrentDirection(movementDirection);
+		((Active*)Instance)->animations.SetCurrentDirection(movementDirection);
 	}
 }

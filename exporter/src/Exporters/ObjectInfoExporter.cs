@@ -118,11 +118,11 @@ public class ObjectInfoExporter : BaseExporter
 			result.AppendLine($"((Active*)instance)->FollowFrame = {(!common.Flags.GetFlag("ScrollingIndependant")).ToString().ToLower()};");
 			result.AppendLine($"((Active*)instance)->AutomaticRotation = {common.NewFlags.GetFlag("AutomaticRotation").ToString().ToLower()};");
 			result.AppendLine($"((Active*)instance)->FineDetection = {(!common.NewFlags.GetFlag("CollisionBox")).ToString().ToLower()};");
-			result.AppendLine($"((Active*)instance)->Animations = {BuildAnimations(common)};");
+			result.AppendLine($"((Active*)instance)->animations = {BuildAnimations(common)};");
 			result.AppendLine($"((Active*)instance)->Values = {BuildAlterableValues(common)};");
 			result.AppendLine($"((Active*)instance)->Strings = {BuildAlterableStrings(common)};");
 			result.AppendLine($"((Active*)instance)->Flags = {BuildAlterableFlags(common)};");
-			result.AppendLine($"((Active*)instance)->Movements = {BuildMovements(common)};");
+			result.AppendLine($"((Active*)instance)->movements = {BuildMovements(common)};");
 		}
 		else if (objectInfo.ObjectType == 3)
 		{
@@ -169,7 +169,7 @@ public class ObjectInfoExporter : BaseExporter
 		result.AppendLine($"((QuickBackdrop*)instance)->CollisionType = {(int)quickBackdrop.CollisionType};");
 		result.AppendLine($"((QuickBackdrop*)instance)->Width = {quickBackdrop.Width};");
 		result.AppendLine($"((QuickBackdrop*)instance)->Height = {quickBackdrop.Height};");
-		result.AppendLine($"((QuickBackdrop*)instance)->Shape = {BuildShape(quickBackdrop.Shape)};");
+		result.AppendLine($"((QuickBackdrop*)instance)->shape = {BuildShape(quickBackdrop.Shape)};");
 		return result.ToString();
 	}
 
@@ -268,7 +268,7 @@ public class ObjectInfoExporter : BaseExporter
 			result.AppendLine($"((CounterBase*)instance)->FloatWholeCount = {common.Counters.FloatDigits};");
 			result.AppendLine($"((CounterBase*)instance)->FloatDecimalCount = {common.Counters.Decimals};");
 			result.AppendLine($"((CounterBase*)instance)->Font = {common.Counters.Font};");
-			result.AppendLine($"((CounterBase*)instance)->oShape = {BuildShape(common.Counters.Shape)};");
+			result.AppendLine($"((CounterBase*)instance)->shape = {BuildShape(common.Counters.Shape)};");
 			result.AppendLine($"((CounterBase*)instance)->Frames = std::vector<unsigned int>{{{string.Join(",", common.Counters.Frames)}}};");
 		}
 

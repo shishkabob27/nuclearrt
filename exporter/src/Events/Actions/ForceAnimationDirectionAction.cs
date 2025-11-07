@@ -20,7 +20,7 @@ public class ForceAnimationDirectionAction : ActionBase
 		else if (eventBase.Items[0].Loader is ExpressionParameter expressionParameter) {
 			direction = ExpressionConverter.ConvertExpression(expressionParameter, eventBase);
 		}
-		result.AppendLine($"    ((Active*)instance)->Animations.SetForcedDirection({direction});");
+		result.AppendLine($"    ((Active*)instance)->animations.SetForcedDirection({direction});");
 		result.AppendLine("}");
 
 		return result.ToString();

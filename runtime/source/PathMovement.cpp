@@ -1,5 +1,7 @@
 #include "PathMovement.h"
-#include "math.h"
+
+#include <cmath>
+
 void PathMovement::Initialize() {
 	originX = Instance->X;
 	originY = Instance->Y;
@@ -71,6 +73,7 @@ void PathMovement::Update(float deltaTime) {
 		float dx = static_cast<float>(originX) - Instance->X;
 		float dy = static_cast<float>(originY) - Instance->Y;
 		float distanceToOrigin = sqrtf(dx * dx + dy * dy);
+		
 		if (distanceToOrigin <= 0.0001f) {
 			Instance->X = static_cast<float>(originX);
 			Instance->Y = static_cast<float>(originY);

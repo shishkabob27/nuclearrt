@@ -13,7 +13,7 @@ public class StopAnimationAction : ActionBase
 
 		result.AppendLine($"for (ObjectIterator it(*{GetSelector(eventBase.ObjectInfo)}); !it.end(); ++it) {{");
 		result.AppendLine($"    auto instance = *it;");
-		result.AppendLine($"    ((Active*)instance)->Animations.Stop();");
+		result.AppendLine($"    ((Active*)instance)->animations.Stop();");
 		result.AppendLine("}");
 
 		return result.ToString();
