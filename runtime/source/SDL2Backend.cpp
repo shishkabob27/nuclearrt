@@ -197,6 +197,20 @@ bool SDL2Backend::ShouldQuit()
 		}
 #endif
 
+#ifdef INPUT_TOUCH
+		// handle touch events
+		if (event.type == SDL_FINGERDOWN || event.type == SDL_FINGERMOTION) {
+			int windowWidth, windowHeight;
+			SDL_GetWindowSize(window, &windowWidth, &windowHeight);
+			touchX = static_cast<int>(event.tfinger.x * windowWidth);
+			touchY = static_cast<int>(event.tfinger.y * windowHeight);
+			touchDown = true;
+		}
+		else if (event.type == SDL_FINGERUP) {
+			touchDown = false;
+		}
+#endif
+
 		if (event.type == SDL_QUIT) {
 			return true;
 		}
@@ -572,6 +586,11 @@ const uint8_t* SDL2Backend::GetKeyboardState()
 
 int SDL2Backend::GetMouseX()
 {
+#ifdef INPUT_TOUCH
+	if (touchDown) {
+		return touchX;
+	}
+#endif
 	int x, windowX;
 	SDL_GetWindowPosition(window, &windowX, nullptr);
 	SDL_GetGlobalMouseState(&x, nullptr);
@@ -580,6 +599,11 @@ int SDL2Backend::GetMouseX()
 
 int SDL2Backend::GetMouseY()
 {
+#ifdef INPUT_TOUCH
+	if (touchDown) {
+		return touchY;
+	}
+#endif
 	int y, windowY;
 	SDL_GetWindowPosition(window, nullptr, &windowY);
 	SDL_GetGlobalMouseState(nullptr, &y);
@@ -599,6 +623,11 @@ int SDL2Backend::GetMouseWheelMove()
 
 uint32_t SDL2Backend::GetMouseState()
 {
+#ifdef INPUT_TOUCH
+	if (touchDown) {
+		return SDL_BUTTON(SDL_BUTTON_LEFT);
+	}
+#endif
 	return SDL_GetMouseState(nullptr, nullptr);
 }
 

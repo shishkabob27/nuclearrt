@@ -12,6 +12,10 @@
 #include "DebugUI.h"
 #endif
 
+#ifdef __SWITCH__
+#define INPUT_TOUCH
+#endif
+
 class SDL2Backend : public Backend {
 public:
 	SDL2Backend();
@@ -79,6 +83,12 @@ private:
 	std::unordered_map<std::string, std::shared_ptr<std::vector<uint8_t>>> fontBuffers;
 
 	int FusionToSDLKey(short key);
+
+#ifdef INPUT_TOUCH
+	int touchX = 0;
+	int touchY = 0;
+	bool touchDown = false;
+#endif
 }; 
 
 #endif
