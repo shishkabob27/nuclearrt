@@ -48,20 +48,22 @@ void Application::Update()
 {
 	RunState();
 
-	if (currentFrame != nullptr)
+	if (currentFrame == nullptr)
 	{
-		input->Update();
-		currentFrame->Update();
+		return;
 	}
-	else
-	{
-		//exit the application
-		Shutdown();
-	}
+
+	input->Update();
+	currentFrame->Update();
 }
 
 void Application::Draw()
 {
+	if (currentFrame == nullptr)
+	{
+		return;
+	}
+
 	backend->BeginDrawing();
 	currentFrame->Draw();
 	backend->EndDrawing();
@@ -69,6 +71,7 @@ void Application::Draw()
 
 void Application::Shutdown()
 {
+	std::cout << "Shutting down..." << std::endl;
 	backend->Deinitialize();
 }
 
@@ -100,6 +103,11 @@ void Application::Run()
 		if (frameTime < targetFrameTime)
 		{
 			backend->Delay(targetFrameTime - frameTime);
+		}
+
+		if (currentState == GameState::EndApplication || currentFrame == nullptr)
+		{
+			break;
 		}
 	}
 #endif
@@ -144,6 +152,13 @@ void Application::LoadFrame(int frameIndex)
 	}
 
 	currentFrame = FrameFactory::CreateFrame(frameIndex);
+
+	if (currentFrame == nullptr)
+	{
+		QueueStateChange(GameState::EndApplication);
+		return;
+	}
+
 	currentFrame->Initialize();
 	
 	// apply global object data to new frame
@@ -312,7 +327,6 @@ void Application::RunState()
 			currentState = GameState::StartOfFrame;
 			break;
 		case GameState::EndApplication:
-			Shutdown();
 			break;
 	}
 }
