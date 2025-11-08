@@ -73,6 +73,8 @@ private:
 	SDL_Renderer* renderer;
 	SDL_Texture* renderTarget;
 
+	bool renderedFirstFrame = false;
+
 	SDL_FRect CalculateRenderTargetRect();
 	SDL_Color RGBToSDLColor(int color);
 	SDL_Color RGBAToSDLColor(int color);

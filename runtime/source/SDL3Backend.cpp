@@ -42,7 +42,7 @@ void SDL3Backend::Initialize() {
 	}
 
 	// Create the window
-	SDL_WindowFlags flags = SDL_WINDOW_RESIZABLE;
+	SDL_WindowFlags flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIDDEN;
 	window = SDL_CreateWindow(windowTitle.c_str(), windowWidth, windowHeight, flags);
 	if (window == nullptr) {
 		std::cerr << "SDL_CreateWindow Error: " << SDL_GetError() << std::endl;
@@ -277,6 +277,11 @@ void SDL3Backend::EndDrawing()
 #endif
 
 	SDL_RenderPresent(renderer);
+
+	if (!renderedFirstFrame) {
+		renderedFirstFrame = true;
+		SDL_ShowWindow(window);
+	}
 }
 
 void SDL3Backend::Clear(int color)
