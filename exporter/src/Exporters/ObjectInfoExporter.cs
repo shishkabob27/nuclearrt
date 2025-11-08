@@ -98,8 +98,28 @@ public class ObjectInfoExporter : BaseExporter
 		{
 			if (objectInfo.properties is ObjectCommon common)
 			{
-				result.AppendLine($"instance->global = {common.Preferences.GetFlag("Global").ToString().ToLower()};");
 				result.AppendLine($"instance->Qualifiers = {BuildQualifiers(common)};");
+
+				// afaik their isn't a way to check if the object is global in the ccn's object info ( the preference flag does not change )
+				// this is probably terrible and might lead to incorrect results, but it's the best i can do for now
+				bool isGlobal = false;
+				foreach (var frame in Exporter.Instance.MfaData.Frames)
+				{
+					foreach (var obj in frame.Items)
+					{
+						if (obj.Name != objectInfo.name || obj.ObjectType != objectInfo.ObjectType) continue;
+
+						if ((obj.Flags & 4) == 4)
+						{
+							isGlobal = true;
+							break;
+						}
+					}
+					
+					if (isGlobal) break;
+				}
+
+				result.AppendLine($"instance->global = {isGlobal.ToString().ToLower()};");
 			}
 		}
 
