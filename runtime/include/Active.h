@@ -29,6 +29,22 @@ public:
 	std::vector<unsigned int> GetImagesUsed() override {
 		return animations.GetImagesUsed();
 	}
+
+	ObjectGlobalData* CreateGlobalData() override {
+		ObjectGlobalData* globalData = new ObjectGlobalData(ObjectInfoHandle);
+		
+		globalData->flags = Flags;
+		globalData->values = Values;
+		globalData->strings = Strings;
+
+		return globalData;
+	}
+
+	void ApplyGlobalData(ObjectGlobalData* globalData) override {
+		Flags = globalData->flags;
+		Values = globalData->values;
+		Strings = globalData->strings;
+	}
 };
 
  

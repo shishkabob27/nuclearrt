@@ -1,9 +1,15 @@
 #include "Frame.h"
-#include "Application.h"
-#include "ImageBank.h"
-#include "FontBank.h"
-#include "Extension.h"
+
+#include <map>
+#include <algorithm>
 #include <math.h>
+
+#include "Application.h"
+#include "Counter.h"
+#include "Extension.h"
+#include "FontBank.h"
+#include "ImageBank.h"
+#include "ObjectGlobalDataCounter.h"
 
 constexpr float PI = 3.14159265358979323846f;
 
@@ -378,6 +384,39 @@ ObjectInstance* Frame::CreateInstance(ObjectInstance* createdInstance, short x, 
 	return createdInstance;
 }
 
+std::vector<ObjectGlobalData*> Frame::GetGlobalObjectData()
+{
+	std::map<unsigned int, std::vector<ObjectInstance*>> instancesByHandle;
+	for (auto& [handle, instance] : ObjectInstances)
+	{
+		if (instance->global)
+		{
+			instancesByHandle[instance->ObjectInfoHandle].push_back(instance);
+		}
+	}
+	
+	for (auto& [objInfoHandle, instances] : instancesByHandle)
+	{
+		std::sort(instances.begin(), instances.end(), 
+			[](ObjectInstance* a, ObjectInstance* b) { return a->Handle < b->Handle; });
+	}
+	
+	std::vector<ObjectGlobalData*> result;
+	for (auto& [objInfoHandle, instances] : instancesByHandle)
+	{
+		for (auto* instance : instances)
+		{
+			ObjectGlobalData* data = instance->CreateGlobalData();
+			if (data != nullptr)
+			{
+				result.push_back(data);
+			}
+		}
+	}
+	
+	return result;
+}
+
 int Frame::GetMouseX()
 {
 	return Application::Instance().GetBackend()->GetMouseX();
@@ -386,6 +425,64 @@ int Frame::GetMouseX()
 int Frame::GetMouseY()
 {
 	return Application::Instance().GetBackend()->GetMouseY();
+}
+
+void Frame::ApplyGlobalObjectData(std::vector<ObjectGlobalData*> savedData)
+{
+	std::map<unsigned int, std::vector<ObjectGlobalData*>> dataByHandle;
+	for (auto* data : savedData)
+	{
+		dataByHandle[data->objectInfoHandle].push_back(data);
+	}
+	
+	std::map<unsigned int, std::vector<ObjectInstance*>> instancesByHandle;
+	for (auto& [handle, instance] : ObjectInstances)
+	{
+		if (instance->global)
+		{
+			ObjectGlobalData* testData = instance->CreateGlobalData();
+			if (testData != nullptr)
+			{
+				delete testData;
+				instancesByHandle[instance->ObjectInfoHandle].push_back(instance);
+			}
+		}
+	}
+	
+	for (auto& [objInfoHandle, instances] : instancesByHandle)
+	{
+		std::sort(instances.begin(), instances.end(), 
+			[](ObjectInstance* a, ObjectInstance* b) { return a->Handle < b->Handle; });
+	}
+	
+	for (auto& [objInfoHandle, instances] : instancesByHandle)
+	{
+		if (dataByHandle.find(objInfoHandle) == dataByHandle.end())
+		{
+			continue;
+		}
+		
+		auto& dataList = dataByHandle[objInfoHandle];
+		int savedCount = dataList.size();
+		int currentCount = instances.size();
+		
+		if (savedCount <= currentCount)
+		{
+			int startIndex = currentCount - savedCount;
+			for (int i = 0; i < savedCount; i++)
+			{
+				instances[startIndex + i]->ApplyGlobalData(dataList[i]);
+			}
+		}
+		else
+		{
+			int dataStartIndex = savedCount - currentCount;
+			for (int i = 0; i < currentCount; i++)
+			{
+				instances[i]->ApplyGlobalData(dataList[dataStartIndex + i]);
+			}
+		}
+	}
 }
 
 //Check if the object is colliding with any backdrop

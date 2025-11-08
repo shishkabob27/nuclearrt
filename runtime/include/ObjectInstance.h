@@ -5,6 +5,8 @@
 #include <string>
 #include <vector>
 
+#include "ObjectGlobalData.h"
+
 class ObjectInstance {
 public:
     ObjectInstance(unsigned int objectInfoHandle, int type, std::string name)
@@ -23,6 +25,8 @@ public:
 
 	short InstanceValue = 0;
 	std::vector<short> Qualifiers = { -1, -1, -1, -1, -1, -1, -1, -1 };
+
+	bool global = false;
 
 	int RGBCoefficient = 0xFFFFFF;
 	int Effect = 0;
@@ -51,6 +55,9 @@ public:
 		
 		Angle = angle;
 	}
+
+	virtual ObjectGlobalData* CreateGlobalData() { return nullptr; };
+	virtual void ApplyGlobalData(ObjectGlobalData* globalData) { };
 
 	virtual std::vector<unsigned int> GetImagesUsed() { return std::vector<unsigned int>(); };
 	virtual std::vector<unsigned int> GetFontsUsed() { return std::vector<unsigned int>(); };

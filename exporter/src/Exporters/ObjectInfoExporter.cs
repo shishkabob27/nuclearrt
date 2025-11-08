@@ -98,6 +98,7 @@ public class ObjectInfoExporter : BaseExporter
 		{
 			if (objectInfo.properties is ObjectCommon common)
 			{
+				result.AppendLine($"instance->global = {common.Preferences.GetFlag("Global").ToString().ToLower()};");
 				result.AppendLine($"instance->Qualifiers = {BuildQualifiers(common)};");
 			}
 		}
