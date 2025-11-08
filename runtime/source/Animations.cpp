@@ -36,12 +36,7 @@ bool Animations::IsSequencePlaying(int sequence) const {
 }
 
 bool Animations::IsSequenceOver(int sequence) const {
-	auto it = SequenceOverEvents.find(sequence);
-	if (it != SequenceOverEvents.end()) {
-		SequenceOverEvents.erase(it);
-		return true;
-	}
-	return false;
+	return SequenceOverEvents.find(sequence) != SequenceOverEvents.end();
 }
 
 std::vector<unsigned int> Animations::GetImagesUsed() const {
@@ -219,6 +214,8 @@ bool Animations::IsDirectionForced() const {
 
 void Animations::Update(float deltaTime) {
 	CurrentFrameTime += deltaTime;
+	
+	SequenceOverEvents.erase(SequenceOverEvents.begin(), SequenceOverEvents.end());
 
 	int displayFrame = CurrentFrameIndex;
 	int displaySequence = CurrentSequenceIndex;
