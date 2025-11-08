@@ -11,6 +11,7 @@ public:
 	Animations() = default;
 	Animations(const std::unordered_map<int, Sequence*> sequences);
 
+	bool IsSequencePlaying(int sequence) const;
 	bool IsSequenceOver(int sequence) const;
 	std::vector<unsigned int> GetImagesUsed() const;
 	unsigned int GetCurrentImageHandle() const;
