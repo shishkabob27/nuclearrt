@@ -45,3 +45,8 @@ public class DestroyStringAction : DestroyAction
 {
 	public override int ObjectType { get; set; } = 3;
 }
+
+public class DestroyCounterAction : DestroyAction
+{
+	public override int ObjectType { get; set; } = 7;
+}
