@@ -11,7 +11,19 @@
 #ifdef _DEBUG
 #include "DebugUI.h"
 #endif
-
+typedef struct Sample {
+	Uint8 *data;
+	Uint32 data_len;
+	SDL_AudioStream *stream;
+	SDL_AudioSpec spec;
+	bool active;
+	int loops;
+} Sample;
+extern Sample samples[1000];
+typedef struct Channel {
+	bool containsSample;
+} Channel;
+extern Channel channels[32];
 class SDL3Backend : public Backend {
 public:
 	SDL3Backend();
@@ -72,7 +84,7 @@ private:
 	SDL_Window* window;
 	SDL_Renderer* renderer;
 	SDL_Texture* renderTarget;
-
+	static SDL_AudioDeviceID audio_device;
 	bool renderedFirstFrame = false;
 
 	SDL_FRect CalculateRenderTargetRect();
