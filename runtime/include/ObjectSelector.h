@@ -101,6 +101,11 @@ public:
 		}
 	}
 
+	void SelectOnly(ObjectInstance* instance) {
+		SelectedInstances.clear();
+		SelectedInstances.push_back(instance);
+	}
+
 	// Get number of selected instances
 	size_t Count() const {
 		return SelectedInstances.size();
