@@ -72,6 +72,12 @@ public:
 
 	void SetPreviousParagraph()
 	{
+		if (CurrentParagraph == -1)
+		{
+			CurrentParagraph = 0;
+			return;
+		}
+
 		if (CurrentParagraph > 0)
 		{
 			CurrentParagraph--;
@@ -80,6 +86,12 @@ public:
 
 	void SetNextParagraph()
 	{
+		if (CurrentParagraph == -1)
+		{
+			CurrentParagraph = 0;
+			return;
+		}
+
 		if (CurrentParagraph < Paragraphs.size() - 1)
 		{
 			CurrentParagraph++;
