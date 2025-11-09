@@ -114,7 +114,7 @@ public class PakBuilder
 		pak.Close();
 	}
 
-	static string GetAudioExtension(byte[] magic)
+	public static string GetAudioExtension(byte[] magic)
 	{
 		if (magic[0] == 0xFF && magic[1] == 0xFB ||
 			magic[0] == 0xFF && magic[1] == 0xF3 ||

@@ -49,6 +49,8 @@ public:
 	void UnloadFont(int id) override;
 	void DrawText(FontInfo* fontInfo, int x, int y, int color, const std::string& text) override;
 
+	void LoadSample(int id) override;
+	void PlaySample(int id, int channel, int loops, int freq, bool interruptable) override;
 	const uint8_t* GetKeyboardState() override;
 
 	int GetMouseX() override;

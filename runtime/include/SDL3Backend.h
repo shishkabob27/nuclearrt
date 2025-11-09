@@ -12,13 +12,18 @@
 #include "DebugUI.h"
 #endif
 typedef struct Sample {
-	Uint8 *wav_data;
-	Uint32 wav_data_len;
+	Uint8 *data;
+	Uint32 data_len;
 	SDL_AudioStream *stream;
 	SDL_AudioSpec spec;
 	bool active;
+	int loops;
 } Sample;
-extern Sample samples[32];
+extern Sample samples[1000];
+typedef struct Channel {
+	bool containsSample;
+} Channel;
+extern Channel channels[32];
 class SDL3Backend : public Backend {
 public:
 	SDL3Backend();

@@ -6,7 +6,9 @@
 
 struct SoundInfo {
     unsigned int Handle;
-    SoundInfo(unsigned int handle) : Handle(handle) {};
+    std::string Name;
+    std::string Type;
+    SoundInfo(unsigned int handle, std::string name, std::string type) : Handle(handle), Name(name), Type(type) {};
 };
 class SoundBank {
 public:
@@ -14,7 +16,7 @@ public:
         static SoundBank instance;
         return instance;
     }
-    std::shared_ptr<SoundInfo> GetSound(unsigned int handle) const {
+    SoundInfo* GetSound(unsigned int handle) const {
         auto it = Sounds.find(handle);
         if (it != Sounds.end()) {
             return it->second;
@@ -24,5 +26,5 @@ public:
 private:
     SoundBank();
 
-    std::unordered_map<unsigned int, std::shared_ptr<SoundInfo>> Sounds;
+    std::unordered_map<unsigned int, SoundInfo*> Sounds;
 };

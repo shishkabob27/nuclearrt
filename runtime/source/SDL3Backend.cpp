@@ -7,18 +7,21 @@
 #include "Application.h"
 #include "Frame.h"
 #include "FontBank.h"
+#include "SoundBank.h"
 #include "PakFile.h"
 
 #include <SDL3/SDL.h>
 #include <SDL3_image/SDL_image.h>
 #include <SDL3_ttf/SDL_ttf.h>
+#include "stb_vorbis.c"
 
 #ifdef _DEBUG
 #include "DebugUI.h"
 #include <imgui_impl_sdl3.h>
 #endif
 SDL_AudioDeviceID SDL3Backend::audio_device = NULL;
-Sample samples[32];
+Sample samples[1000];
+Channel channels[32];
 SDL3Backend::SDL3Backend() {
 }
 
@@ -179,7 +182,7 @@ void SDL3Backend::Deinitialize()
 	// cleanup audio
 	for (int i; i <= 32; i++) {
 		if (samples[i].stream != nullptr) SDL_DestroyAudioStream(samples[i].stream);
-		SDL_free(samples[i].wav_data);
+		SDL_free(samples[i].data);
 	}
 	if (renderTarget != nullptr) {
 		SDL_DestroyTexture(renderTarget);
@@ -620,30 +623,97 @@ void SDL3Backend::DrawText(FontInfo* fontInfo, int x, int y, int color, const st
 }
 
 void SDL3Backend::LoadSample(int id) {
-	std::vector<uint8_t> data = pakFile.GetData("sounds/" + std::to_string(id) + ".wav");
-	if (data.empty()) {
-		std::cerr << "PakFile::GetData Error: Sample with id " << id << " not found" << std::endl;
+	if (samples[id].stream) return; // Check if sample is already loaded
+	SoundInfo* soundInfo = SoundBank::Instance().GetSound(id);
+	if (!soundInfo) {
+		std::cerr << "SoundBank Error: Sound ID " << id << " not found!" << std::endl;
 		return;
 	}
-	SDL_IOStream* stream = SDL_IOFromMem(data.data(), data.size());
-	if (!SDL_LoadWAV_IO(stream, true, &samples[id].spec, &samples[id].wav_data, &samples[id].wav_data_len)) {
-		std::cout << "SDL_LoadWAV_IO Error : " << SDL_GetError() << std::endl;
-		return;
+	std::cout << soundInfo->Type << "\n";
+	if (soundInfo->Type == "wav") {
+		std::vector<uint8_t> data = pakFile.GetData("sounds/" + std::to_string(id) + ".wav");
+		if (data.empty()) {
+			std::cerr << "PakFile::GetData Error: Sample with id " << id << " not found" << std::endl;
+			return;
+		}
+		SDL_IOStream* stream = SDL_IOFromMem(data.data(), data.size());
+		if (!SDL_LoadWAV_IO(stream, true, &samples[id].spec, &samples[id].data, &samples[id].data_len)) {
+			std::cout << "SDL_LoadWAV_IO Error (WAV) : " << SDL_GetError() << std::endl;
+			return;
+		}
+		samples[id].stream = SDL_CreateAudioStream(&samples[id].spec, NULL);
+		if (!samples[id].stream) {
+			std::cout << "SDL_CreateAudioStream (WAV) Error : " << SDL_GetError() << std::endl;
+			return;
+		}
+		else if (!SDL_BindAudioStream(audio_device, samples[id].stream)) {
+			std::cout << "SDL_BindAudioStream (WAV) Error : " << SDL_GetError() << std::endl;
+			return;
+		}
+		std::cout << "Loaded WAV Sample ID : " << id << "\n";
 	}
-	samples[id].stream = SDL_CreateAudioStream(&samples[id].spec, NULL);
-	if (!samples[id].stream) {
-		std::cout << "SDL_CreateAudioStream Error : " << SDL_GetError() << std::endl;
-		return;
+	else if (soundInfo->Type == "ogg") {
+		std::vector<uint8_t> data = pakFile.GetData("sounds/" + std::to_string(id) + ".ogg");
+		std::cout << "OGG Data Size: " << data.size() << " bytes\n";
+		int channels, samplerate;
+		short* output = nullptr;
+		int numSamples = stb_vorbis_decode_memory(data.data(), data.size(), &channels, &samplerate, &output);
+		if (numSamples <= 0 || !output) {
+			std::cout << "stb_vorbis_decode_memory failed.\n";
+			return;
+		}
+		std::cout << "Decoded Memory (OGG)\n";
+		SDL_AudioSpec devSpec;
+		SDL_GetAudioDeviceFormat(audio_device, &devSpec, NULL);
+		std::cout << "devSpec freq=" << devSpec.freq << " format=" << devSpec.format << " channels=" << (int)devSpec.channels << std::endl;
+		samples[id].spec = {};
+		samples[id].spec.freq = samplerate;
+		samples[id].spec.format = SDL_AUDIO_S16LE;
+		samples[id].spec.channels = static_cast<Uint8>(channels);
+		samples[id].stream = SDL_CreateAudioStream(&samples[id].spec, &devSpec);
+		if (!samples[id].stream) {
+			std::cout << "SDL_CreateAudioStream (OGG) Error : " << SDL_GetError() << "\n";
+			return;
+		}
+		else if (!SDL_BindAudioStream(audio_device, samples[id].stream)) {
+			std::cout << "SDL_PutAudioStreamData (OGG) Error: " << SDL_GetError() << "\n";
+			free(output);
+			return;
+		}
+		samples[id].data_len = numSamples * channels * sizeof(short);
+		samples[id].data = (Uint8*)malloc(samples[id].data_len);
+		if (samples[id].data == nullptr) {
+			std::cout << "malloc (OGG) Error.\n";
+			free(output);
+			return;
+		}
+		memcpy(samples[id].data, output, samples[id].data_len);
+		free(output);
+		std::cout << "Loaded OGG Sample ID : " << id << "\n";
 	}
-	else if (!SDL_BindAudioStream(audio_device, samples[id].stream)) {
-		std::cout << "SDL_BindAudioStream Error : " << SDL_GetError() << std::endl;
-		return;
-	}
+	else std::cout << "Audio File not supported.\n";
+	
 }
 void SDL3Backend::PlaySample(int id, int channel, int loops, int freq, bool interruptable) {
-	if (samples[id].stream) samples[id].active = true;
-	else return;
+	if (!samples[id].stream) return;
 
+	if (freq != NULL || freq <= -1) samples[id].spec.freq = freq;
+	
+	samples[id].loops = loops;
+
+	if (channel <= 0) {
+		for (int i = 1; i <= 32; i++) {
+			if (!channels[i].containsSample) {
+				samples[id].active = true;
+				channels[i].containsSample = true;
+				channel = i;
+				break;
+			}
+		}
+	}
+	samples[id].active = true;
+	channels[channel].containsSample = true;
+	std::cout << "Sample ID " << id << " is now playing at channel " << channel << ".\n";
 }
 const uint8_t* SDL3Backend::GetKeyboardState()
 {
@@ -1003,10 +1073,10 @@ float SDL3Backend::GetTimeDelta()
 void SDL3Backend::Delay(unsigned int ms)
 {
     for (int i = 0; i < SDL_arraysize(samples); i++) {
-        if (SDL_GetAudioStreamQueued(samples[i].stream) < ((int)samples[i].wav_data_len) && samples[i].active)
-            SDL_PutAudioStreamData(samples[i].stream, samples[i].wav_data, samples[i].wav_data_len);
-        if (SDL_GetAudioStreamQueued(samples[i].stream) == ((int)samples[i].wav_data_len)) {
-            samples[i].active = false;
+        if (SDL_GetAudioStreamQueued(samples[i].stream) < ((int)samples[i].data_len) && samples[i].active)
+            SDL_PutAudioStreamData(samples[i].stream, samples[i].data, samples[i].data_len);
+        if (SDL_GetAudioStreamQueued(samples[i].stream) == ((int)samples[i].data_len)) {
+			samples[i].active = false;
         }
     }
 	SDL_Delay(ms);
