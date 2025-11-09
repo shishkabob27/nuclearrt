@@ -372,6 +372,8 @@ ObjectInstance* Frame::CreateInstance(ObjectInstance* createdInstance, short x, 
 		{
 			movement->Instance = createdInstance;
 			movement->Initialize();
+
+			if (handle == 0) movement->OnEnabled();
 		}
 
 		((Active*)createdInstance)->animations.AutomaticRotation = ((Active*)createdInstance)->AutomaticRotation;

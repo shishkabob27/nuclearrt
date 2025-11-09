@@ -8,6 +8,12 @@ void PathMovement::Initialize() {
 	currentNodeIndex = 0;
 }
 
+void PathMovement::OnEnabled() {
+	originX = Instance->X;
+	originY = Instance->Y;
+	currentNodeIndex = 0;
+}
+
 void PathMovement::Start() {
 	stopped = false;
 }

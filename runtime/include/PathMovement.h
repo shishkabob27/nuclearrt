@@ -25,6 +25,7 @@ public:
 	bool movingForward = true;
 
 	void Initialize() override;
+	void OnEnabled() override;
 	void Start() override;
 	void Stop() override;
 	void Update(float deltaTime) override;
