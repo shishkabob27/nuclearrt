@@ -21,3 +21,8 @@ public class PreviousMovementAction : ActionBase
 		return result.ToString();
 	}
 }
+
+public class CounterPreviousMovementAction : PreviousMovementAction
+{
+	public override int ObjectType { get; set; } = 7;
+}

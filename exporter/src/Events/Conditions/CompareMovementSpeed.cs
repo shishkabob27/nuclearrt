@@ -21,3 +21,8 @@ public class CompareMovementSpeedCondition : ConditionBase
 		return result.ToString();
 	}
 }
+
+public class CounterCompareMovementSpeedCondition : CompareMovementSpeedCondition
+{
+	public override int ObjectType { get; set; } = 7;
+}

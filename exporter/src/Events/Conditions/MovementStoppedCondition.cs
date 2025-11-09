@@ -21,3 +21,8 @@ public class MovementStoppedCondition : ConditionBase
 		return result.ToString();
 	}
 }
+
+public class CounterMovementStoppedCondition : MovementStoppedCondition
+{
+	public override int ObjectType { get; set; } = 7;
+}

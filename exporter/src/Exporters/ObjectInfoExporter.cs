@@ -159,6 +159,7 @@ public class ObjectInfoExporter : BaseExporter
 			var common = (ObjectCommon)objectInfo.properties;
 			result.AppendLine($"((CounterBase*)instance)->Visible = {common.NewFlags.GetFlag("VisibleAtStart").ToString().ToLower()};");
 			result.AppendLine($"((CounterBase*)instance)->FollowFrame = {(!common.Flags.GetFlag("ScrollingIndependant")).ToString().ToLower()};");
+			result.AppendLine($"((CounterBase*)instance)->movements = {BuildMovements(common)};");
 			result.AppendLine(BuildCounter((ObjectCommon)objectInfo.properties));
 
 			if (objectInfo.ObjectType == 7) // only counter has alterable values, strings, and flags

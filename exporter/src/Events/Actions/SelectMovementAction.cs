@@ -24,8 +24,13 @@ public class SelectMovementAction : ActionBase
 			movementIndex = ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[0].Loader, eventBase);
 		}
 
-		result.AppendLine($"    ((Active*)instance)->movements.SetMovement({movementIndex});");
+		result.AppendLine($"    (({ExpressionConverter.GetObjectClassName(eventBase.ObjectInfo, IsGlobal)}*)instance)->movements.SetMovement({movementIndex});");
 		result.AppendLine("}");
 		return result.ToString();
 	}
+}
+
+public class CounterSelectMovementAction : SelectMovementAction
+{
+	public override int ObjectType { get; set; } = 7;
 }

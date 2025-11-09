@@ -34,6 +34,10 @@ void Frame::Update()
 			((Active*)instance)->movements.Update(deltaTime);
 			((Active*)instance)->animations.Update(deltaTime);
 		}
+		else if (instance->Type == 5 || instance->Type == 6 || instance->Type == 7) // Counter
+		{
+			((CounterBase*)instance)->movements.Update(deltaTime);
+		}
 		else if (instance->Type >= 32) // Extension
 		{
 			((Extension*)instance)->Update(deltaTime);
@@ -377,6 +381,16 @@ ObjectInstance* Frame::CreateInstance(ObjectInstance* createdInstance, short x, 
 		}
 
 		((Active*)createdInstance)->animations.AutomaticRotation = ((Active*)createdInstance)->AutomaticRotation;
+	}
+	else if (createdInstance->Type == 5 || createdInstance->Type == 6 || createdInstance->Type == 7) // Counter
+	{
+		for (auto& [handle, movement] : ((CounterBase*)createdInstance)->movements.items)
+		{
+			movement->Instance = createdInstance;
+			movement->Initialize();
+
+			if (handle == 0) movement->OnEnabled();
+		}
 	}
 	else if (createdInstance->Type >= 32) // Extension
 	{

@@ -23,3 +23,8 @@ public class MovementStopAction : ActionBase
 		return result.ToString();
 	}
 }
+
+public class CounterMovementStopAction : MovementStopAction
+{
+	public override int ObjectType { get; set; } = 7;
+}

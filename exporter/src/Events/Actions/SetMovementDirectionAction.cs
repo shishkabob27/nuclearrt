@@ -27,3 +27,8 @@ public class SetMovementDirectionAction : ActionBase
 		return result.ToString();
 	}
 }
+
+public class CounterSetMovementDirectionAction : SetMovementDirectionAction
+{
+	public override int ObjectType { get; set; } = 7;
+}
