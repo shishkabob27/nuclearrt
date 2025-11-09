@@ -262,9 +262,9 @@ public class ExpressionConverter
 			else if (expression.ObjectType > 0 && expression.Num == 27) // Alpha Coefficient
 			{
 				if (expression.ObjectInfo == eventBase.ObjectInfo && expression.ObjectInfoList == eventBase.ObjectInfoList)
-					result += "instance->GetBlendCoefficient()";
+					result += "instance->GetEffectParameter()";
 				else
-					result += $"({GetSelector(expression.ObjectInfo)}->Count() > 0 ? (*{GetSelector(expression.ObjectInfo)}->begin())->GetBlendCoefficient() : 0)";
+					result += $"({GetSelector(expression.ObjectInfo)}->Count() > 0 ? (*{GetSelector(expression.ObjectInfo)}->begin())->GetEffectParameter() : 0)";
 			}
 			else if (expression.ObjectType > 0 && expression.Num == 45) // Selected Objects
 			{

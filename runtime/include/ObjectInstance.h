@@ -30,14 +30,13 @@ public:
 
 	int RGBCoefficient = 0xFFFFFF;
 	int Effect = 0;
-	unsigned int EffectParameter = 0; 
 
-	unsigned char GetBlendCoefficient() const {
-		return BlendCoefficient;
+	unsigned char GetEffectParameter() const {
+		return EffectParameter;
 	}
 	
-	void SetBlendCoefficient(int blendCoefficient) {
-		BlendCoefficient = static_cast<unsigned char>(std::clamp(blendCoefficient, 0, 255));
+	void SetEffectParameter(int effectParameter) {
+		EffectParameter = static_cast<unsigned char>(std::clamp(effectParameter, 0, 255));
 	}
 	
 	unsigned int GetAngle() const {
@@ -64,5 +63,5 @@ public:
 
 private:
 	unsigned int Angle = 0;
-	unsigned char BlendCoefficient = 0; // Alpha
+	unsigned char EffectParameter = 0;
 };

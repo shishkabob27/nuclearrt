@@ -133,8 +133,7 @@ void SDL2Backend::Initialize() {
 							ImGui::Text("Type: %d", instance->OI->Type);
 							ImGui::Text("RGB Coefficient: %d", instance->OI->RGBCoefficient);
 							ImGui::Text("Effect: %d", instance->OI->Effect);
-							ImGui::Text("Blend Coefficient: %d", instance->OI->GetBlendCoefficient());
-							ImGui::Text("Effect Parameter: %d", instance->OI->EffectParameter);
+							ImGui::Text("Effect Parameter: %d", instance->OI->GetEffectParameter());
 							ImGui::TreePop();
 						}
 
@@ -299,7 +298,7 @@ void SDL2Backend::UnloadTexture(int id) {
 	textures.erase(id);
 }
 
-void SDL2Backend::DrawTexture(int id, int x, int y, int offsetX, int offsetY, int angle, float scale, int color, unsigned char blendCoefficient, int effect, unsigned int effectParam)
+void SDL2Backend::DrawTexture(int id, int x, int y, int offsetX, int offsetY, int angle, float scale, int color, int effect, unsigned char effectParameter)
 {
 	SDL_Texture* texture = textures[id];
 	if (texture == nullptr) {
@@ -328,15 +327,15 @@ void SDL2Backend::DrawTexture(int id, int x, int y, int offsetX, int offsetY, in
 	switch (effect) {
 		case 4096:
 		case 0:
-			SDL_SetTextureAlphaMod(texture, 255 - blendCoefficient);
+			SDL_SetTextureAlphaMod(texture, 255 - effectParameter);
 			break;
 		case 1: // Semi-Transparent:
 			SDL_SetTextureColorMod(texture, 255, 255, 255);
-			SDL_SetTextureAlphaMod(texture, 255 - (effectParam * 2));
+			SDL_SetTextureAlphaMod(texture, 255 - effectParameter);
 			break;
 		case 9: // Additive
 			SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_ADD);
-			SDL_SetTextureAlphaMod(texture, 255 - (blendCoefficient));
+			SDL_SetTextureAlphaMod(texture, 255 - effectParameter);
 			break;
 	}
 
