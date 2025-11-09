@@ -82,7 +82,10 @@ public class ObjectInfoExporter : BaseExporter
 					if (common.ExtensionOffset > 0 && common.ExtensionData != null)
 					{
 						string extensionParameters = extensionExporter.ExportExtension(common.ExtensionData);
-						additionalParameters = $", {extensionParameters}";
+						if (!string.IsNullOrEmpty(extensionParameters))
+						{
+							additionalParameters = $", {extensionParameters}";
+						}
 					}
 				}
 			}
