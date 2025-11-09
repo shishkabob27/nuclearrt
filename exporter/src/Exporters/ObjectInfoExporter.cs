@@ -347,6 +347,9 @@ public class ObjectInfoExporter : BaseExporter
 				case 3:
 					movementClassName = "EightDirectionsMovement";
 					break;
+				case 4:
+					movementClassName = "BouncingBallMovement";
+					break;
 				case 5:
 					movementClassName = "PathMovement";
 					break;
@@ -363,6 +366,10 @@ public class ObjectInfoExporter : BaseExporter
 				else if (movement.Loader is Mouse mouse)
 				{
 					result.Append($", {mouse.X1}, {mouse.X2}, {mouse.Y1}, {mouse.Y2}");
+				}
+				else if (movement.Loader is Ball ball)
+				{
+					result.Append($", {ball.Speed}, {ball.Randomizer}, {ball.Angles}, {ball.Security}, {ball.Deceleration}");
 				}
 				else if (movement.Loader is MovementPath pathMovement)
 				{

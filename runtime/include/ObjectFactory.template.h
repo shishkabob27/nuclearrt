@@ -16,6 +16,7 @@
 #include "StaticMovement.h"
 #include "MouseMovement.h"
 #include "EightDirectionsMovement.h"
+#include "BouncingBallMovement.h"
 #include "PathMovement.h"
 
 {{ EXTENSION_INCLUDES }}
