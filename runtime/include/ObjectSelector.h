@@ -106,6 +106,14 @@ public:
 		SelectedInstances.push_back(instance);
 	}
 
+	void SelectRandom() {
+		if (!SelectedInstances.empty()) {
+			ObjectInstance* instance = SelectedInstances[Application::Instance().RandomRange(0, static_cast<short>(SelectedInstances.size() - 1))];
+			SelectedInstances.clear();
+			SelectedInstances.push_back(instance);
+		}
+	}
+
 	// Get number of selected instances
 	size_t Count() const {
 		return SelectedInstances.size();
