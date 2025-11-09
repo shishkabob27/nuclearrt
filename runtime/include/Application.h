@@ -13,6 +13,7 @@
 #include "Backend.h"
 #include "GameState.h"
 #include "Input.h"
+#include "ObjectGlobalData.h"
 
 class Frame;
 
@@ -69,4 +70,6 @@ private:
 	int newFrameIndex;
 	void RunState();
 
+	std::vector<ObjectGlobalData*> globalObjectData;
+	void MergeGlobalObjectData(std::vector<ObjectGlobalData*> frameData);
 };

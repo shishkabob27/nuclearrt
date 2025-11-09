@@ -7,8 +7,8 @@
 #include "AlterableValues.h"
 #include "AlterableStrings.h"
 #include "AlterableFlags.h"
+#include "Movements.h"
 #include "Shape.h"
-
 
 class CounterBase : public ObjectInstance {
 public:
@@ -21,6 +21,8 @@ public:
 	AlterableValues Values;
 	AlterableStrings Strings;
 	AlterableFlags Flags;
+
+	Movements movements;
 	
 	int Width;
 	int Height;

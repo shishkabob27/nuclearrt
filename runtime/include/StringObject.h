@@ -1,9 +1,11 @@
 #pragma once
 
-#include "Shape.h"
-#include <vector>
 #include <memory>
+#include <vector>
+
+#include "ObjectGlobalDataString.h"
 #include "Paragraph.h"
+#include "Shape.h"
 
 class StringObject : public ObjectInstance {
 public:
@@ -72,6 +74,12 @@ public:
 
 	void SetPreviousParagraph()
 	{
+		if (CurrentParagraph == -1)
+		{
+			CurrentParagraph = 0;
+			return;
+		}
+
 		if (CurrentParagraph > 0)
 		{
 			CurrentParagraph--;
@@ -80,6 +88,12 @@ public:
 
 	void SetNextParagraph()
 	{
+		if (CurrentParagraph == -1)
+		{
+			CurrentParagraph = 0;
+			return;
+		}
+
 		if (CurrentParagraph < Paragraphs.size() - 1)
 		{
 			CurrentParagraph++;
@@ -99,5 +113,21 @@ public:
 			fontsUsed.push_back(paragraph.Font);
 		}
 		return fontsUsed;
+	}
+
+	ObjectGlobalDataString* CreateGlobalData() override {
+		ObjectGlobalDataString* globalData = new ObjectGlobalDataString(ObjectInfoHandle);
+
+		globalData->alterableText = AlterableText;
+		globalData->currentParagraph = CurrentParagraph;
+
+		return globalData;
+	}
+
+	void ApplyGlobalData(ObjectGlobalData* globalData) override {
+		ObjectGlobalDataString* stringData = (ObjectGlobalDataString*)globalData;
+
+		AlterableText = stringData->alterableText;
+		CurrentParagraph = stringData->currentParagraph;
 	}
 };

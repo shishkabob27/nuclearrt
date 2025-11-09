@@ -82,7 +82,10 @@ public class ObjectInfoExporter : BaseExporter
 					if (common.ExtensionOffset > 0 && common.ExtensionData != null)
 					{
 						string extensionParameters = extensionExporter.ExportExtension(common.ExtensionData);
-						additionalParameters = $", {extensionParameters}";
+						if (!string.IsNullOrEmpty(extensionParameters))
+						{
+							additionalParameters = $", {extensionParameters}";
+						}
 					}
 				}
 			}
@@ -91,14 +94,37 @@ public class ObjectInfoExporter : BaseExporter
 		result.AppendLine($"\tObjectInstance* instance = new {objectTypeClass}({objectInfo.handle}, {objectInfo.ObjectType}, \"{SanitizeString(objectInfo.name)}\"{additionalParameters});");
 
 		result.AppendLine($"instance->RGBCoefficient = {ColorToArgb(objectInfo.rgbCoeff)};");
-		result.AppendLine($"instance->SetBlendCoefficient({objectInfo.blend});");
 		result.AppendLine($"instance->Effect = {objectInfo.InkEffect};");
-		result.AppendLine($"instance->EffectParameter = {objectInfo.InkEffectValue};");
+		if (objectInfo.InkEffect == 0)
+			result.AppendLine($"instance->SetEffectParameter({Math.Clamp(objectInfo.blend, (byte)0, (byte)255)});");
+		else
+			result.AppendLine($"instance->SetEffectParameter({Math.Clamp(objectInfo.InkEffectValue * 2, 0, 255)});");
 
 		{
 			if (objectInfo.properties is ObjectCommon common)
 			{
 				result.AppendLine($"instance->Qualifiers = {BuildQualifiers(common)};");
+
+				// afaik their isn't a way to check if the object is global in the ccn's object info ( the preference flag does not change )
+				// this is probably terrible and might lead to incorrect results, but it's the best i can do for now
+				bool isGlobal = false;
+				foreach (var frame in Exporter.Instance.MfaData.Frames)
+				{
+					foreach (var obj in frame.Items)
+					{
+						if (obj.Name != objectInfo.name || obj.ObjectType != objectInfo.ObjectType) continue;
+
+						if ((obj.Flags & 4) == 4)
+						{
+							isGlobal = true;
+							break;
+						}
+					}
+					
+					if (isGlobal) break;
+				}
+
+				result.AppendLine($"instance->global = {isGlobal.ToString().ToLower()};");
 			}
 		}
 
@@ -136,6 +162,7 @@ public class ObjectInfoExporter : BaseExporter
 			var common = (ObjectCommon)objectInfo.properties;
 			result.AppendLine($"((CounterBase*)instance)->Visible = {common.NewFlags.GetFlag("VisibleAtStart").ToString().ToLower()};");
 			result.AppendLine($"((CounterBase*)instance)->FollowFrame = {(!common.Flags.GetFlag("ScrollingIndependant")).ToString().ToLower()};");
+			result.AppendLine($"((CounterBase*)instance)->movements = {BuildMovements(common)};");
 			result.AppendLine(BuildCounter((ObjectCommon)objectInfo.properties));
 
 			if (objectInfo.ObjectType == 7) // only counter has alterable values, strings, and flags
@@ -324,6 +351,9 @@ public class ObjectInfoExporter : BaseExporter
 				case 3:
 					movementClassName = "EightDirectionsMovement";
 					break;
+				case 4:
+					movementClassName = "BouncingBallMovement";
+					break;
 				case 5:
 					movementClassName = "PathMovement";
 					break;
@@ -340,6 +370,10 @@ public class ObjectInfoExporter : BaseExporter
 				else if (movement.Loader is Mouse mouse)
 				{
 					result.Append($", {mouse.X1}, {mouse.X2}, {mouse.Y1}, {mouse.Y2}");
+				}
+				else if (movement.Loader is Ball ball)
+				{
+					result.Append($", {ball.Speed}, {ball.Randomizer}, {ball.Angles}, {ball.Security}, {ball.Deceleration}");
 				}
 				else if (movement.Loader is MovementPath pathMovement)
 				{

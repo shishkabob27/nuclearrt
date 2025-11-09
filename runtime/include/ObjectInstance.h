@@ -5,6 +5,8 @@
 #include <string>
 #include <vector>
 
+#include "ObjectGlobalData.h"
+
 class ObjectInstance {
 public:
     ObjectInstance(unsigned int objectInfoHandle, int type, std::string name)
@@ -24,16 +26,17 @@ public:
 	short InstanceValue = 0;
 	std::vector<short> Qualifiers = { -1, -1, -1, -1, -1, -1, -1, -1 };
 
+	bool global = false;
+
 	int RGBCoefficient = 0xFFFFFF;
 	int Effect = 0;
-	unsigned int EffectParameter = 0; 
 
-	unsigned char GetBlendCoefficient() const {
-		return BlendCoefficient;
+	unsigned char GetEffectParameter() const {
+		return EffectParameter;
 	}
 	
-	void SetBlendCoefficient(int blendCoefficient) {
-		BlendCoefficient = static_cast<unsigned char>(std::clamp(blendCoefficient, 0, 255));
+	void SetEffectParameter(int effectParameter) {
+		EffectParameter = static_cast<unsigned char>(std::clamp(effectParameter, 0, 255));
 	}
 	
 	unsigned int GetAngle() const {
@@ -52,10 +55,13 @@ public:
 		Angle = angle;
 	}
 
+	virtual ObjectGlobalData* CreateGlobalData() { return nullptr; };
+	virtual void ApplyGlobalData(ObjectGlobalData* globalData) { };
+
 	virtual std::vector<unsigned int> GetImagesUsed() { return std::vector<unsigned int>(); };
 	virtual std::vector<unsigned int> GetFontsUsed() { return std::vector<unsigned int>(); };
 
 private:
 	unsigned int Angle = 0;
-	unsigned char BlendCoefficient = 0; // Alpha
+	unsigned char EffectParameter = 0;
 };

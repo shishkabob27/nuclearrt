@@ -215,9 +215,9 @@ public class ExpressionConverter
 			else if (expression.ObjectType > 0 && expression.Num == 3) // Real Movement Speed
 			{
 				if (expression.ObjectInfo == eventBase.ObjectInfo && expression.ObjectInfoList == eventBase.ObjectInfoList)
-					result += "((Active*)instance)->movements.GetCurrentMovement()->GetRealSpeed()";
+					result += $"(({GetObjectClassName(expression.ObjectInfo)}*)instance)->movements.GetCurrentMovement()->GetRealSpeed()";
 				else
-					result += $"({GetSelector(expression.ObjectInfo)}->Count() > 0 ? ((Active*)*({GetSelector(expression.ObjectInfo)}->begin()))->movements.GetCurrentMovement()->GetRealSpeed() : 0)";
+					result += $"({GetSelector(expression.ObjectInfo)}->Count() > 0 ? (({GetObjectClassName(expression.ObjectInfo)}*)*({GetSelector(expression.ObjectInfo)}->begin()))->movements.GetCurrentMovement()->GetRealSpeed() : 0)";
 			}
 			else if (expression.ObjectType > 0 && expression.Num == 6) // Animation Direction
 			{
@@ -262,9 +262,9 @@ public class ExpressionConverter
 			else if (expression.ObjectType > 0 && expression.Num == 27) // Alpha Coefficient
 			{
 				if (expression.ObjectInfo == eventBase.ObjectInfo && expression.ObjectInfoList == eventBase.ObjectInfoList)
-					result += "instance->GetBlendCoefficient()";
+					result += "instance->GetEffectParameter()";
 				else
-					result += $"({GetSelector(expression.ObjectInfo)}->Count() > 0 ? (*{GetSelector(expression.ObjectInfo)}->begin())->GetBlendCoefficient() : 0)";
+					result += $"({GetSelector(expression.ObjectInfo)}->Count() > 0 ? (*{GetSelector(expression.ObjectInfo)}->begin())->GetEffectParameter() : 0)";
 			}
 			else if (expression.ObjectType > 0 && expression.Num == 45) // Selected Objects
 			{

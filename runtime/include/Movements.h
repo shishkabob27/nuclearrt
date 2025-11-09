@@ -11,10 +11,6 @@ public:
 	Movements() = default;
 	Movements(const std::unordered_map<int, Movement*> movementItems) : items(movementItems) {
 		currentMovementIndex = 0;
-
-		if (!items.empty() && items.find(currentMovementIndex) != items.end()) {
-			items.find(currentMovementIndex)->second->OnEnabled();
-		}
 	}
 
 	std::unordered_map<int, Movement*> items;
@@ -35,6 +31,32 @@ public:
 		if (items.find(currentMovementIndex) != items.end()) {
 			items.at(currentMovementIndex)->OnEnabled();
 		}	
+	}
+
+	void NextMovement() {
+		if (items.empty() || items.find(currentMovementIndex) == items.end()) return;
+
+		if (currentMovementIndex < items.size() - 1) {
+			currentMovementIndex++;
+		} else {
+			return;
+		}
+
+		items.at(currentMovementIndex - 1)->OnDisabled();
+		items.at(currentMovementIndex)->OnEnabled();
+	}
+
+	void PreviousMovement() {
+		if (items.empty() || items.find(currentMovementIndex) == items.end()) return;
+
+		if (currentMovementIndex > 0) {
+			currentMovementIndex--;
+		} else {
+			return;
+		}
+
+		items.at(currentMovementIndex + 1)->OnDisabled();
+		items.at(currentMovementIndex)->OnEnabled();
 	}
 
 	Movement* GetCurrentMovement() {

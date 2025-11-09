@@ -30,13 +30,13 @@ Animations::Animations(const std::unordered_map<int, Sequence*> sequences) {
 	}
 }
 
+bool Animations::IsSequencePlaying(int sequence) const {
+	int displayedSequence = forcedSequence != -1 ? forcedSequence : CurrentSequenceIndex;
+	return displayedSequence == sequence;
+}
+
 bool Animations::IsSequenceOver(int sequence) const {
-	auto it = SequenceOverEvents.find(sequence);
-	if (it != SequenceOverEvents.end()) {
-		SequenceOverEvents.erase(it);
-		return true;
-	}
-	return false;
+	return SequenceOverEvents.find(sequence) != SequenceOverEvents.end();
 }
 
 std::vector<unsigned int> Animations::GetImagesUsed() const {
@@ -214,6 +214,8 @@ bool Animations::IsDirectionForced() const {
 
 void Animations::Update(float deltaTime) {
 	CurrentFrameTime += deltaTime;
+	
+	SequenceOverEvents.erase(SequenceOverEvents.begin(), SequenceOverEvents.end());
 
 	int displayFrame = CurrentFrameIndex;
 	int displaySequence = CurrentSequenceIndex;
@@ -284,7 +286,7 @@ void Animations::Update(float deltaTime) {
 				
 				if (CurrentSequenceIndex != firstSequenceIndex) {
 					//set sequence over event
-					SequenceOverEvents[CurrentSequenceIndex] = true;
+					SequenceOverEvents[displaySequence] = true;
 
 					//Change to the first sequence
 					SetCurrentSequenceIndex(firstSequenceIndex);
@@ -295,7 +297,7 @@ void Animations::Update(float deltaTime) {
 
 					//TODO: this shouldn't activate during certian conditions but idk what they are
 					//set sequence over event
-					SequenceOverEvents[CurrentSequenceIndex] = true;
+					SequenceOverEvents[displaySequence] = true;
 				}
 			}
 		}

@@ -1,6 +1,7 @@
 #include "Application.h"
 #include "FrameFactory.h"
 #include "Frame.h"
+#include <set>
 
 #ifdef NUCLEAR_BACKEND_SDL3
 #include "SDL3Backend.h"
@@ -47,20 +48,22 @@ void Application::Update()
 {
 	RunState();
 
-	if (currentFrame != nullptr)
+	if (currentFrame == nullptr)
 	{
-		input->Update();
-		currentFrame->Update();
+		return;
 	}
-	else
-	{
-		//exit the application
-		Shutdown();
-	}
+
+	input->Update();
+	currentFrame->Update();
 }
 
 void Application::Draw()
 {
+	if (currentFrame == nullptr)
+	{
+		return;
+	}
+
 	backend->BeginDrawing();
 	currentFrame->Draw();
 	backend->EndDrawing();
@@ -68,6 +71,7 @@ void Application::Draw()
 
 void Application::Shutdown()
 {
+	std::cout << "Shutting down..." << std::endl;
 	backend->Deinitialize();
 }
 
@@ -99,6 +103,11 @@ void Application::Run()
 		if (frameTime < targetFrameTime)
 		{
 			backend->Delay(targetFrameTime - frameTime);
+		}
+
+		if (currentState == GameState::EndApplication || currentFrame == nullptr)
+		{
+			break;
 		}
 	}
 #endif
@@ -136,10 +145,27 @@ void Application::LoadFrame(int frameIndex)
 	{
 		oldImagesUsed = currentFrame->GetImagesUsed();
 		oldFontsUsed = currentFrame->GetFontsUsed();
+
+		// merge current frame's global object data with existing data
+		std::vector<ObjectGlobalData*> frameData = currentFrame->GetGlobalObjectData();
+		MergeGlobalObjectData(frameData);
 	}
 
 	currentFrame = FrameFactory::CreateFrame(frameIndex);
+
+	if (currentFrame == nullptr)
+	{
+		QueueStateChange(GameState::EndApplication);
+		return;
+	}
+
 	currentFrame->Initialize();
+	
+	// apply global object data to new frame
+	if (!globalObjectData.empty())
+	{
+		currentFrame->ApplyGlobalObjectData(globalObjectData);
+	}
 	
 	backend->ShowMouseCursor();
 
@@ -191,6 +217,85 @@ void Application::LoadFrame(int frameIndex)
 	std::cout << "Loaded frame " << frameIndex << std::endl;
 }
 
+void Application::MergeGlobalObjectData(std::vector<ObjectGlobalData*> frameData)
+{
+	std::map<unsigned int, std::vector<ObjectGlobalData*>> existingByHandle;
+	for (auto* data : globalObjectData)
+	{
+		existingByHandle[data->objectInfoHandle].push_back(data);
+	}
+	
+	std::map<unsigned int, std::vector<ObjectGlobalData*>> frameByHandle;
+	for (auto* data : frameData)
+	{
+		frameByHandle[data->objectInfoHandle].push_back(data);
+	}
+	
+	globalObjectData.clear();
+	
+	std::set<unsigned int> allHandles;
+	for (auto& [handle, dataList] : existingByHandle)
+	{
+		allHandles.insert(handle);
+	}
+	for (auto& [handle, dataList] : frameByHandle)
+	{
+		allHandles.insert(handle);
+	}
+	
+	for (unsigned int handle : allHandles)
+	{
+		bool hasExisting = existingByHandle.find(handle) != existingByHandle.end();
+		bool hasFrame = frameByHandle.find(handle) != frameByHandle.end();
+		
+		if (hasFrame)
+		{
+			int frameCount = frameByHandle[handle].size();
+			
+			if (hasExisting)
+			{
+				int savedCount = existingByHandle[handle].size();
+				
+				if (frameCount <= savedCount)
+				{
+					auto& savedList = existingByHandle[handle];
+					auto& frameList = frameByHandle[handle];
+					
+					for (int i = 0; i < savedCount - frameCount; i++)
+					{
+						globalObjectData.push_back(savedList[i]);
+					}
+					for (int i = 0; i < frameCount; i++)
+					{
+						globalObjectData.push_back(frameList[i]);
+					}
+				}
+				else
+				{
+					for (auto* data : frameByHandle[handle])
+					{
+						globalObjectData.push_back(data);
+					}
+				}
+			}
+			else
+			{
+				for (auto* data : frameByHandle[handle])
+				{
+					globalObjectData.push_back(data);
+				}
+			}
+		}
+		else
+		{
+			for (auto* data : existingByHandle[handle])
+			{
+				globalObjectData.push_back(data);
+			}
+		}
+	}
+}
+
 void Application::RunState()
 {
 	switch (currentState)
@@ -198,6 +303,7 @@ void Application::RunState()
 		case GameState::Running:
 			break;
 		case GameState::RestartApplication:
+			globalObjectData.clear();
 			LoadFrame(0);
 			currentState = GameState::StartOfFrame;
 			break;
@@ -221,7 +327,6 @@ void Application::RunState()
 			currentState = GameState::StartOfFrame;
 			break;
 		case GameState::EndApplication:
-			Shutdown();
 			break;
 	}
 }

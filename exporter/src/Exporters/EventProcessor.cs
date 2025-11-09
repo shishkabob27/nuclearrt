@@ -254,7 +254,7 @@ public class EventProcessor
 			}
 			else if (expression.Loader is Position)
 			{
-				if ((expression.Loader as Position).ObjectInfoParent != 65535)
+				if ((expression.Loader as Position).ObjectInfoParent != ushort.MaxValue)
 				{
 					objectInfos.Add((int)(expression.Loader as Position).ObjectInfoParent);
 					count++;
@@ -267,6 +267,9 @@ public class EventProcessor
 			}
 			else if (expression.Loader is Create)
 			{
+				objectInfos.Add((expression.Loader as Create).ObjectInfo);
+				count++;
+
 				if ((expression.Loader as Create).Position.ObjectInfoParent != ushort.MaxValue)
 				{
 					objectInfos.Add((int)(expression.Loader as Create).Position.ObjectInfoParent);

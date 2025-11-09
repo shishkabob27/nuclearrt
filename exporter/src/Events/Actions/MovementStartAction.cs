@@ -23,3 +23,8 @@ public class MovementStartAction : ActionBase
 		return result.ToString();
 	}
 }
+
+public class CounterMovementStartAction : MovementStartAction
+{
+	public override int ObjectType { get; set; } = 7;
+}

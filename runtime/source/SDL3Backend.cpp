@@ -47,7 +47,7 @@ void SDL3Backend::Initialize() {
 	}
 
 	// Create the window
-	SDL_WindowFlags flags = SDL_WINDOW_RESIZABLE;
+	SDL_WindowFlags flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIDDEN;
 	window = SDL_CreateWindow(windowTitle.c_str(), windowWidth, windowHeight, flags);
 	if (window == nullptr) {
 		std::cerr << "SDL_CreateWindow Error: " << SDL_GetError() << std::endl;
@@ -137,8 +137,7 @@ void SDL3Backend::Initialize() {
 							ImGui::Text("Type: %d", instance->Type);
 							ImGui::Text("RGB Coefficient: %d", instance->RGBCoefficient);
 							ImGui::Text("Effect: %d", instance->Effect);
-							ImGui::Text("Blend Coefficient: %d", instance->GetBlendCoefficient());
-							ImGui::Text("Effect Parameter: %d", instance->EffectParameter);
+							ImGui::Text("Effect Parameter: %d", instance->GetEffectParameter());
 							ImGui::TreePop();
 						}
 
@@ -294,6 +293,11 @@ void SDL3Backend::EndDrawing()
 #endif
 
 	SDL_RenderPresent(renderer);
+
+	if (!renderedFirstFrame) {
+		renderedFirstFrame = true;
+		SDL_ShowWindow(window);
+	}
 }
 
 void SDL3Backend::Clear(int color)
@@ -335,7 +339,7 @@ void SDL3Backend::UnloadTexture(int id) {
 	}
 }
 
-void SDL3Backend::DrawTexture(int id, int x, int y, int offsetX, int offsetY, int angle, float scale, int color, unsigned char blendCoefficient, int effect, unsigned int effectParam)
+void SDL3Backend::DrawTexture(int id, int x, int y, int offsetX, int offsetY, int angle, float scale, int color, int effect, unsigned char effectParameter)
 {
 	SDL_Texture* texture = textures[id];
 	if (texture == nullptr) {
@@ -364,15 +368,15 @@ void SDL3Backend::DrawTexture(int id, int x, int y, int offsetX, int offsetY, in
 	switch (effect) {
 		case 4096:
 		case 0:
-			SDL_SetTextureAlphaMod(texture, 255 - blendCoefficient);
+			SDL_SetTextureAlphaMod(texture, 255 - effectParameter);
 			break;
 		case 1: // Semi-Transparent:
 			SDL_SetTextureColorMod(texture, 255, 255, 255);
-			SDL_SetTextureAlphaMod(texture, 255 - (effectParam * 2));
+			SDL_SetTextureAlphaMod(texture, 255 - effectParameter);
 			break;
 		case 9: // Additive
 			SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_ADD);
-			SDL_SetTextureAlphaMod(texture, 255 - (blendCoefficient));
+			SDL_SetTextureAlphaMod(texture, 255 - effectParameter);
 			break;
 	}
 
@@ -806,16 +810,26 @@ int SDL3Backend::GetMouseY()
 
 void SDL3Backend::SetMouseX(int x)
 {
-	float y;
-	SDL_GetMouseState(NULL, &y);
-	SDL_WarpMouseInWindow(window, x, y);
+	SDL_FRect rect = CalculateRenderTargetRect();
+	int renderTargetWidth = std::min(Application::Instance().GetAppData()->GetWindowWidth(), Application::Instance().GetCurrentFrame()->Width);
+	
+	float windowX = rect.x + (x * rect.w / renderTargetWidth);
+	float windowY;
+	
+	SDL_GetMouseState(NULL, &windowY);
+	SDL_WarpMouseInWindow(window, windowX, windowY);
 }
 
 void SDL3Backend::SetMouseY(int y)
 {
-	float x;
-	SDL_GetMouseState(&x, NULL);
-	SDL_WarpMouseInWindow(window, x, y);
+	SDL_FRect rect = CalculateRenderTargetRect();
+	int renderTargetHeight = std::min(Application::Instance().GetAppData()->GetWindowHeight(), Application::Instance().GetCurrentFrame()->Height);
+	
+	float windowX;
+	float windowY = rect.y + (y * rect.h / renderTargetHeight);
+	
+	SDL_GetMouseState(&windowX, NULL);
+	SDL_WarpMouseInWindow(window, windowX, windowY);
 }
 
 int SDL3Backend::GetMouseWheelMove()

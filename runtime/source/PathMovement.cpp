@@ -8,6 +8,14 @@ void PathMovement::Initialize() {
 	currentNodeIndex = 0;
 }
 
+void PathMovement::OnEnabled() {
+	originX = Instance->X;
+	originY = Instance->Y;
+	currentNodeIndex = 0;
+	movingForward = true;
+	stopped = false;
+}
+
 void PathMovement::Start() {
 	stopped = false;
 }
@@ -41,7 +49,7 @@ void PathMovement::Update(float deltaTime) {
 
 			if (ReverseAtEnd) {
 				movingForward = !movingForward;
-				if (wasMovingForward && !movingForward) {
+				if (wasMovingForward && !movingForward && !RepositionAtEnd) {
 					int endX = originX;
 					int endY = originY;
 					for (size_t i = 0; i < Nodes.size(); ++i) {
@@ -60,12 +68,40 @@ void PathMovement::Update(float deltaTime) {
 			}
 
 		} else {
+			bool wasMovingForward = movingForward;
+			
 			if (RepositionAtEnd) {
 				Instance->X = static_cast<float>(originX);
 				Instance->Y = static_cast<float>(originY);
-				stopped = true;
+			} else {
+				if (!ReverseAtEnd) {
+					originX = static_cast<int>(Instance->X);
+					originY = static_cast<int>(Instance->Y);
+				}
 			}
-			return;
+
+			if (ReverseAtEnd) {
+				movingForward = !movingForward;
+				if (wasMovingForward && !movingForward && !RepositionAtEnd) {
+					int endX = originX;
+					int endY = originY;
+					for (size_t i = 0; i < Nodes.size(); ++i) {
+						endX += Nodes[i].DestinationX;
+						endY += Nodes[i].DestinationY;
+					}
+					Instance->X = static_cast<float>(endX);
+					Instance->Y = static_cast<float>(endY);
+				}
+				
+				if (movingForward) {
+					currentNodeIndex = 0;
+				} else {
+					currentNodeIndex = static_cast<int>(Nodes.size()) - 1;
+				}
+			} else {
+				stopped = true;
+				return;
+			}
 		}
 	}
 	
@@ -81,7 +117,11 @@ void PathMovement::Update(float deltaTime) {
 			if (Loop && ReverseAtEnd) {
 				movingForward = !movingForward;
 				currentNodeIndex = 0;
+			} else if (Loop) {
+				movingForward = !movingForward;
+				currentNodeIndex = 0;
 			} else {
+				stopped = true;
 				return;
 			}
 		} else {
@@ -98,7 +138,11 @@ void PathMovement::Update(float deltaTime) {
 				if (Loop && ReverseAtEnd) {
 					movingForward = !movingForward;
 					currentNodeIndex = 0;
+				} else if (Loop) {
+					movingForward = !movingForward;
+					currentNodeIndex = 0;
 				} else {
+					stopped = true;
 					return;
 				}
 			} else {

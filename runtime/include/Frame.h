@@ -74,6 +74,9 @@ public:
 
 	ObjectInstance* CreateInstance(ObjectInstance* createdInstance, short x, short y, unsigned int layer, short instanceValue, unsigned int objectInfoHandle, short angle, ObjectInstance* parentInstance = nullptr);
 
+	std::vector<ObjectGlobalData*> GetGlobalObjectData();
+	void ApplyGlobalObjectData(std::vector<ObjectGlobalData*> globalData);
+
 	int GetMouseX();
 	int GetMouseY();
 
