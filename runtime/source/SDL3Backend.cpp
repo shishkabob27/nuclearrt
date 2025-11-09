@@ -700,16 +700,26 @@ int SDL3Backend::GetMouseY()
 
 void SDL3Backend::SetMouseX(int x)
 {
-	float y;
-	SDL_GetMouseState(NULL, &y);
-	SDL_WarpMouseInWindow(window, x, y);
+	SDL_FRect rect = CalculateRenderTargetRect();
+	int renderTargetWidth = std::min(Application::Instance().GetAppData()->GetWindowWidth(), Application::Instance().GetCurrentFrame()->Width);
+	
+	float windowX = rect.x + (x * rect.w / renderTargetWidth);
+	float windowY;
+	
+	SDL_GetMouseState(NULL, &windowY);
+	SDL_WarpMouseInWindow(window, windowX, windowY);
 }
 
 void SDL3Backend::SetMouseY(int y)
 {
-	float x;
-	SDL_GetMouseState(&x, NULL);
-	SDL_WarpMouseInWindow(window, x, y);
+	SDL_FRect rect = CalculateRenderTargetRect();
+	int renderTargetHeight = std::min(Application::Instance().GetAppData()->GetWindowHeight(), Application::Instance().GetCurrentFrame()->Height);
+	
+	float windowX;
+	float windowY = rect.y + (y * rect.h / renderTargetHeight);
+	
+	SDL_GetMouseState(&windowX, NULL);
+	SDL_WarpMouseInWindow(window, windowX, windowY);
 }
 
 int SDL3Backend::GetMouseWheelMove()
