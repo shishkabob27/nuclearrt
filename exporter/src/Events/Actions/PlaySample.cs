@@ -28,7 +28,16 @@ public class PlaySampleChannel : ActionBase
 		return result.ToString();
 	}
 }
-/*public class PlayAndLoopSample : PlaySample
+public class PlayAndLoopSample : ActionBase
 {
+	public override int ObjectType { get; set; } = -2;
 	public override int Num { get; set; } = -2;
-}*/
+	public override string Build(EventBase eventBase, ref string nextLabel, ref int orIndex, Dictionary<string, object>? parameters = null, string ifStatement = "if (")
+	{
+		StringBuilder result = new();
+		result.AppendLine($"Application::Instance().GetBackend()->LoadSample({((Sample)eventBase.Items[0].Loader).Handle});");
+		result.AppendLine($"Application::Instance().GetBackend()->PlaySample({((Sample)eventBase.Items[0].Loader).Handle}, -1, {ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[1].Loader, eventBase)}, NULL, false);");
+
+		return result.ToString();
+	}
+}

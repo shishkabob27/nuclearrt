@@ -57,6 +57,9 @@ public:
 	void UnloadFont(int id) override;
 	void DrawText(FontInfo* fontInfo, int x, int y, int color, const std::string& text) override;
 
+	void LoadSample(int id) override;
+	void PlaySample(int id, int channel, int loops, int freq, bool interruptable) override;
+
 	const uint8_t* GetKeyboardState() override;
 
 	int GetMouseX() override;
@@ -67,6 +70,14 @@ public:
 	uint32_t GetMouseState() override;
 	void HideMouseCursor() override;
 	void ShowMouseCursor() override;
+
+	void SetTitle(const char* name) override {}
+	void HideWindow() override {}
+	void ShowWindow() override {}
+	void ChangeWindowPosX(int x) override {}
+	void ChangeWindowPosY(int y) override {}
+	void Windowed() override {}
+	void Fullscreen(bool fullscreenDesktop) override {}
 
 	unsigned int GetTicks() override { return SDL_GetTicks(); }
 	float GetTimeDelta() override;
@@ -85,6 +96,7 @@ private:
 	SDL_Renderer* renderer;
 	SDL_Texture* renderTarget;
 	static SDL_AudioDeviceID audio_device;
+	SDL_AudioSpec spec;
 	bool renderedFirstFrame = false;
 
 	SDL_FRect CalculateRenderTargetRect();

@@ -634,12 +634,13 @@ void SDL3Backend::LoadSample(int id) {
 		return;
 	}
 	std::cout << soundInfo->Type << "\n";
+	std::vector<uint8_t> data = pakFile.GetData("sounds/" + std::to_string(id) + "." + soundInfo->Type);
+	if (data.empty()) {
+		std::cerr << "PakFile::GetData Error: Sample with id " << id << " not found" << std::endl;
+		return;
+	}
 	if (soundInfo->Type == "wav") {
-		std::vector<uint8_t> data = pakFile.GetData("sounds/" + std::to_string(id) + ".wav");
-		if (data.empty()) {
-			std::cerr << "PakFile::GetData Error: Sample with id " << id << " not found" << std::endl;
-			return;
-		}
+
 		SDL_IOStream* stream = SDL_IOFromMem(data.data(), data.size());
 		if (!SDL_LoadWAV_IO(stream, true, &samples[id].spec, &samples[id].data, &samples[id].data_len)) {
 			std::cout << "SDL_LoadWAV_IO Error (WAV) : " << SDL_GetError() << std::endl;
@@ -657,7 +658,6 @@ void SDL3Backend::LoadSample(int id) {
 		std::cout << "Loaded WAV Sample ID : " << id << "\n";
 	}
 	else if (soundInfo->Type == "ogg") {
-		std::vector<uint8_t> data = pakFile.GetData("sounds/" + std::to_string(id) + ".ogg");
 		std::cout << "OGG Data Size: " << data.size() << " bytes\n";
 		int channels, samplerate;
 		short* output = nullptr;

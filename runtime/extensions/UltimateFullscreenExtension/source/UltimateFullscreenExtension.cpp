@@ -8,12 +8,12 @@ void UltimateFullscreenExtension::Update(float deltaTime) {
 
 }
 void UltimateFullscreenExtension::GoFullscreen() {
-    Application::Instance().GetBackend()->Fullscreen(true);
-    isFullscreen = true;
+    //Application::Instance().GetBackend()->Fullscreen(true);
+    //isFullscreen = true;
 }
 void UltimateFullscreenExtension::GoWindowed() {
-    Application::Instance().GetBackend()->Windowed();
-    isFullscreen = false;
+    //Application::Instance().GetBackend()->Windowed();
+    //isFullscreen = false;
 }
 UltimateFullscreenExtension::UltimateFullscreenExtension(short flags) {
     
