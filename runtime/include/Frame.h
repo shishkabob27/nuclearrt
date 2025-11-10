@@ -61,12 +61,21 @@ public:
 
 	void DeleteMarkedInstances() {
 		for (auto& handle : instancesMarkedForDeletion) {
-			auto it = ObjectInstances.erase(handle);
+			for (auto& layer : Layers) {
+				auto it = std::find_if(layer.instances.begin(), layer.instances.end(), [handle](ObjectInstance* instance) {
+					return instance->Handle == handle;
+				});
+				if (it != layer.instances.end()) {
+					layer.instances.erase(it);
+					break;
+				}
+			}
+			ObjectInstances.erase(handle);
 		}
 		instancesMarkedForDeletion.clear();
 	}
 
-	virtual void DrawLayer(Layer& layer, unsigned int index);
+	void DrawLayer(Layer& layer);
 	void DrawCounterNumbers(CounterBase *counter, int value, int x, int y);
 
 	std::vector<unsigned int> GetImagesUsed();

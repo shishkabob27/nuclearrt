@@ -1,6 +1,9 @@
 #pragma once
 
 #include <string>
+#include <vector>
+
+class ObjectInstance;
 
 class Layer {
 public:
@@ -15,4 +18,6 @@ public:
 
 	float XCoefficient;
 	float YCoefficient;
+
+	std::vector<ObjectInstance*> instances;
 };
