@@ -51,7 +51,7 @@ void Frame::Draw()
 
 	for (unsigned int i = 0; i < Layers.size(); i++)
 	{
-		DrawLayer(Layers[i], i);
+		DrawLayer(Layers[i]);
 	}
 }
 
@@ -96,12 +96,10 @@ void Frame::SetScrollY(int y)
 	scrollY = y;
 }
 
-void Frame::DrawLayer(Layer& layer, unsigned int index)
+void Frame::DrawLayer(Layer& layer)
 {
-	for (auto& [handle, instance] : ObjectInstances)
+	for (auto& instance : layer.instances)
 	{
-		if (instance->Layer != index) continue; // TODO: dont do this
-		
 		if (instance->Type == 1)
 		{
 			auto& imageBank = ImageBank::Instance();
@@ -396,6 +394,8 @@ ObjectInstance* Frame::CreateInstance(ObjectInstance* createdInstance, short x, 
 	{
 		((Extension*)createdInstance)->Initialize();
 	}
+
+	Layers[createdInstance->Layer].instances.push_back(createdInstance);
 
 	return createdInstance;
 }
