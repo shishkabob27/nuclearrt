@@ -162,13 +162,13 @@ void SDL3Backend::Deinitialize()
 #ifdef _DEBUG
 	DEBUG_UI.Shutdown();
 #endif
-
+	SDL_HideWindow(window); // Hide the window so the user doesn't see the pause in clearing the audio
 	// cleanup textures
 	for (auto& pair : textures) {
 		SDL_DestroyTexture(pair.second);
 	}
 	textures.clear();
-
+	
 	// cleanup fonts
 	for (auto& pair : fonts) {
 		TTF_CloseFont(pair.second);
@@ -177,17 +177,19 @@ void SDL3Backend::Deinitialize()
 	fontBuffers.clear();
 	
 	// Close the Audio Device
-	SDL_CloseAudioDevice(audio_device);
+	SDL_PauseAudioDevice(audio_device);
 	// cleanup audio
 	for (int i; i <= 32; i++) {
-		if (samples[i].stream != nullptr) SDL_DestroyAudioStream(samples[i].stream);
+		if (!samples[i].stream) continue;
+		SDL_ClearAudioStream(samples[i].stream);
+		SDL_DestroyAudioStream(samples[i].stream);
 		SDL_free(samples[i].data);
 	}
 	if (renderTarget != nullptr) {
 		SDL_DestroyTexture(renderTarget);
 		renderTarget = nullptr;
 	}
-
+	SDL_CloseAudioDevice(audio_device);
 	// Destroy the renderer
 	if (renderer != nullptr) {
 		SDL_DestroyRenderer(renderer);
@@ -658,7 +660,6 @@ void SDL3Backend::LoadSample(int id) {
 		std::cout << "Loaded WAV Sample ID : " << id << "\n";
 	}
 	else if (soundInfo->Type == "ogg") {
-		std::cout << "OGG Data Size: " << data.size() << " bytes\n";
 		int channels, samplerate;
 		short* output = nullptr;
 		int numSamples = stb_vorbis_decode_memory(data.data(), data.size(), &channels, &samplerate, &output);
@@ -669,7 +670,6 @@ void SDL3Backend::LoadSample(int id) {
 		std::cout << "Decoded Memory (OGG)\n";
 		SDL_AudioSpec devSpec;
 		SDL_GetAudioDeviceFormat(audio_device, &devSpec, NULL);
-		std::cout << "devSpec freq=" << devSpec.freq << " format=" << devSpec.format << " channels=" << (int)devSpec.channels << std::endl;
 		samples[id].spec = {};
 		samples[id].spec.freq = samplerate;
 		samples[id].spec.format = SDL_AUDIO_S16LE;
@@ -699,14 +699,21 @@ void SDL3Backend::LoadSample(int id) {
 	
 }
 void SDL3Backend::PlaySample(int id, int channel, int loops, int freq, bool interruptable) {
-	if (!samples[id].stream) return;
+	if (!samples[id].stream) return; // Check if there isn't a stream in the sample.
 
-	if (freq != NULL || freq <= -1) samples[id].spec.freq = freq;
+	if (freq != NULL || freq >= 0) { // Check if frequency isn't blank.
+		SDL_AudioSpec dstSpec;
+		dstSpec.channels = samples[id].spec.channels;
+		dstSpec.format = samples[id].spec.format;
+		dstSpec.freq = freq;
+		SDL_SetAudioStreamFormat(samples[id].stream, &samples[id].spec, &dstSpec);
+	}
 	
-	samples[id].loops = loops;
+	if (loops <= 0) samples[id].loops = -1; // Safety Checking, loops would end on zero.
+	else samples[id].loops = loops;
 
 	if (channel <= 0) {
-		for (int i = 1; i <= 32; i++) {
+		for (int i = 1; i <= SDL_arraysize(channels); i++) {
 			if (!channels[i].containsSample) {
 				samples[id].active = true;
 				channels[i].containsSample = true;
@@ -716,8 +723,34 @@ void SDL3Backend::PlaySample(int id, int channel, int loops, int freq, bool inte
 		}
 	}
 	samples[id].active = true;
+	samples[id].channel = channel;
 	channels[channel].containsSample = true;
 	std::cout << "Sample ID " << id << " is now playing at channel " << channel << ".\n";
+}
+
+void SDL3Backend::StopSample(int id, bool channel) {
+	if (id == -1 && !channel) { // Stop any sample
+		for (int i = 0; i <= SDL_arraysize(samples); i++) {
+			samples[i].active = false;
+			samples[i].channel = 0;
+			SDL_DestroyAudioStream(samples[i].stream);
+		}
+		for (int i = 1; i <= 32; i++) {
+			channels[i].containsSample = false;
+		}
+	}
+	if (channel) { // check for the channel
+		if (id >= 1 && id <= 32) {
+			channels[id].containsSample = false;
+		}
+	}
+	else { // check for sample handle
+		int getChannel = samples[id].channel;
+		samples[id].active = false;
+		samples[id].channel = 0;
+		SDL_DestroyAudioStream(samples[id].stream);
+		channels[getChannel].containsSample = false; // This programming is horrendus honestly 
+	}
 }
 const uint8_t* SDL3Backend::GetKeyboardState()
 {
@@ -1087,11 +1120,20 @@ float SDL3Backend::GetTimeDelta()
 void SDL3Backend::Delay(unsigned int ms)
 {
     for (int i = 0; i < SDL_arraysize(samples); i++) {
-        if (SDL_GetAudioStreamQueued(samples[i].stream) < ((int)samples[i].data_len) && samples[i].active)
-            SDL_PutAudioStreamData(samples[i].stream, samples[i].data, samples[i].data_len);
-        if (SDL_GetAudioStreamQueued(samples[i].stream) == ((int)samples[i].data_len)) {
-			samples[i].active = false;
-        }
+		if (!samples[i].active) continue; // Skip inactive ones.
+		if (SDL_GetAudioStreamQueued(samples[i].stream) == 0) {
+			if (samples[i].loops == 0) {
+				int getChannel = samples[i].channel;
+				samples[i].active = false;
+				SDL_DestroyAudioStream(samples[i].stream);
+				channels[getChannel].containsSample = false;
+				std::cout << "Sample ID " << i << " finished.\n";
+			} else {
+				SDL_PutAudioStreamData(samples[i].stream, samples[i].data, samples[i].data_len);
+				if (samples[i].loops > 0) samples[i].loops--;
+				std::cout << "Sample ID " << i << " playing with Loops " << samples[i].loops << "\n";
+			}
+		}
     }
 	SDL_Delay(ms);
 }

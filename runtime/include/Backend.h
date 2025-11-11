@@ -45,7 +45,7 @@ public:
 
 	virtual void LoadSample(int id) {}
 	virtual void PlaySample(int id, int channel, int loops, int freq, bool interruptable) {}
-
+	virtual void StopSample(int id, bool channel) {}
 	virtual const uint8_t* GetKeyboardState() { return nullptr; }
 
 	virtual int GetMouseX() { return 0; }

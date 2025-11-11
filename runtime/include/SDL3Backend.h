@@ -18,10 +18,12 @@ typedef struct Sample {
 	SDL_AudioSpec spec;
 	bool active;
 	int loops;
+	int channel;
 } Sample;
 extern Sample samples[1000];
 typedef struct Channel {
 	bool containsSample;
+	bool uninterruptable;
 } Channel;
 extern Channel channels[32];
 class SDL3Backend : public Backend {
@@ -59,6 +61,7 @@ public:
 
 	void LoadSample(int id) override;
 	void PlaySample(int id, int channel, int loops, int freq, bool interruptable) override;
+	void StopSample(int id, bool channel) override;
 
 	const uint8_t* GetKeyboardState() override;
 
@@ -78,7 +81,7 @@ public:
 	void ChangeWindowPosY(int y) override {}
 	void Windowed() override {}
 	void Fullscreen(bool fullscreenDesktop) override {}
-
+	
 	unsigned int GetTicks() override { return SDL_GetTicks(); }
 	float GetTimeDelta() override;
 	void Delay(unsigned int ms) override;
