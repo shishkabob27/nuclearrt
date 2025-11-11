@@ -86,6 +86,12 @@ public:
 	std::vector<ObjectGlobalData*> GetGlobalObjectData();
 	void ApplyGlobalObjectData(std::vector<ObjectGlobalData*> globalData);
 
+	void MoveObjectToLayer(ObjectInstance* instance, unsigned int layer);
+	void MoveObjectToFront(ObjectInstance* instance);
+	void MoveObjectToBack(ObjectInstance* instance);
+	void MoveObjectInFrontOf(ObjectInstance* instance, unsigned int oiHandle);
+	void MoveObjectBehindOf(ObjectInstance* instance, unsigned int oiHandle);
+
 	int GetMouseX();
 	int GetMouseY();
 

@@ -433,6 +433,61 @@ std::vector<ObjectGlobalData*> Frame::GetGlobalObjectData()
 	return result;
 }
 
+void Frame::MoveObjectToLayer(ObjectInstance* instance, unsigned int layer)
+{
+	if (instance->Layer == layer) return;
+	if (layer >= Layers.size()) return;
+
+	Layers[instance->Layer].instances.erase(std::find(Layers[instance->Layer].instances.begin(), Layers[instance->Layer].instances.end(), instance));
+	Layers[layer].instances.push_back(instance);
+	instance->Layer = layer;
+}
+
+void Frame::MoveObjectToFront(ObjectInstance* instance)
+{	
+	Layers[instance->Layer].instances.erase(std::find(Layers[instance->Layer].instances.begin(), Layers[instance->Layer].instances.end(), instance));
+	Layers[instance->Layer].instances.push_back(instance);
+}
+
+void Frame::MoveObjectToBack(ObjectInstance* instance)
+{
+	Layers[instance->Layer].instances.erase(std::find(Layers[instance->Layer].instances.begin(), Layers[instance->Layer].instances.end(), instance));
+	Layers[instance->Layer].instances.insert(Layers[instance->Layer].instances.begin(), instance);
+}
+
+void Frame::MoveObjectInFrontOf(ObjectInstance* instance, unsigned int oiHandle)
+{	
+	int maxIndex = -1;
+	for (int i = 0; i < Layers[instance->Layer].instances.size(); i++)
+	{
+		if (Layers[instance->Layer].instances[i]->ObjectInfoHandle == oiHandle)
+		{
+			maxIndex = i;
+		}
+	}
+
+	if (maxIndex == -1) return;
+	Layers[instance->Layer].instances.erase(std::find(Layers[instance->Layer].instances.begin(), Layers[instance->Layer].instances.end(), instance));
+	Layers[instance->Layer].instances.insert(Layers[instance->Layer].instances.begin() + maxIndex + 1, instance);
+}
+
+void Frame::MoveObjectBehindOf(ObjectInstance* instance, unsigned int oiHandle)
+{
+	
+	int minIndex = -1;
+	for (int i = Layers[instance->Layer].instances.size() - 1; i >= 0; i--)
+	{
+		if (Layers[instance->Layer].instances[i]->ObjectInfoHandle == oiHandle)
+		{
+			minIndex = i;
+		}
+	}
+	
+	if (minIndex == -1) return;
+	Layers[instance->Layer].instances.erase(std::find(Layers[instance->Layer].instances.begin(), Layers[instance->Layer].instances.end(), instance));
+	Layers[instance->Layer].instances.insert(Layers[instance->Layer].instances.begin() + minIndex, instance);
+}
+
 int Frame::GetMouseX()
 {
 	return Application::Instance().GetBackend()->GetMouseX();
@@ -560,6 +615,9 @@ bool Frame::IsColliding(ObjectInstance *instance1, ObjectInstance *instance2)
 	if ((instance1->Type != 0 && instance1->Type != 1 && instance1->Type != 2) ||
 		(instance2->Type != 0 && instance2->Type != 1 && instance2->Type != 2))
 		return false;
+
+	// Check if the objects are on the same layer
+	if (instance1->Layer != instance2->Layer) return false;
 
 	// Get image IDs for both instances
 	unsigned int imageId1, imageId2;
