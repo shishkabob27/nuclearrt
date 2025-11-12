@@ -191,6 +191,8 @@ void Animations::SetForcedDirection(int directionMask) {
 	automaticRotationDirection = newDirection;
 
 	forcedDirection = newDirection;
+	CurrentFrameIndex = 0;
+	CurrentFrameTime = 0.0f;
 }
 
 void Animations::RestoreForcedSequence() {
