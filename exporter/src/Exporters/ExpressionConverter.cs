@@ -377,8 +377,15 @@ public class ExpressionConverter
 		if (convertToCCN)
 		{
 			var obj = GetObject(objectInfo, isGlobal);
-			ObjectType = Exporter.Instance.GameData.frameitems[obj.Item1].ObjectType;
-			ObjectInfo = obj.Item1;
+			if (obj.Item1 > short.MaxValue)
+			{
+				ObjectType = GetQualifierType(obj.Item1);
+			}
+			else
+			{
+				ObjectType = Exporter.Instance.GameData.frameitems[obj.Item1].ObjectType;
+				ObjectInfo = obj.Item1;
+			}
 		}
 		else
 		{
@@ -401,6 +408,11 @@ public class ExpressionConverter
 			return exporter?.CppClassName ?? "Extension";
 			default: return "ObjectInstance";
 		}
+	}
+
+	static int GetQualifierType(int qualifier)
+	{
+		return (qualifier & 0x7FFF) + 1;
 	}
 
 	public static Tuple<int, string, ObjectInstance> GetObject(int objectInfo, bool isGlobal = false, int frame = -1)
