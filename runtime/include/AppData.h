@@ -92,6 +92,7 @@ public:
 	void SetControlKeys(const std::vector<std::vector<int>>& keys) { m_controlKeys = keys; }
 
 	std::vector<int>& GetPlayerScores() { return m_playerScores; }
+	int GetPlayerScore(int playerIndex) { return m_playerScores[playerIndex]; }
 	void SetPlayerScores(const std::vector<int>& scores) { m_playerScores = scores; }
 	void SetScore(int playerIndex, int score) { m_playerScores[playerIndex] = score; }
 	void AddScore(int playerIndex, int score) { m_playerScores[playerIndex] += score; }
@@ -103,6 +104,7 @@ public:
 	}
 
 	std::vector<int>& GetPlayerLives() { return m_playerLives; }
+	int GetPlayerLives(int playerIndex) { return m_playerLives[playerIndex]; }
 	void SetPlayerLives(const std::vector<int>& lives) { m_playerLives = lives; }
 	void SetLives(int playerIndex, int lives) { m_playerLives[playerIndex] = lives; }
 	void AddLives(int playerIndex, int lives) { m_playerLives[playerIndex] += lives; }

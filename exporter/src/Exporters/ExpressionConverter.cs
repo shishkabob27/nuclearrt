@@ -24,7 +24,11 @@ public class ExpressionConverter
 		for (int i = 0; i < expressions.Items.Count; i++)
 		{
 			Expression expression = expressions.Items[i];
-			if (expression.ObjectType == -6 && expression.Num == 0) // XMouse
+			if (expression.ObjectType == -7 && expression.Num == 1) // Player Lives
+			{
+				result += $"Application::Instance().GetAppData()->GetPlayerLives({expression.ObjectInfo})";
+			}
+			else if (expression.ObjectType == -6 && expression.Num == 0) // XMouse
 			{
 				result += "Application::Instance().GetInput()->GetMouseX()";
 			}
