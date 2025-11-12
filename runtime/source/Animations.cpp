@@ -190,6 +190,8 @@ void Animations::SetForcedDirection(int directionMask) {
 	newDirection = validDirections.at(index);
 	automaticRotationDirection = newDirection;
 
+	if (forcedDirection == newDirection) return;
+
 	forcedDirection = newDirection;
 	CurrentFrameIndex = 0;
 	CurrentFrameTime = 0.0f;
