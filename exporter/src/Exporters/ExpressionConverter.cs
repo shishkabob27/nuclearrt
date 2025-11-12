@@ -330,6 +330,7 @@ public class ExpressionConverter
 			}
 			else
 			{
+				result += $"/* Expression not found: ({expression.ObjectType}, {expression.Num}) */";
 				Logger.Log($"No expresion match, ObjectType: {expression.ObjectType}, Num: {expression.Num}");
 			}
 		}
