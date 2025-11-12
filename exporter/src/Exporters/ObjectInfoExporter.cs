@@ -357,6 +357,9 @@ public class ObjectInfoExporter : BaseExporter
 				case 5:
 					movementClassName = "PathMovement";
 					break;
+				default:
+					movementClassName = "StaticMovement";
+					break;
 			}
 
 			if (movementClassName != null)

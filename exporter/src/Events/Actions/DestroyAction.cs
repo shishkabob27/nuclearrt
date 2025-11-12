@@ -19,12 +19,12 @@ public class DestroyAction : ActionBase
 		result.AppendLine($"    it.deselect();");
 		result.AppendLine($"	{GetSelector(eventBase.ObjectInfo)}->RemoveInstance(instance->Handle);");
 		//remove from qualifier selectors
-		var obj = ExpressionConverter.GetObject(eventBase.ObjectType, true);
-		if (Exporter.Instance.GameData.frameitems[(int)obj.Item1].properties is ObjectCommon common)
+		var obj = ExpressionConverter.GetObject(eventBase.ObjectInfo, IsGlobal);
+		if (obj.Item1 < short.MaxValue && Exporter.Instance.GameData.frameitems[(int)obj.Item1].properties is ObjectCommon common)
 		{
 			foreach (var qualifier in common._qualifiers)
 			{
-				if (qualifier != -1 && qualifier != (short)eventBase.ObjectInfo)
+				if (qualifier > 0 && qualifier != (short)eventBase.ObjectInfo)
 				{
 					string qualifierSelector = StringUtils.SanitizeObjectName(Utilities.GetQualifierName(qualifier & 0x7FFF, eventBase.ObjectType)) + "_" + (32768 + qualifier) + "_selector";
 					if (qualifierSelector != GetSelector(eventBase.ObjectInfo))

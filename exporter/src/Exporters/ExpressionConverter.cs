@@ -24,7 +24,11 @@ public class ExpressionConverter
 		for (int i = 0; i < expressions.Items.Count; i++)
 		{
 			Expression expression = expressions.Items[i];
-			if (expression.ObjectType == -6 && expression.Num == 0) // XMouse
+			if (expression.ObjectType == -7 && expression.Num == 1) // Player Lives
+			{
+				result += $"Application::Instance().GetAppData()->GetPlayerLives({expression.ObjectInfo})";
+			}
+			else if (expression.ObjectType == -6 && expression.Num == 0) // XMouse
 			{
 				result += "Application::Instance().GetInput()->GetMouseX()";
 			}
@@ -326,6 +330,7 @@ public class ExpressionConverter
 			}
 			else
 			{
+				result += $"/* Expression not found: ({expression.ObjectType}, {expression.Num}) */";
 				Logger.Log($"No expresion match, ObjectType: {expression.ObjectType}, Num: {expression.Num}");
 			}
 		}
@@ -373,8 +378,15 @@ public class ExpressionConverter
 		if (convertToCCN)
 		{
 			var obj = GetObject(objectInfo, isGlobal);
-			ObjectType = Exporter.Instance.GameData.frameitems[obj.Item1].ObjectType;
-			ObjectInfo = obj.Item1;
+			if (obj.Item1 > short.MaxValue)
+			{
+				ObjectType = GetQualifierType(obj.Item1);
+			}
+			else
+			{
+				ObjectType = Exporter.Instance.GameData.frameitems[obj.Item1].ObjectType;
+				ObjectInfo = obj.Item1;
+			}
 		}
 		else
 		{
@@ -397,6 +409,11 @@ public class ExpressionConverter
 			return exporter?.CppClassName ?? "Extension";
 			default: return "ObjectInstance";
 		}
+	}
+
+	static int GetQualifierType(int qualifier)
+	{
+		return (qualifier & 0x7FFF) + 1;
 	}
 
 	public static Tuple<int, string, ObjectInstance> GetObject(int objectInfo, bool isGlobal = false, int frame = -1)
