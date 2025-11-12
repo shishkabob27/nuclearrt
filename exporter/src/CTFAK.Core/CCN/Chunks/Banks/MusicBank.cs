@@ -38,16 +38,14 @@ namespace CTFAK.CCN.Chunks.Banks
 		public override void Read(ByteReader reader)
 		{
 			Handle = reader.ReadInt32();
-			reader = Decompressor.DecompressAsReader(reader, out int decompressed);
-
 			Checksum = reader.ReadInt32();
 			References = reader.ReadInt32();
 			var size = reader.ReadUInt32();
 			_flags = reader.ReadUInt32();
 			var reserved = reader.ReadInt32();
 			var nameLen = reader.ReadInt32();
-			Name = reader.ReadWideString(nameLen);
-			Data = reader.ReadBytes((int)(size - nameLen));
+			Name = reader.ReadUniversal(nameLen);
+			Data = reader.ReadBytes((int)(size - nameLen * 2));
 		}
 
 		public void Save(string filename)
