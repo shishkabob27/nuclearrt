@@ -6,9 +6,6 @@ using CTFAK.MMFParser.EXE.Loaders.Events.Expressions;
 using CTFAK.MMFParser.EXE.Loaders.Events.Parameters;
 using CTFAK.Utils;
 using System.Text;
-using static CTFAK.CCN.Constants;
-using OT = CTFAK.CCN.Constants.ObjectType;
-using System.Text;
 
 public class ExpressionConverter
 {
@@ -87,9 +84,11 @@ public class ExpressionConverter
         { (ObjectType.System, 19), _ => "StringLeft(" }, // String Left
         { (ObjectType.System, 20), _ => "StringRight(" }, // String Right
         { (ObjectType.System, 22), _ => "StringLength(" }, // String Length
+		{ (ObjectType.System, 23), e => (e.Loader as DoubleExp).FloatValue.ToString() },
         { (ObjectType.System, 29), _ => "std::abs(" }, // Abs(
         { (ObjectType.System, 41), _ => "std::max(" }, // Max(
-        { (ObjectType.System, 46), _ => "0" }, // LoopIndex // TODO // skip
+        { (ObjectType.System, 46), _ => "0" }, // LoopIndex // TODO // NOTE: original code had i += 2, might be important?
+		{ (ObjectType.System, 50), e => $"Application::Instance().GetAppData()->GetGlobalStrings()[{(e.Loader as GlobalCommon).Value}]" },
         { (ObjectType.System, 56), _ => "\"\"" }, // AppTempPath$ // TODO
         { (ObjectType.System, 65), _ => "Application::Instance().RandomRange(" }, // RRandom
         { (ObjectType.System, 67), _ => "Application::Instance().GetBackend()->GetPlatformName()" }, // RuntimeName$
@@ -101,23 +100,34 @@ public class ExpressionConverter
         { (ObjectType.Arithmetic, 8), _ => " /MathHelper::GetSafeDivision()/ " }, // Division
     };
 
-	private static void HandleSystemExpr(StringBuilder stringBuilder, Expression expressions)
+	private static void HandleSystemExpr(StringBuilder stringBuilder, Expression expression)
 	{
-		switch (expressions.Num)
+		switch (expression.Num)
 		{
+			case 0: //
+				ExpressionLoader loader = (ExpressionLoader)expression.Loader;
 
+				if (loader is StringExp) stringBuilder.Append($"std::string(\"{(loader as StringExp).Value}\")");
+				else if (loader is DoubleExp) stringBuilder.Append((loader as DoubleExp).FloatValue);
+				else stringBuilder.Append(loader.Value.ToString());
+				break;
+			default:
+				HandleUnimplemented(stringBuilder, expression);
+				break;
 		}
 	}
-	private static void HandleRuntimeObjectExpr(StringBuilder stringBuilder, Expression expressions, EventBase eventBase = null)
+	private static void HandleRuntimeObjectExpr(StringBuilder stringBuilder, Expression expression, EventBase eventBase = null)
 	{
-		switch (expressions.Num)
+		switch (expression.Num)
 		{
 
 		}
 	}
 	private static void HandleUnimplemented(StringBuilder result, Expression expression, EventBase eventBase = null)
 	{
-		switch (expression.Num) { }
+
+		result.Append($"/* Expression not found: ({expression.ObjectType}, {expression.Num}) */");
+		Logger.Log($"No expresion match, ObjectType: {expression.ObjectType}, Num: {expression.Num}");
 	}
 
 	public static string ConvertExpression(ExpressionParameter expressions, EventBase eventBase = null)
@@ -130,14 +140,14 @@ public class ExpressionConverter
 			Expression expression = expressions.Items[i];
 
 			if (expressionsLookup.TryGetValue(((ObjectType)expression.ObjectType, expression.Num), out var generator)) {
-
+				result.Append(generator(expression));
 				continue;
 			}
 
 			switch ((ObjectType)expression.ObjectType)
 			{
 				case ObjectType.System:
-					HandleSystemExpr(result, expression); break;
+					HandleSystemExpr(result, expression); break; // for readablity sake, it is a seperate function
 
 				default:
 					if (expression.ObjectType > 0)
@@ -147,7 +157,7 @@ public class ExpressionConverter
 					}
 					else
 					{
-						HandleUnimplemented(result, expression);
+						HandleUnimplemented(result, expression, eventBase);
 					}
 					break;
 			}
