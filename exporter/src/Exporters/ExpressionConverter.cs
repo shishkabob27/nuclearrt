@@ -18,56 +18,88 @@ public class ExpressionConverter
 	{
 		_exporter = exporter;
 	}
-	// most function output are in the string builder itself, no need to return values when the argument is modified
-	private static void HandlePlayerExpr(StringBuilder stringBuilder, Expression expressions)
-	{
-		switch (expressions.Num) {
 
-		}
-	}
-	private static void HandleInputExpr(StringBuilder stringBuilder, Expression expressions)
+	private enum ObjectType
 	{
-		switch (expressions.Num)
-		{
-
-		}
-	}
-	private static void HandleCreateExpr(StringBuilder stringBuilder, Expression expressions)
-	{
-		switch (expressions.Num)
-		{
-
-		}
-	}
-	private static void HandleTimerExpr(StringBuilder stringBuilder, Expression expressions)
-	{
-		switch (expressions.Num)
-		{
-
-		}
-	}
-	private static void HandleGameExpr(StringBuilder stringBuilder, Expression expressions)
-	{
-		switch (expressions.Num)
-		{
-
-		}
-	}
-	private static void HandleSoundExpr(StringBuilder stringBuilder, Expression expressions)
-	{
-		switch (expressions.Num)
-		{
-
-		}
+		Player = -7,
+		Keyboard = -6,
+		Create = -5,
+		Timer = -4,
+		Game = -3,
+		Speaker = -2,
+		System = -1,
+		Arithmetic = 0,
+		Backdrop = 1,
+		Active = 2,
+		Text = 3,
+		Question = 4,
+		Score = 5,
+		Lives = 6,
+		Counter = 7,
+		Rtf = 8,
+		SubApplication = 9,
+		Extension = 32,
 	}
 
-	private static void HandleArithmeticExpr(StringBuilder stringBuilder, Expression expressions)
+	private static readonly Dictionary<(ObjectType, int), Func<Expression, string>> expressionsLookup = new()
 	{
-		switch (expressions.Num)
-		{
+        //Player
+        { (ObjectType.Player, 1), e => $"Application::Instance().GetAppData()->GetPlayerLives({e.ObjectInfo})" }, // Player Lives
 
-		}
-	}
+        //Keyboard / Mouse
+        { (ObjectType.Keyboard, 0), _ => "Application::Instance().GetInput()->GetMouseX()" }, // XMouse
+        { (ObjectType.Keyboard, 1), _ => "Application::Instance().GetInput()->GetMouseY()" }, // YMouse
+        { (ObjectType.Keyboard, 2), _ => "Application::Instance().GetInput()->GetMouseWheelMove()" }, // WheelDelta
+
+        //Create
+        { (ObjectType.Create, 0), _ => $"ObjectInstances.size()" }, // Total Objects
+
+        //Timer
+        { (ObjectType.Timer, 0), _ => "GameTimer.GetTime()" }, // Timer
+        { (ObjectType.Timer, 1), _ => "GameTimer.GetHundreds()" }, // Hundreds
+        { (ObjectType.Timer, 2), _ => "GameTimer.GetSeconds()" }, // seconds
+        { (ObjectType.Timer, 3), _ => "GameTimer.GetMinutes()" }, // Minutes
+        { (ObjectType.Timer, 4), _ => "GameTimer.GetHours()" }, // Hours
+        { (ObjectType.Timer, 5), _ => $"0" }, // Event Index // TODO
+
+        //Game
+        { (ObjectType.Game, 0),  _ => $"Index + 1" }, // Frame
+        { (ObjectType.Game, 8),  _ => $"Index + 1" }, // Frame
+        { (ObjectType.Game, 10), _ => "Application::Instance().GetAppData()->GetTargetFPS()" }, // FrameRate // TODO: Verify this
+        { (ObjectType.Game, 14), _ => "0" }, // DisplayMode // TODO
+        { (ObjectType.Game, 15), _ => "0" }, // PixelShaderVersion // TODO
+
+        //Speaker
+        { (ObjectType.Speaker, 12), _ => "std::to_string(" }, // ChannelSampleName$ // TODO
+
+        // System
+        { (ObjectType.System, -3), _ => ", " },
+		{ (ObjectType.System, -2), _ => ")" },
+		{ (ObjectType.System, -1), _ => "(" },
+		{ (ObjectType.System, 1),  _ => "Application::Instance().Random(" }, // Random(
+        { (ObjectType.System, 2),  _ => $"Application::Instance().GetAppData()->GetGlobalValue(" }, // Global Value
+        { (ObjectType.System, 3),  e => $"std::string(\"{e.Loader.ToString()}\")" },
+		{ (ObjectType.System, 4),  _ => $"std::to_string(" }, // Str$
+        { (ObjectType.System, 6),  _ => "\"\"" }, // Appdrive$ // TODO
+        { (ObjectType.System, 7),  _ => "\"\"" }, // Appdir$ // TODO
+        { (ObjectType.System, 8),  _ => "\"\"" }, // Apppath$ // TODO
+        { (ObjectType.System, 9),  _ => "\"\"" }, // Appname$ // TODO
+        { (ObjectType.System, 19), _ => "StringLeft(" }, // String Left
+        { (ObjectType.System, 20), _ => "StringRight(" }, // String Right
+        { (ObjectType.System, 22), _ => "StringLength(" }, // String Length
+        { (ObjectType.System, 29), _ => "std::abs(" }, // Abs(
+        { (ObjectType.System, 41), _ => "std::max(" }, // Max(
+        { (ObjectType.System, 46), _ => "0" }, // LoopIndex // TODO // skip
+        { (ObjectType.System, 56), _ => "\"\"" }, // AppTempPath$ // TODO
+        { (ObjectType.System, 65), _ => "Application::Instance().RandomRange(" }, // RRandom
+        { (ObjectType.System, 67), _ => "Application::Instance().GetBackend()->GetPlatformName()" }, // RuntimeName$
+
+        // Arithmetic
+        { (ObjectType.Arithmetic, 2), _ => " + " }, // Add
+        { (ObjectType.Arithmetic, 4), _ => " - " }, // Sub
+        { (ObjectType.Arithmetic, 6), _ => " * " }, // Multiply
+        { (ObjectType.Arithmetic, 8), _ => " /MathHelper::GetSafeDivision()/ " }, // Division
+    };
 
 	private static void HandleSystemExpr(StringBuilder stringBuilder, Expression expressions)
 	{
@@ -96,31 +128,16 @@ public class ExpressionConverter
 		for (int i = 0; i < expressions.Items.Count; i++)
 		{
 			Expression expression = expressions.Items[i];
-			switch ((OT)expression.ObjectType)
+
+			if (expressionsLookup.TryGetValue(((ObjectType)expression.ObjectType, expression.Num), out var generator)) {
+
+				continue;
+			}
+
+			switch ((ObjectType)expression.ObjectType)
 			{
-				case OT.Player:
-					HandlePlayerExpr(result, expression); break;
-
-				case OT.Keyboard:
-					HandleInputExpr(result, expression); break;
-
-				case OT.Create:
-					HandleCreateExpr(result, expression); break;
-
-				case OT.Timer:
-					HandleTimerExpr(result, expression); break;
-
-				case OT.Game:
-					HandleGameExpr(result, expression); break;
-
-				case OT.Speaker:
-					HandleSoundExpr(result, expression); break;
-
-				case OT.System:
+				case ObjectType.System:
 					HandleSystemExpr(result, expression); break;
-
-				case (OT)0: // 0 is Arithmetic not a quickdrop (+ - * /)
-					HandleArithmeticExpr(result, expression); break;
 
 				default:
 					if (expression.ObjectType > 0)
