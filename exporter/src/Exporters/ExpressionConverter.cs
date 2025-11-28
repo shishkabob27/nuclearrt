@@ -1,3 +1,4 @@
+using Avalonia.Styling;
 using CTFAK.CCN;
 using CTFAK.CCN.Chunks.Frame;
 using CTFAK.CCN.Chunks.Objects;
@@ -8,6 +9,7 @@ using CTFAK.Utils;
 using System.Text;
 using static CTFAK.CCN.Constants;
 
+// TODO: use enums for each objetc expression id for readablity?
 public class ExpressionConverter
 {
 	private readonly Exporter _exporter;
@@ -103,7 +105,6 @@ public class ExpressionConverter
 
 	private static void HandleSystemExpr(StringBuilder stringBuilder, Expression expression, EventBase eventBase = null)
 	{
-		// TODO: use enums for each expression id for readbality
 		switch (expression.Num)
 		{
 			case 0: //
@@ -156,8 +157,103 @@ public class ExpressionConverter
 
 
 		// object expressions
-		// if none of switch cases return than default to unimplemented
-		HandleUnimplemented(stringBuilder, expression, eventBase); // if none
+		// Extension
+		if (expression.ObjectType >= 32)
+		{
+			var exporter = ExtensionExporterRegistry.GetExporterByObjectInfo(expression.ObjectInfo, Exporter.Instance.CurrentFrame);
+
+			if (exporter == null)
+			{
+				Logger.Log($"Extension exporter not found for ObjectInfo {expression.ObjectInfo}");
+				stringBuilder.Append($"Extension exporter not found for ObjectInfo {expression.ObjectInfo}. ({expression.ObjectType}, {expression.Num})");
+				HandleUnimplemented(stringBuilder, expression, eventBase);
+				return stringBuilder;
+			}
+			// TODO: implement
+			//exporter.ExportExpression(stringBuilder, expression, eventBase);
+			stringBuilder.Append(exporter.ExportExpression(expression, eventBase));
+			return stringBuilder;
+		}
+
+		// Active/Backdrop
+		switch (expression.Num)
+		{
+
+			case 2: // Image
+				{
+					if (expression.ObjectInfo == eventBase.ObjectInfo && expression.ObjectInfoList == eventBase.ObjectInfoList)
+						return stringBuilder.Append("((Active*)instance)->animations.GetCurrentFrameIndex()");
+					else
+						return stringBuilder.Append($"({GetSelector(expression.ObjectInfo)}->Count() > 0 ? ((Active*)*({GetSelector(expression.ObjectInfo)}->begin()))->animations.GetCurrentFrameIndex() : 0)");
+				}
+			case 3: // Real Movement Speed
+				{
+					if (expression.ObjectInfo == eventBase.ObjectInfo && expression.ObjectInfoList == eventBase.ObjectInfoList)
+						return stringBuilder.Append($"(({GetObjectClassName(expression.ObjectInfo)}*)instance)->movements.GetCurrentMovement()->GetRealSpeed()");
+					else
+						return stringBuilder.Append($"({GetSelector(expression.ObjectInfo)}->Count() > 0 ? (({GetObjectClassName(expression.ObjectInfo)}*)*({GetSelector(expression.ObjectInfo)}->begin()))->movements.GetCurrentMovement()->GetRealSpeed() : 0)");
+				}
+			case 6: // Animation Direction
+				{
+					if (expression.ObjectInfo == eventBase.ObjectInfo && expression.ObjectInfoList == eventBase.ObjectInfoList)
+						return stringBuilder.Append("((Active*)instance)->animations.GetCurrentDirection()");
+					else
+						return stringBuilder.Append($"({GetSelector(expression.ObjectInfo)}->Count() > 0 ? ((Active*)*({GetSelector(expression.ObjectInfo)}->begin()))->animations.GetCurrentDirection() : 0)");
+				}
+			case 14: // Animation Number
+				{
+					if (expression.ObjectInfo == eventBase.ObjectInfo && expression.ObjectInfoList == eventBase.ObjectInfoList)
+						return stringBuilder.Append("((Active*)instance)->animations.GetCurrentSequenceIndex()");
+					else
+						return stringBuilder.Append($"({GetSelector(expression.ObjectInfo)}->Count() > 0 ? ((Active*)*({GetSelector(expression.ObjectInfo)}->begin()))->animations.GetCurrentSequenceIndex() : 0)");
+				}
+			case 83:
+				{
+					if (expression.ObjectInfo == eventBase.ObjectInfo && expression.ObjectInfoList == eventBase.ObjectInfoList)
+						return stringBuilder.Append("instance->GetAngle()");
+					else
+						return stringBuilder.Append($"({GetSelector(expression.ObjectInfo)}->Count() > 0 ? (*{GetSelector(expression.ObjectInfo)}->begin())->GetAngle() : 0)");
+				}
+			case 22:
+				{
+					if (expression.ObjectInfo == eventBase.ObjectInfo && expression.ObjectInfoList == eventBase.ObjectInfoList)
+						return stringBuilder.Append("instance->GetEffectParameter()");
+					else
+						return stringBuilder.Append($"({GetSelector(expression.ObjectInfo)}->Count() > 0 ? (*{GetSelector(expression.ObjectInfo)}->begin())->GetEffectParameter() : 0)");
+				}
+		}
+
+		// Counter
+		switch (expression.Num)
+		{
+			case 80:
+				return stringBuilder.Append($"({GetSelector(expression.ObjectInfo)}->Count() > 0 ? ((Counter*)*({GetSelector(expression.ObjectInfo)}->begin()))->GetValue() : 0)");
+			case 82:
+				{
+					if (expression.ObjectInfo == eventBase.ObjectInfo && expression.ObjectInfoList == eventBase.ObjectInfoList)
+						return stringBuilder.Append($"((Counter*)instance)->MaxValue");
+					else
+						return stringBuilder.Append($"({GetSelector(expression.ObjectInfo)}->Count() > 0 ? ((Counter*)*({GetSelector(expression.ObjectInfo)}->begin()))->MaxValue : 0)");
+				}
+		}
+
+		// String
+
+		switch (expression.Num)
+		{
+			case 81:
+				{
+					if (expression.ObjectInfo == eventBase.ObjectInfo && expression.ObjectInfoList == eventBase.ObjectInfoList)
+						 return stringBuilder.Append("((StringObject*)instance)->GetText()");
+					else
+						return stringBuilder.Append($"({GetSelector(expression.ObjectInfo)}->Count() > 0 ? ((StringObject*)*({GetSelector(expression.ObjectInfo)}->begin()))->GetText() : std::string(\"\"))");
+				}
+			case 22:
+				return stringBuilder.Append("0");
+		}
+
+		// if none of switch cases return than defaults to unimplemented
+		HandleUnimplemented(stringBuilder, expression, eventBase);
 		return stringBuilder;
 	}
 	private static void HandleUnimplemented(StringBuilder result, Expression expression, EventBase eventBase = null)
