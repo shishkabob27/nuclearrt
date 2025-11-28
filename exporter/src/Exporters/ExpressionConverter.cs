@@ -6,6 +6,7 @@ using CTFAK.MMFParser.EXE.Loaders.Events.Expressions;
 using CTFAK.MMFParser.EXE.Loaders.Events.Parameters;
 using CTFAK.Utils;
 using System.Text;
+using static CTFAK.CCN.Constants;
 
 public class ExpressionConverter
 {
@@ -100,8 +101,9 @@ public class ExpressionConverter
         { (ObjectType.Arithmetic, 8), _ => " /MathHelper::GetSafeDivision()/ " }, // Division
     };
 
-	private static void HandleSystemExpr(StringBuilder stringBuilder, Expression expression)
+	private static void HandleSystemExpr(StringBuilder stringBuilder, Expression expression, EventBase eventBase = null)
 	{
+		// TODO: use enums for each expression id for readbality
 		switch (expression.Num)
 		{
 			case 0: //
@@ -112,16 +114,51 @@ public class ExpressionConverter
 				else stringBuilder.Append(loader.Value.ToString());
 				break;
 			default:
-				HandleUnimplemented(stringBuilder, expression);
+				HandleUnimplemented(stringBuilder, expression, eventBase);
 				break;
 		}
 	}
-	private static void HandleRuntimeObjectExpr(StringBuilder stringBuilder, Expression expression, EventBase eventBase = null)
+	private static StringBuilder HandleRuntimeObjectExpr(StringBuilder stringBuilder, Expression expression, EventBase eventBase = null)
 	{
+		// common expressions
 		switch (expression.Num)
 		{
-
+			case 12: // Fixed Value
+				return stringBuilder.Append("0"); // TODO
+			case 15: // Number of this Object
+				return stringBuilder.Append($"{GetSelector(expression.ObjectInfo)}->Size()");
+			case 45: // Number of selected Objects
+				return stringBuilder.Append($"{GetSelector(expression.ObjectInfo)}->Count()");
+			case 46: // Instance Value
+				return stringBuilder.Append("instance->InstanceValue");
+			case 1: // Y Position
+				{
+					if (expression.ObjectInfo == eventBase.ObjectInfo && expression.ObjectInfoList == eventBase.ObjectInfoList)
+						return stringBuilder.Append("instance->Y");
+					else
+						return stringBuilder.Append($"({GetSelector(expression.ObjectInfo)}->Count() > 0 ? (*{GetSelector(expression.ObjectInfo)}->begin())->Y : 0)");
+				}
+			case 11: // X Position
+				{
+					if (expression.ObjectInfo == eventBase.ObjectInfo && expression.ObjectInfoList == eventBase.ObjectInfoList)
+						return stringBuilder.Append("instance->X");
+					else
+						return stringBuilder.Append($"({GetSelector(expression.ObjectInfo)}->Count() > 0 ? (*{GetSelector(expression.ObjectInfo)}->begin())->X : 0)");
+				}
+			case 16: // Alterable Value
+				{
+					if (expression.ObjectInfo == eventBase.ObjectInfo && expression.ObjectInfoList == eventBase.ObjectInfoList)
+						return stringBuilder.Append($"(({GetObjectClassName(expression.ObjectInfo)}*)instance)->Values.GetValue({((ShortExp)expression.Loader).Value})");
+					else
+						return stringBuilder.Append($"({GetSelector(expression.ObjectInfo)}->Count() > 0 ? (({GetObjectClassName(expression.ObjectInfo)}*)*({GetSelector(expression.ObjectInfo)}->begin()))->Values.GetValue({((ShortExp)expression.Loader).Value}) : 0)");
+				}
 		}
+
+
+		// object expressions
+		// if none of switch cases return than default to unimplemented
+		HandleUnimplemented(stringBuilder, expression, eventBase); // if none
+		return stringBuilder;
 	}
 	private static void HandleUnimplemented(StringBuilder result, Expression expression, EventBase eventBase = null)
 	{
@@ -147,7 +184,7 @@ public class ExpressionConverter
 			switch ((ObjectType)expression.ObjectType)
 			{
 				case ObjectType.System:
-					HandleSystemExpr(result, expression); break; // for readablity sake, it is a seperate function
+					HandleSystemExpr(result, expression, eventBase); break; // for readablity sake, it is a seperate function
 
 				default:
 					if (expression.ObjectType > 0)
