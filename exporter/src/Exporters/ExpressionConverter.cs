@@ -207,14 +207,14 @@ public class ExpressionConverter
 					else
 						return stringBuilder.Append($"({GetSelector(expression.ObjectInfo)}->Count() > 0 ? ((Active*)*({GetSelector(expression.ObjectInfo)}->begin()))->animations.GetCurrentSequenceIndex() : 0)");
 				}
-			case 83:
+			case 83: // Angle
 				{
 					if (expression.ObjectInfo == eventBase.ObjectInfo && expression.ObjectInfoList == eventBase.ObjectInfoList)
 						return stringBuilder.Append("instance->GetAngle()");
 					else
 						return stringBuilder.Append($"({GetSelector(expression.ObjectInfo)}->Count() > 0 ? (*{GetSelector(expression.ObjectInfo)}->begin())->GetAngle() : 0)");
 				}
-			case 22:
+			case 27: // Alpha Coefficient
 				{
 					if (expression.ObjectInfo == eventBase.ObjectInfo && expression.ObjectInfoList == eventBase.ObjectInfoList)
 						return stringBuilder.Append("instance->GetEffectParameter()");
@@ -226,9 +226,9 @@ public class ExpressionConverter
 		// Counter
 		switch (expression.Num)
 		{
-			case 80:
+			case 80: // Value
 				return stringBuilder.Append($"({GetSelector(expression.ObjectInfo)}->Count() > 0 ? ((Counter*)*({GetSelector(expression.ObjectInfo)}->begin()))->GetValue() : 0)");
-			case 82:
+			case 82: // Max Value
 				{
 					if (expression.ObjectInfo == eventBase.ObjectInfo && expression.ObjectInfoList == eventBase.ObjectInfoList)
 						return stringBuilder.Append($"((Counter*)instance)->MaxValue");
@@ -241,14 +241,14 @@ public class ExpressionConverter
 
 		switch (expression.Num)
 		{
-			case 81:
+			case 81: // String
 				{
 					if (expression.ObjectInfo == eventBase.ObjectInfo && expression.ObjectInfoList == eventBase.ObjectInfoList)
 						 return stringBuilder.Append("((StringObject*)instance)->GetText()");
 					else
 						return stringBuilder.Append($"({GetSelector(expression.ObjectInfo)}->Count() > 0 ? ((StringObject*)*({GetSelector(expression.ObjectInfo)}->begin()))->GetText() : std::string(\"\"))");
 				}
-			case 22:
+			case 22: // Font Color
 				return stringBuilder.Append("0");
 		}
 
@@ -265,8 +265,6 @@ public class ExpressionConverter
 
 	public static string ConvertExpression(ExpressionParameter expressions, EventBase eventBase = null)
 	{
-		//TODO: refactor this
-		// TODO: use switch cases, maybe seperate every speecial object switch to its own function
 		StringBuilder result = new();
 		for (int i = 0; i < expressions.Items.Count; i++)
 		{
