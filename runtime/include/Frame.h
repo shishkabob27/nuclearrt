@@ -107,6 +107,11 @@ public:
 		return str.substr(str.length() - length);
 	}
 
+	int Loopindex(std::string loopName) {
+		//TODO: loopindex will return 0 untul the loop system can support expressions
+		return 0;
+	}
+
 	//Collision detection
 	bool IsCollidingWithBackground(ObjectInstance* instance);
 	bool IsColliding(ObjectInstance* instance1, ObjectInstance* instance2);
