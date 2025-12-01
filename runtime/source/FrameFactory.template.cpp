@@ -7,3 +7,7 @@ std::unique_ptr<Frame> FrameFactory::CreateFrame(int index) {
     }
     return nullptr;
 }
+
+int FrameFactory::GetFrameCount() {
+    return {{ FRAME_COUNT }};
+}

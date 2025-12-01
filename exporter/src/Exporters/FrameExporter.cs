@@ -51,6 +51,7 @@ public class FrameExporter : BaseExporter
 		// write factory implementation
 		string frameFactoryCpp = frameFactoryCppTemplate.Replace("{{ FRAME_INCLUDES }}", frameIncludes);
 		frameFactoryCpp = frameFactoryCpp.Replace("{{ FRAME_CASES }}", frameCases);
+		frameFactoryCpp = frameFactoryCpp.Replace("{{ FRAME_COUNT }}", GameData.Frames.Count.ToString());
 
 		SaveFile(Path.Combine(OutputPath.FullName, "source", "FrameFactory.cpp"), frameFactoryCpp);
 
