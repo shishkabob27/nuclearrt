@@ -90,7 +90,7 @@ public class ExpressionConverter
 		{ (ObjectType.System, 23), e => (e.Loader as DoubleExp).FloatValue.ToString() },
         { (ObjectType.System, 29), _ => "std::abs(" }, // Abs(
         { (ObjectType.System, 41), _ => "std::max(" }, // Max(
-        { (ObjectType.System, 46), _ => "0" }, // LoopIndex // TODO // NOTE: original code had i += 2, might be important?
+        { (ObjectType.System, 46), _ => "Loopindex(" }, // LoopIndex
 		{ (ObjectType.System, 50), e => $"Application::Instance().GetAppData()->GetGlobalStrings()[{(e.Loader as GlobalCommon).Value}]" },
         { (ObjectType.System, 56), _ => "\"\"" }, // AppTempPath$ // TODO
         { (ObjectType.System, 65), _ => "Application::Instance().RandomRange(" }, // RRandom
