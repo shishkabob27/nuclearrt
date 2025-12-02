@@ -117,6 +117,18 @@ void Application::Run()
 
 void Application::QueueStateChange(GameState newState, int frameIndex)
 {
+	if (newState == GameState::JumpToFrame) 
+	{
+		if (frameIndex < 0)
+		{
+			return;
+		}
+		else if (frameIndex >= FrameFactory::GetFrameCount())
+		{
+			frameIndex = FrameFactory::GetFrameCount() - 1;
+		}
+	}
+
 	currentState = newState;
 	newFrameIndex = frameIndex;
 }
