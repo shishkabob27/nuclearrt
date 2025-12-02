@@ -11,9 +11,17 @@ public class AnimationSequenceAction : ActionBase
 	{
 		StringBuilder result = new StringBuilder();
 
+		string sequenceValue = "";
+		if (eventBase.Items[0].Loader is Short shortLoader) {
+			sequenceValue = shortLoader.Value.ToString();
+		}
+		else if (eventBase.Items[0].Loader is ExpressionParameter expressionParameter) {
+			sequenceValue = ExpressionConverter.ConvertExpression(expressionParameter, eventBase);
+		}
+
 		result.AppendLine($"for (ObjectIterator it(*{GetSelector(eventBase.ObjectInfo)}); !it.end(); ++it) {{");
 		result.AppendLine($"    auto instance = *it;");
-		result.AppendLine($"    ((Active*)instance)->animations.SetCurrentSequenceIndex({((Short)eventBase.Items[0].Loader).Value});");
+		result.AppendLine($"    ((Active*)instance)->animations.SetCurrentSequenceIndex({sequenceValue});");
 		result.AppendLine("}");
 
 		return result.ToString();
