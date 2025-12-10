@@ -43,11 +43,14 @@ public:
 	virtual void UnloadFont(int id) {}
 	virtual void DrawText(FontInfo* fontInfo, int x, int y, int color, const std::string& text) {}
 
-	virtual void LoadSample(int id) {}
-	virtual void PlaySample(int id, int channel, int loops, int freq, bool interruptable) {}
+	virtual bool LoadSample(int id) {}
+	virtual void PlaySample(int id, int channel, int loops, int freq, bool uninterruptable) {}
 	virtual void StopSample(int id, bool channel) {}
+	virtual void SetSampleVolume(float volume, int id, bool channel) {}
+	virtual void SetSamplePan(float pan, int id, bool channel) {}
+	virtual void UpdateSample() {}
+	virtual void LoadMusic(int id) {}
 	virtual const uint8_t* GetKeyboardState() { return nullptr; }
-
 	virtual int GetMouseX() { return 0; }
 	virtual int GetMouseY() { return 0; }
 	virtual void SetMouseX(int x) {}

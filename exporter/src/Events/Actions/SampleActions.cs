@@ -1,5 +1,6 @@
 using System.Text;
 using CTFAK.CCN.Chunks.Frame;
+using CTFAK.Memory;
 using CTFAK.MMFParser.EXE.Loaders.Events.Parameters;
 public class PlaySample : ActionBase
 {
@@ -23,7 +24,7 @@ public class PlaySampleChannel : ActionBase
 	{
 		StringBuilder result = new();
 		result.AppendLine($"Application::Instance().GetBackend()->LoadSample({((Sample)eventBase.Items[0].Loader).Handle});");
-		result.AppendLine($"Application::Instance().GetBackend()->PlaySample({((Sample)eventBase.Items[0].Loader).Handle}, {ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[1].Loader, eventBase)}, 2, NULL, false);");
+		result.AppendLine($"Application::Instance().GetBackend()->PlaySample({((Sample)eventBase.Items[0].Loader).Handle}, {ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[1].Loader, eventBase)}, 1, NULL, false);");
 
 		return result.ToString();
 	}
@@ -61,5 +62,32 @@ public class PlayAndLoopSampleAtChannel : ActionBase
 		result.AppendLine($"Application::Instance().GetBackend()->PlaySample({((Sample)eventBase.Items[0].Loader).Handle}, {ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[1].Loader, eventBase)}, {ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[2].Loader, eventBase)}, NULL, false);");
 
 		return result.ToString();
+	}
+}
+public class SetMainVolume : ActionBase
+{
+	public override int ObjectType { get; set; } = -2;
+	public override int Num { get; set; } = 20;
+	public override string Build(EventBase eventBase, ref string nextLabel, ref int orIndex, Dictionary<string, object>? parameters = null, string ifStatement = "if (")
+	{
+		return $"Application::Instance().GetBackend()->SetSampleVolume({ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[0].Loader, eventBase)}, -1, false);";
+	}
+}
+public class SetChannelVolume : ActionBase
+{
+	public override int ObjectType { get; set; } = -2;
+	public override int Num { get; set; } = 17;
+	public override string Build(EventBase eventBase, ref string nextLabel, ref int orIndex, Dictionary<string, object>? parameters = null, string ifStatement = "if (")
+	{
+		return $"Application::Instance().GetBackend()->SetSampleVolume({ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[1].Loader, eventBase)}, {ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[0].Loader, eventBase)}, true);";
+	}
+}
+public class SetSampleVolume : ActionBase
+{
+	public override int ObjectType { get; set; } = -2;
+	public override int Num { get; set; } = 21;
+	public override string Build(EventBase eventBase, ref string nextLabel, ref int orIndex, Dictionary<string, object>? parameters = null, string ifStatement = "if (")
+	{
+		return $"Application::Instance().GetBackend()->SetSampleVolume({ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[1].Loader, eventBase)}, {((Sample)eventBase.Items[0].Loader).Handle}, true);";
 	}
 }

@@ -14,18 +14,15 @@
 typedef struct Sample {
 	Uint8 *data;
 	Uint32 data_len;
-	SDL_AudioStream *stream;
 	SDL_AudioSpec spec;
-	bool active;
-	int loops;
-	int channel;
 } Sample;
-extern Sample samples[1000];
 typedef struct Channel {
-	bool containsSample;
 	bool uninterruptable;
+	SDL_AudioStream *stream;
+	int curHandle;
+	bool loop;
+	float volume = 1.0f;
 } Channel;
-extern Channel channels[32];
 class SDL3Backend : public Backend {
 public:
 	SDL3Backend();
@@ -59,10 +56,13 @@ public:
 	void UnloadFont(int id) override;
 	void DrawText(FontInfo* fontInfo, int x, int y, int color, const std::string& text) override;
 
-	void LoadSample(int id) override;
-	void PlaySample(int id, int channel, int loops, int freq, bool interruptable) override;
+	bool LoadSample(int id) override;
+	void PlaySample(int id, int channel, int loops, int freq, bool uninterruptable) override;
+	void UpdateSample() override;
+	void SetSampleVolume(float volume, int id, bool channel) override;
+	void SetSamplePan(float pan, int id, bool channel) override;
 	void StopSample(int id, bool channel) override;
-
+	void LoadMusic(int id) override;
 	const uint8_t* GetKeyboardState() override;
 
 	int GetMouseX() override;
@@ -101,13 +101,14 @@ private:
 	static SDL_AudioDeviceID audio_device;
 	SDL_AudioSpec spec;
 	bool renderedFirstFrame = false;
-
+	float mainVol = 100.0f;
 	SDL_FRect CalculateRenderTargetRect();
 	SDL_Color RGBToSDLColor(int color);
 	SDL_Color RGBAToSDLColor(int color);
 
 	std::unordered_map<int, SDL_Texture*> textures;
-
+	std::unordered_map<int, Sample> samples;
+	Channel channels[49]; // 48 will be the last element.
 	std::unordered_map<int, TTF_Font*> fonts;
 	std::unordered_map<std::string, std::shared_ptr<std::vector<uint8_t>>> fontBuffers;
 

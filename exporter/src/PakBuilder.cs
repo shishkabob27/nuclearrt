@@ -33,6 +33,15 @@ public class PakBuilder
 			entries.Add(entry);
 		}
 
+		//music
+		foreach (var music in gameData.Music.Items)
+		{
+			var entry = new PakEntry { Path = $"music/{music.Handle}.midi" };
+			entry.Size = (uint)music.Data.Length;
+			entry.Data = music.Data;
+			entries.Add(entry);
+		}
+
 		//fonts
 		Dictionary<string, List<string>> fontNames = new Dictionary<string, List<string>>(); // font family name, font file names
 		var fontsFolder = new DirectoryInfo(Environment.GetFolderPath(Environment.SpecialFolder.Fonts));
