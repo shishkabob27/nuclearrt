@@ -632,7 +632,7 @@ void SDL3Backend::DrawText(FontInfo* fontInfo, int x, int y, int color, const st
 	SDL_DestroySurface(surface);
 	SDL_DestroyTexture(texture);
 }
-
+// Sample Start
 bool SDL3Backend::LoadSample(int id) {
 	std::cout << "Loading Sample : " << id << "\n";
 
@@ -693,14 +693,11 @@ bool SDL3Backend::LoadSample(int id) {
 	return true;
 	
 }
-void SDL3Backend::LoadMusic(int id) {
-	std::cout << "Music Loading not supported.\n";
-}
+// The frequency could be used later on with the Play Sample (All Parameters)
 void SDL3Backend::PlaySample(int id, int channel, int loops, int freq, bool uninterruptable) {
 	bool replaceSample = false;
-	if (channel <= 0 || channel > 48) {
+	if (channel < 1 || channel > 48) {
 		for (int i = 1; i < SDL_arraysize(channels); i++) {
-			// We check if the channel doesn't have a sample or is not uninterruptable
 			if (!channels[i].stream) {
 				channel = i;
 				break;
@@ -716,13 +713,8 @@ void SDL3Backend::PlaySample(int id, int channel, int loops, int freq, bool unin
 			}
 		}
 	}
-	SDL_AudioSpec dstSpec;
-	SDL_GetAudioDeviceFormat(audio_device, &dstSpec, NULL);
-	if (freq > 0) dstSpec.freq = freq;
-	dstSpec.format = SDL_AUDIO_F32;
-	dstSpec.channels = 2;
 	if (channels[channel].stream) StopSample(channel, false);
-	channels[channel].stream = SDL_CreateAudioStream(&samples[id].spec, &dstSpec);
+	channels[channel].stream = SDL_CreateAudioStream(&samples[id].spec, &samples[id].spec);
 	if (!channels[channel].stream) {
 		std::cerr << "SDL_CreateAudioStream error : " << SDL_GetError() << "\n";
 		channels[channel].stream = nullptr;
@@ -736,20 +728,78 @@ void SDL3Backend::PlaySample(int id, int channel, int loops, int freq, bool unin
 	}
 	channels[channel].curHandle = id;
 	channels[channel].uninterruptable = uninterruptable;
+	SDL_SetAudioStreamFormat(channels[channel].stream, &samples[id].spec, NULL);
 	if (loops <= 0) channels[channel].loop = true;
 	else {
 		for (int i = 1; i <= loops; i++) {
 			SDL_PutAudioStreamData(channels[channel].stream, samples[id].data, samples[id].data_len);
 		}
 	}
-	SDL_SetAudioStreamFormat(channels[channel].stream, &dstSpec, NULL);
 
 	SetSampleVolume(mainVol, channel, true); // Set volume to the main one.
 	std::cout << "Sample ID " << id << " is now playing at channel " << channel << ".\n";
 }
-void SDL3Backend::SetSamplePan(float pan, int id, bool channel) {
-	bool setMain = false;
 
+// ALL SAMPLE CONDITIONS HERE
+
+bool SDL3Backend::SampleState(int id, bool channel, bool pause) {
+	if (id == -1 && !channel && !pause) { // No Sample is playing
+		int countStream = 0;
+		for (int i = 1; i < SDL_arraysize(channels); i++) {
+			if (channels[i].stream) countStream++;
+		}
+		if (countStream == 0) return true;
+		else return false;
+	}
+	if (channel) { // Check if channel is not playing/paused
+		if (id < 1 || id > 48) return false;
+		if (pause && channels[id].pause) return true;
+		if (!channels[id].stream && !pause) return true;
+	}
+	if (id > -1 && !channel) { // Check for specific sample not playing/paused.
+		for (int i = 1; i < SDL_arraysize(channels); i++) {
+			if (channels[i].curHandle == id) {
+				if (pause && channels[i].pause) {
+					return true;
+				}
+				if (!channels[i].stream && !pause) return true;
+			}
+			else { 
+				if (!pause) return true;
+				else return false;
+			}
+		}
+	}
+	return false;
+}
+void SDL3Backend::PauseSample(int id, bool channel, bool pause) {
+	if (id == -1 && !channel) { // Pause/Resume all sounds
+		for (int i = 1; i < SDL_arraysize(channels); i++) {
+			PauseSample(i, true, pause);
+		}
+	}
+	if (channel) { // Pause/Resume specific channel
+		if (id < 1 || id > 48) return;
+		if (channels[id].stream) {
+			if (pause) {
+				SDL_PauseAudioStreamDevice(channels[id].stream);
+				channels[id].pause = true;
+			}
+			else {
+				SDL_ResumeAudioStreamDevice(channels[id].stream);
+				channels[id].pause = false;
+			}
+		}
+		return;
+	}
+	if (id > -1 && !channel) { // Pause/Resume sample handle.
+		for (int i = 1; i < SDL_arraysize(channels); i++) {
+			if (channels[i].curHandle == id) PauseSample(i, true, pause);
+		}
+	}
+}
+void SDL3Backend::SetSamplePan(float pan, int id, bool channel) {
+	// TODO: We have to convert the sample to stereo and apply the panning with cos and sin formulas across the sample data
 }
 void SDL3Backend::SetSampleVolume(float volume, int id, bool channel) {
 	bool setMain = false;
@@ -761,9 +811,8 @@ void SDL3Backend::SetSampleVolume(float volume, int id, bool channel) {
 		}
 	}
 	if (channel) { // Set Channel Volume
-		if (id < 0 || id > 48) return;
+		if (id < 1 || id > 48) return;
 		if (channels[id].stream) {
-			
 			channels[id].volume = SDL_GetAudioStreamGain(channels[id].stream);
 			if (!setMain) channels[id].volume = volume / 100;
 			else {
@@ -776,6 +825,18 @@ void SDL3Backend::SetSampleVolume(float volume, int id, bool channel) {
 	if (id > -1 && !channel) { // Set Sample Volume
 		for (int i = 1; i < SDL_arraysize(channels); i++) {
 			if (channels[i].curHandle == id) SetSampleVolume(volume, i, true);
+		}
+	}
+}
+int SDL3Backend::GetSampleVolume(int id, bool channel) {
+	if (id == -1 && !channel) return mainVol;
+	if (channel) { // Get Channel Volume
+		if (id < 1 || id > 48) return -1;
+		return channels[id].volume;
+	}
+	if (id > -1 && !channel) {
+		for (int i = 1; i < SDL_arraysize(channels); i++) {
+			if (channels[i].curHandle == id && channels[i].stream) return channels[i].volume;
 		}
 	}
 }
@@ -793,11 +854,11 @@ void SDL3Backend::StopSample(int id, bool channel) {
 		return;
 	}
 	if (channel) { // check for the channel
-		if (id < 0 || id > 48) return;
+		if (id < 1 || id > 48) return;
 		if (channels[id].stream) {
 			std::cout << "Stopping Sample : " << id << "\n";
-			//SDL_ClearAudioStream(channels[id].stream);
-			//SDL_UnbindAudioStream(channels[id].stream);
+			SDL_ClearAudioStream(channels[id].stream);
+			SDL_UnbindAudioStream(channels[id].stream);
 			SDL_DestroyAudioStream(channels[id].stream);
 			channels[id].stream = nullptr;
 		}
@@ -835,6 +896,7 @@ void SDL3Backend::UpdateSample() {
 		else continue;
 	}
 }
+// Sample End
 const uint8_t* SDL3Backend::GetKeyboardState()
 {
 	//return the keyboard state in a new array which matches the Fusion key codes

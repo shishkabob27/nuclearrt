@@ -69,7 +69,10 @@ public class ExpressionConverter
         { (ObjectType.Game, 14), _ => "0" }, // DisplayMode // TODO
         { (ObjectType.Game, 15), _ => "0" }, // PixelShaderVersion // TODO
 
-        //Speaker
+		//Speaker
+		{ (ObjectType.Speaker, 0), _ => "Application::Instance().GetBackend->GetSampleVolume(-1, false)" }, // Main Volume
+		{ (ObjectType.Speaker, 1), e => $"Application::Instance().GetBackend->GetSampleVolume({(e.Loader as StringExp).Value}, false)" }, // Sample Volume, will have to work on supporting the string later.
+		{ (ObjectType.Speaker, 2), e => $"Application::Instance().GetBackend->GetSampleVolume({(e.Loader as DoubleExp).Value}, true)"}, // Channel Volume
         { (ObjectType.Speaker, 12), _ => "std::to_string(" }, // ChannelSampleName$ // TODO
 
         // System

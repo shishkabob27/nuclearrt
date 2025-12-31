@@ -15,12 +15,14 @@ typedef struct Sample {
 	Uint8 *data;
 	Uint32 data_len;
 	SDL_AudioSpec spec;
+	std::string name;
 } Sample;
 typedef struct Channel {
 	bool uninterruptable;
 	SDL_AudioStream *stream;
 	int curHandle;
 	bool loop;
+	bool pause;
 	float volume = 1.0f;
 } Channel;
 class SDL3Backend : public Backend {
@@ -55,14 +57,17 @@ public:
 	void LoadFont(int id) override;
 	void UnloadFont(int id) override;
 	void DrawText(FontInfo* fontInfo, int x, int y, int color, const std::string& text) override;
-
+	// Sample Start
 	bool LoadSample(int id) override;
 	void PlaySample(int id, int channel, int loops, int freq, bool uninterruptable) override;
 	void UpdateSample() override;
+	void PauseSample(int id, bool channel, bool pause) override;
+	bool SampleState(int id, bool channel, bool pauseOrStop) override;
+	int GetSampleVolume(int id, bool channel) override;
 	void SetSampleVolume(float volume, int id, bool channel) override;
 	void SetSamplePan(float pan, int id, bool channel) override;
 	void StopSample(int id, bool channel) override;
-	void LoadMusic(int id) override;
+	// Sample End
 	const uint8_t* GetKeyboardState() override;
 
 	int GetMouseX() override;
