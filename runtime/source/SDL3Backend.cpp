@@ -728,7 +728,6 @@ void SDL3Backend::PlaySample(int id, int channel, int loops, int freq, bool unin
 	}
 	channels[channel].curHandle = id;
 	channels[channel].uninterruptable = uninterruptable;
-	SDL_SetAudioStreamFormat(channels[channel].stream, &samples[id].spec, NULL);
 	if (loops <= 0) channels[channel].loop = true;
 	else {
 		for (int i = 1; i <= loops; i++) {
