@@ -69,7 +69,10 @@ public class ExpressionConverter
         { (ObjectType.Game, 14), _ => "0" }, // DisplayMode // TODO
         { (ObjectType.Game, 15), _ => "0" }, // PixelShaderVersion // TODO
 
-        //Speaker
+		//Speaker
+		{ (ObjectType.Speaker, 0), _ => "Application::Instance().GetBackend->GetSampleVolume(-1, false)" }, // Main Volume
+		{ (ObjectType.Speaker, 1), e => $"Application::Instance().GetBackend->GetSampleVolume({(e.Loader as StringExp).Value}, false)" }, // Sample Volume, will have to work on supporting the string later.
+		{ (ObjectType.Speaker, 2), e => $"Application::Instance().GetBackend->GetSampleVolume({(e.Loader as DoubleExp).Value}, true)"}, // Channel Volume
         { (ObjectType.Speaker, 12), _ => "std::to_string(" }, // ChannelSampleName$ // TODO
 
         // System
@@ -88,11 +91,11 @@ public class ExpressionConverter
         { (ObjectType.System, 20), _ => "StringRight(" }, // String Right
         { (ObjectType.System, 22), _ => "StringLength(" }, // String Length
 		{ (ObjectType.System, 23), e => (e.Loader as DoubleExp).FloatValue.ToString() },
-        { (ObjectType.System, 29), _ => "std::abs(" }, // Abs(
+		{ (ObjectType.System, 29), _ => "std::abs(" }, // Abs(
         { (ObjectType.System, 41), _ => "std::max(" }, // Max(
         { (ObjectType.System, 46), _ => "Loopindex(" }, // LoopIndex
 		{ (ObjectType.System, 50), e => $"Application::Instance().GetAppData()->GetGlobalStrings()[{(e.Loader as GlobalCommon).Value}]" },
-        { (ObjectType.System, 56), _ => "\"\"" }, // AppTempPath$ // TODO
+		{ (ObjectType.System, 56), _ => "\"\"" }, // AppTempPath$ // TODO
         { (ObjectType.System, 65), _ => "Application::Instance().RandomRange(" }, // RRandom
         { (ObjectType.System, 67), _ => "Application::Instance().GetBackend()->GetPlatformName()" }, // RuntimeName$
 
@@ -244,7 +247,7 @@ public class ExpressionConverter
 			case 81: // String
 				{
 					if (expression.ObjectInfo == eventBase.ObjectInfo && expression.ObjectInfoList == eventBase.ObjectInfoList)
-						 return stringBuilder.Append("((StringObject*)instance)->GetText()");
+						return stringBuilder.Append("((StringObject*)instance)->GetText()");
 					else
 						return stringBuilder.Append($"({GetSelector(expression.ObjectInfo)}->Count() > 0 ? ((StringObject*)*({GetSelector(expression.ObjectInfo)}->begin()))->GetText() : std::string(\"\"))");
 				}
@@ -270,7 +273,8 @@ public class ExpressionConverter
 		{
 			Expression expression = expressions.Items[i];
 
-			if (expressionsLookup.TryGetValue(((ObjectType)expression.ObjectType, expression.Num), out var generator)) {
+			if (expressionsLookup.TryGetValue(((ObjectType)expression.ObjectType, expression.Num), out var generator))
+			{
 				result.Append(generator(expression));
 				continue;
 			}
@@ -363,9 +367,9 @@ public class ExpressionConverter
 			case 6: return "Lives";
 			case 7: return "Counter";
 			case >= 32:
-			ObjectCommon common = Exporter.Instance.GameData.frameitems[ObjectInfo].properties as ObjectCommon;
-			ExtensionExporter exporter = ExtensionExporterRegistry.GetExporter(common.Identifier);
-			return exporter?.CppClassName ?? "Extension";
+				ObjectCommon common = Exporter.Instance.GameData.frameitems[ObjectInfo].properties as ObjectCommon;
+				ExtensionExporter exporter = ExtensionExporterRegistry.GetExporter(common.Identifier);
+				return exporter?.CppClassName ?? "Extension";
 			default: return "ObjectInstance";
 		}
 	}

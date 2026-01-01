@@ -7,23 +7,25 @@
 #include "Application.h"
 #include "Frame.h"
 #include "FontBank.h"
+#include "SoundBank.h"
 #include "PakFile.h"
-
+#include <math.h>
 #include <SDL3/SDL.h>
 #include <SDL3_image/SDL_image.h>
 #include <SDL3_ttf/SDL_ttf.h>
-
+#include "stb_vorbis.c"
 #ifdef _DEBUG
 #include "DebugUI.h"
 #include <imgui_impl_sdl3.h>
 #endif
-
+SDL_AudioDeviceID SDL3Backend::audio_device = NULL;
 SDL3Backend::SDL3Backend() {
 }
 
 SDL3Backend::~SDL3Backend() {
 	Deinitialize();
 }
+
 
 void SDL3Backend::Initialize() {
 	int windowWidth = Application::Instance().GetAppData()->GetWindowWidth();
@@ -48,7 +50,13 @@ void SDL3Backend::Initialize() {
 		std::cerr << "SDL_CreateWindow Error: " << SDL_GetError() << std::endl;
 		return;
 	}
-
+	// Create the Audio Device
+	audio_device = SDL_OpenAudioDevice(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &spec);
+    if (!audio_device) {
+        std::cerr << "SDL_OpenAudioDevice Error : " << SDL_GetError() << std::endl;
+        return;
+    }
+	std::cout << "Opened Audio Device.\n";
 	// Create the renderer
 	renderer = SDL_CreateRenderer(window, nullptr);
 	if (renderer == nullptr) {
@@ -152,25 +160,42 @@ void SDL3Backend::Deinitialize()
 #ifdef _DEBUG
 	DEBUG_UI.Shutdown();
 #endif
-
+	SDL_HideWindow(window); // Hide the window so the user doesn't see the pause in clearing the audio
 	// cleanup textures
 	for (auto& pair : textures) {
 		SDL_DestroyTexture(pair.second);
 	}
 	textures.clear();
-
+	
 	// cleanup fonts
 	for (auto& pair : fonts) {
 		TTF_CloseFont(pair.second);
 	}
 	fonts.clear();
 	fontBuffers.clear();
-
+	
+	// Close the Audio Device
+	SDL_PauseAudioDevice(audio_device);
+	// cleanup audio
+	for (auto& [id, sample] : samples) {
+		if (sample.data) {
+			SDL_free(sample.data);
+			sample.data = nullptr;
+		}
+	}
+	for (int i = 1; i <= 48; i++) {
+		if (!channels[i].stream) continue;
+		SDL_UnbindAudioStream(channels[i].stream);
+		SDL_ClearAudioStream(channels[i].stream);
+		SDL_DestroyAudioStream(channels[i].stream);
+		channels[i].stream = nullptr;
+	}
+	samples.clear();
+	SDL_CloseAudioDevice(audio_device);
 	if (renderTarget != nullptr) {
 		SDL_DestroyTexture(renderTarget);
 		renderTarget = nullptr;
 	}
-
 	// Destroy the renderer
 	if (renderer != nullptr) {
 		SDL_DestroyRenderer(renderer);
@@ -182,7 +207,6 @@ void SDL3Backend::Deinitialize()
 		SDL_DestroyWindow(window);
 		window = nullptr;
 	}
-	
 	TTF_Quit();
 	SDL_Quit();
 }
@@ -608,7 +632,272 @@ void SDL3Backend::DrawText(FontInfo* fontInfo, int x, int y, int color, const st
 	SDL_DestroySurface(surface);
 	SDL_DestroyTexture(texture);
 }
+// Sample Start
+bool SDL3Backend::LoadSample(int id) {
+	std::cout << "Loading Sample : " << id << "\n";
 
+	for (int i = 1; i < SDL_arraysize(channels); i++) {
+		if (channels[i].curHandle == id) {
+			if (channels[i].stream) {
+				std::cout << "Sample Already Loaded. Returning true anyways.\n";
+				return true;
+			}
+		}
+	} // Check if sample is already loaded
+	SoundInfo* soundInfo = SoundBank::Instance().GetSound(id);
+	if (!soundInfo) {
+		std::cerr << "SoundBank Error: Sound ID " << id << " not found!" << std::endl;
+		return false;
+	}
+	std::cout << soundInfo->Type << "\n";
+	std::vector<uint8_t> data = pakFile.GetData("sounds/" + std::to_string(id) + "." + soundInfo->Type);
+	if (data.empty()) {
+		std::cerr << "PakFile::GetData Error: Sample with id " << id << " not found" << std::endl;
+		return false;
+	}
+	if (soundInfo->Type == "wav") {
+		SDL_IOStream* stream = SDL_IOFromMem(data.data(), data.size());
+		if (!SDL_LoadWAV_IO(stream, true, &samples[id].spec, &samples[id].data, &samples[id].data_len)) {
+			std::cout << "SDL_LoadWAV_IO Error (WAV) : " << SDL_GetError() << std::endl;
+			return false;
+		}
+		std::cout << "Loaded WAV Sample ID : " << id << "\n";
+	}
+	else if (soundInfo->Type == "ogg") {
+		int channels, samplerate;
+		short* output = nullptr;
+		int numSamples = stb_vorbis_decode_memory(data.data(), data.size(), &channels, &samplerate, &output);
+		if (numSamples <= 0 || !output) {
+			std::cout << "stb_vorbis_decode_memory failed.\n";
+			return false;
+		}
+		std::cout << "Decoded Memory (OGG)\n";
+		SDL_AudioSpec devSpec;
+		SDL_GetAudioDeviceFormat(audio_device, &devSpec, NULL);
+		samples[id].spec = {};
+		samples[id].spec.freq = samplerate;
+		samples[id].spec.format = SDL_AUDIO_S16LE;
+		samples[id].spec.channels = static_cast<Uint8>(channels);
+		samples[id].data_len = numSamples * channels * sizeof(short);
+		samples[id].data = (Uint8*)malloc(samples[id].data_len);
+		if (samples[id].data == nullptr) {
+			std::cout << "malloc (OGG) Error.\n";
+			free(output);
+			return false;
+		}
+		memcpy(samples[id].data, output, samples[id].data_len);
+		free(output);
+		std::cout << "Loaded OGG Sample ID : " << id << "\n";
+	}
+	else std::cout << "Audio File" << soundInfo->Type << "not supported.\n";
+	return true;
+	
+}
+// The frequency could be used later on with the Play Sample (All Parameters)
+void SDL3Backend::PlaySample(int id, int channel, int loops, int freq, bool uninterruptable) {
+	bool replaceSample = false;
+	if (channel < 1 || channel > 48) {
+		for (int i = 1; i < SDL_arraysize(channels); i++) {
+			if (!channels[i].stream) {
+				channel = i;
+				break;
+			}
+		}
+	}
+	else {
+		if (channels[channel].uninterruptable) replaceSample = true;
+	}
+	if (replaceSample) {
+		for (int i = 1; i < SDL_arraysize(channels); i++) {
+			if (!channels[i].uninterruptable) {
+				channel = i;
+				break;
+			}
+		}
+	}
+	if (channels[channel].stream) StopSample(channel, false);
+	channels[channel].stream = SDL_CreateAudioStream(&samples[id].spec, &samples[id].spec);
+	if (!channels[channel].stream) {
+		std::cerr << "SDL_CreateAudioStream error : " << SDL_GetError() << "\n";
+		channels[channel].stream = nullptr;
+		return;
+	}
+	if (!SDL_BindAudioStream(audio_device, channels[channel].stream)) {
+		std::cerr << "SDL_BindAudioStream error: " << SDL_GetError() << "\n";
+		SDL_DestroyAudioStream(channels[channel].stream);
+		channels[channel].stream = nullptr;
+		return;
+	}
+	channels[channel].curHandle = id;
+	channels[channel].uninterruptable = uninterruptable;
+	if (loops <= 0) channels[channel].loop = true;
+	else {
+		for (int i = 1; i <= loops; i++) {
+			SDL_PutAudioStreamData(channels[channel].stream, samples[id].data, samples[id].data_len);
+		}
+	}
+
+	SetSampleVolume(mainVol, channel, true); // Set volume to the main one.
+	std::cout << "Sample ID " << id << " is now playing at channel " << channel << ".\n";
+}
+
+// ALL SAMPLE CONDITIONS HERE
+
+bool SDL3Backend::SampleState(int id, bool channel, bool pause) {
+	if (id == -1 && !channel && !pause) { // No Sample is playing
+		int countStream = 0;
+		for (int i = 1; i < SDL_arraysize(channels); i++) {
+			if (channels[i].stream) countStream++;
+		}
+		if (countStream == 0) return true;
+		else return false;
+	}
+	if (channel) { // Check if channel is not playing/paused
+		if (id < 1 || id > 48) return false;
+		if (pause && channels[id].pause) return true;
+		if (!channels[id].stream && !pause) return true;
+	}
+	if (id > -1 && !channel) { // Check for specific sample not playing/paused.
+		for (int i = 1; i < SDL_arraysize(channels); i++) {
+			if (channels[i].curHandle == id) {
+				if (pause && channels[i].pause) {
+					return true;
+				}
+				if (!channels[i].stream && !pause) return true;
+			}
+			else { 
+				if (!pause) return true;
+				else return false;
+			}
+		}
+	}
+	return false;
+}
+void SDL3Backend::PauseSample(int id, bool channel, bool pause) {
+	if (id == -1 && !channel) { // Pause/Resume all sounds
+		for (int i = 1; i < SDL_arraysize(channels); i++) {
+			PauseSample(i, true, pause);
+		}
+	}
+	if (channel) { // Pause/Resume specific channel
+		if (id < 1 || id > 48) return;
+		if (channels[id].stream) {
+			if (pause) {
+				SDL_PauseAudioStreamDevice(channels[id].stream);
+				channels[id].pause = true;
+			}
+			else {
+				SDL_ResumeAudioStreamDevice(channels[id].stream);
+				channels[id].pause = false;
+			}
+		}
+		return;
+	}
+	if (id > -1 && !channel) { // Pause/Resume sample handle.
+		for (int i = 1; i < SDL_arraysize(channels); i++) {
+			if (channels[i].curHandle == id) PauseSample(i, true, pause);
+		}
+	}
+}
+void SDL3Backend::SetSamplePan(float pan, int id, bool channel) {
+	// TODO: We have to convert the sample to stereo and apply the panning with cos and sin formulas across the sample data
+}
+void SDL3Backend::SetSampleVolume(float volume, int id, bool channel) {
+	bool setMain = false;
+	if (id == -1 && !channel) { // Set Main Volume
+		mainVol = volume;
+		setMain = true;
+		for (int i = 1; i < SDL_arraysize(channels); i++) {
+			SetSampleVolume(volume, i, true);
+		}
+	}
+	if (channel) { // Set Channel Volume
+		if (id < 1 || id > 48) return;
+		if (channels[id].stream) {
+			channels[id].volume = SDL_GetAudioStreamGain(channels[id].stream);
+			if (!setMain) channels[id].volume = volume / 100;
+			else {
+				mainVol = (volume / 100) * channels[id].volume;
+				channels[id].volume = mainVol;
+			}
+			SDL_SetAudioStreamGain(channels[id].stream, channels[id].volume);
+		}
+	}
+	if (id > -1 && !channel) { // Set Sample Volume
+		for (int i = 1; i < SDL_arraysize(channels); i++) {
+			if (channels[i].curHandle == id) SetSampleVolume(volume, i, true);
+		}
+	}
+}
+int SDL3Backend::GetSampleVolume(int id, bool channel) {
+	if (id == -1 && !channel) return mainVol;
+	if (channel) { // Get Channel Volume
+		if (id < 1 || id > 48) return -1;
+		return channels[id].volume;
+	}
+	if (id > -1 && !channel) {
+		for (int i = 1; i < SDL_arraysize(channels); i++) {
+			if (channels[i].curHandle == id && channels[i].stream) return channels[i].volume;
+		}
+	}
+}
+void SDL3Backend::StopSample(int id, bool channel) {
+	if (id == -1) { // Stop any sample
+		for (int i = 1; i < SDL_arraysize(channels); i++) {
+			StopSample(i, true);
+		}
+		for (auto& [id, sample] : samples) {
+			if (sample.data) {
+				SDL_free(sample.data);
+				sample.data = nullptr;
+			}
+		}
+		return;
+	}
+	if (channel) { // check for the channel
+		if (id < 1 || id > 48) return;
+		if (channels[id].stream) {
+			std::cout << "Stopping Sample : " << id << "\n";
+			SDL_ClearAudioStream(channels[id].stream);
+			SDL_UnbindAudioStream(channels[id].stream);
+			SDL_DestroyAudioStream(channels[id].stream);
+			channels[id].stream = nullptr;
+		}
+		channels[id].curHandle = -1;
+		channels[id].uninterruptable = false;
+		return;
+	}
+	if (!channel && id > -1) { // check for sample handle
+		for (int i = 1; i < SDL_arraysize(channels); i++) {
+			if (channels[i].curHandle == id) StopSample(i, true);
+		}
+	}
+}
+void SDL3Backend::UpdateSample() {
+	for (int i = 1; i < SDL_arraysize(channels); i++) {
+		if (channels[i].stream) {
+			if (channels[i].loop) {
+				if (SDL_GetAudioStreamQueued(channels[i].stream) == 0) {
+					for (int j = 0; j < samples.max_size(); j++) {
+						if (j == channels[i].curHandle) {
+							PlaySample(j, i, 0, NULL, channels[i].uninterruptable);
+							break;
+						}
+						else continue;
+					}
+				}
+				else continue;
+			}
+			else {
+				if (SDL_GetAudioStreamQueued(channels[i].stream) == 0) {
+					StopSample(i, true);
+				}
+			}
+		}
+		else continue;
+	}
+}
+// Sample End
 const uint8_t* SDL3Backend::GetKeyboardState()
 {
 	//return the keyboard state in a new array which matches the Fusion key codes

@@ -5,8 +5,8 @@
 #include "Backend.h"
 #include <unordered_map>
 
-#include <SDL.h>
-#include <SDL_ttf.h>
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_ttf.h>
 
 #ifdef _DEBUG
 #include "DebugUI.h"
@@ -49,6 +49,11 @@ public:
 	void UnloadFont(int id) override;
 	void DrawText(FontInfo* fontInfo, int x, int y, int color, const std::string& text) override;
 
+	bool LoadSample(int id) override;
+	void PlaySample(int id, int channel, int loops, int freq, bool uninterruptable) override;
+	void StopSample(int id, bool channel) override;
+	void SetSampleVolume(float volume, int id, bool channel) override;
+	void UpdateSample() override;
 	const uint8_t* GetKeyboardState() override;
 
 	int GetMouseX() override;
@@ -61,7 +66,13 @@ public:
 	unsigned int GetTicks() override { return SDL_GetTicks(); }
 	float GetTimeDelta() override;
 	void Delay(unsigned int ms) override;
-
+	void SetTitle(const char* name) override;
+	void HideWindow() override;
+	void ShowWindow() override;
+	void ChangeWindowPosX(int x) override;
+	void ChangeWindowPosY(int y) override;
+	void Windowed() override;
+	void Fullscreen(bool fullscreenDesktop) override;
 	bool IsPixelTransparent(int textureId, int x, int y) override;
 	void GetTextureDimensions(int textureId, int& width, int& height) override;
 

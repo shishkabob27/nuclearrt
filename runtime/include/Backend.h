@@ -2,7 +2,6 @@
 
 #include <string>
 #include <cstdint>
-
 #include "FontBank.h"
 #include "Shape.h"
 #include "PakFile.h"
@@ -44,8 +43,16 @@ public:
 	virtual void UnloadFont(int id) {}
 	virtual void DrawText(FontInfo* fontInfo, int x, int y, int color, const std::string& text) {}
 
+	virtual bool LoadSample(int id) {}
+	virtual void PlaySample(int id, int channel, int loops, int freq, bool uninterruptable) {}
+	virtual void StopSample(int id, bool channel) {}
+	virtual void PauseSample(int id, bool channel, bool pause) {}
+	virtual void SetSampleVolume(float volume, int id, bool channel) {}
+	virtual int GetSampleVolume(int id, bool channel) {}
+	virtual void SetSamplePan(float pan, int id, bool channel) {}
+	virtual void UpdateSample() {}
+	virtual bool SampleState(int id, bool channel, bool pauseOrStop) {}
 	virtual const uint8_t* GetKeyboardState() { return nullptr; }
-
 	virtual int GetMouseX() { return 0; }
 	virtual int GetMouseY() { return 0; }
 	virtual void SetMouseX(int x) {}
@@ -54,7 +61,13 @@ public:
 	virtual uint32_t GetMouseState() { return 0; }
 	virtual void HideMouseCursor() {}
 	virtual void ShowMouseCursor() {}
-
+	virtual void SetTitle(const char* name) = 0;
+	virtual void HideWindow() = 0;
+	virtual void ShowWindow() = 0;
+	virtual void ChangeWindowPosX(int x) = 0;
+	virtual void ChangeWindowPosY(int y) = 0;
+	virtual void Fullscreen(bool fullscreenDesktop) = 0;
+	virtual void Windowed() = 0;
 	virtual bool IsPixelTransparent(int textureId, int x, int y) { return true; }
 	virtual void GetTextureDimensions(int textureId, int& width, int& height) { width = 0; height = 0; }
 
