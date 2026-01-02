@@ -12,17 +12,17 @@
 #include "DebugUI.h"
 #endif
 typedef struct Sample {
-	Uint8 *data;
-	Uint32 data_len;
-	SDL_AudioSpec spec;
-	std::string name;
+	Uint8 *data = nullptr;
+	Uint32 data_len = 0;
+	SDL_AudioSpec spec{};
+	std::string name = "";
 } Sample;
 typedef struct Channel {
-	bool uninterruptable;
-	SDL_AudioStream *stream;
-	int curHandle;
-	bool loop;
-	bool pause;
+	bool uninterruptable = false;
+	SDL_AudioStream *stream = nullptr;
+	int curHandle = -1;
+	bool loop = false;
+	bool pause = false;
 	float volume = 1.0f;
 } Channel;
 class SDL3Backend : public Backend {

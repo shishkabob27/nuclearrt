@@ -51,6 +51,9 @@ void SDL3Backend::Initialize() {
 		return;
 	}
 	// Create the Audio Device
+	spec.freq = 44100;
+	spec.channels = 2;
+	spec.format = SDL_AUDIO_F32;
 	audio_device = SDL_OpenAudioDevice(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &spec);
     if (!audio_device) {
         std::cerr << "SDL_OpenAudioDevice Error : " << SDL_GetError() << std::endl;
@@ -713,10 +716,11 @@ void SDL3Backend::PlaySample(int id, int channel, int loops, int freq, bool unin
 				channel = i;
 				break;
 			}
+			else continue;
 		}
 	}
 	if (channels[channel].stream) StopSample(channel, false);
-	channels[channel].stream = SDL_CreateAudioStream(&samples[id].spec, &samples[id].spec);
+	channels[channel].stream = SDL_CreateAudioStream(&samples[id].spec, NULL);
 	if (!channels[channel].stream) {
 		std::cerr << "SDL_CreateAudioStream error : " << SDL_GetError() << "\n";
 		channels[channel].stream = nullptr;
