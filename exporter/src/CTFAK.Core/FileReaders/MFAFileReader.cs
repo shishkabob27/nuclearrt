@@ -20,6 +20,11 @@ namespace CTFAK.EXE
 			return game;
 		}
 
+		public MFAData getMfaData()
+		{
+			return mfa;
+		}
+
 		public int ReadHeader(ByteReader reader)
 		{
 			throw new System.NotImplementedException();
