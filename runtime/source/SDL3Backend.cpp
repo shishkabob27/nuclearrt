@@ -225,7 +225,8 @@ std::string SDL3Backend::GetPlatformName()
 
 std::string SDL3Backend::GetAssetsFileName()
 {
-	return "assets.pak";
+	const char* basePath = SDL_GetBasePath();
+	return std::string(basePath) + "assets.pak";
 }
 
 void SDL3Backend::BeginDrawing()
