@@ -59,6 +59,7 @@ public:
 	void DrawText(FontInfo* fontInfo, int x, int y, int color, const std::string& text) override;
 	// Sample Start
 	bool LoadSample(int id) override;
+	int FindSample(std::string name) override;
 	void PlaySample(int id, int channel, int loops, int freq, bool uninterruptable) override;
 	void UpdateSample() override;
 	void PauseSample(int id, bool channel, bool pause) override;

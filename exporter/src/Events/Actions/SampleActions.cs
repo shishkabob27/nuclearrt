@@ -21,10 +21,11 @@ public class CheckType
 	public static string Check(EventBase eventBase)
 	{
 		string type;
-		if (eventBase.Items[0].Loader is Sample)
+		/*if (eventBase.Items[0].Loader is Sample)
 			type = $"{((Sample)eventBase.Items[0].Loader).Handle}";
 		else
-			type = $"{ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[0].Loader, eventBase)}"; // Supposedly the String expression that uses the name of the sample.
+			type = $"{ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[0].Loader, eventBase)}";*/ // Supposedly the String expression that uses the name of the sample.
+		type = $"Application::Instance().GetBackend()->FindSample(\"{((Sample)eventBase.Items[0].Loader).Name}\")";
 		return type;
 	}
 }

@@ -23,6 +23,14 @@ public:
         }
         return nullptr;
     }
+    SoundInfo* GetSoundName(std::string name) const {
+        for (const auto& pair : Sounds) {
+            unsigned int id = pair.first;
+            SoundInfo* sound = pair.second;
+            if (sound->Name == name) return sound;
+        }
+        return nullptr;
+    }
 private:
     SoundBank();
 

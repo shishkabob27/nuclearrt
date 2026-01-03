@@ -638,7 +638,7 @@ void SDL3Backend::DrawText(FontInfo* fontInfo, int x, int y, int color, const st
 // Sample Start
 bool SDL3Backend::LoadSample(int id) {
 	std::cout << "Loading Sample : " << id << "\n";
-
+	if (id < 0) return false;
 	for (int i = 1; i < SDL_arraysize(channels); i++) {
 		if (channels[i].curHandle == id) {
 			if (channels[i].stream) {
@@ -695,6 +695,11 @@ bool SDL3Backend::LoadSample(int id) {
 	else std::cout << "Audio File" << soundInfo->Type << "not supported.\n";
 	return true;
 	
+}
+int SDL3Backend::FindSample(std::string name) {
+	SoundInfo* soundInfo = SoundBank::Instance().GetSoundName(name);
+	if (soundInfo->Name == name) return soundInfo->Handle;
+	return -1;
 }
 // The frequency could be used later on with the Play Sample (All Parameters)
 void SDL3Backend::PlaySample(int id, int channel, int loops, int freq, bool uninterruptable) {
