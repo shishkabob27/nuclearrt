@@ -56,6 +56,8 @@ public:
 	void SetSampleVolume(float volume, int id, bool channel) override {}
 	void UpdateSample() override {}
 	int GetSampleVolume(int id, bool channel) override {return 0;}
+	std::string GetChannelName(int channel) override {return "";}
+	void LockChannel(int channel, bool unlock) {}
 	void SetSamplePan(float pan, int id, bool channel) override {}
 	void UpdateSample() override {}
 	bool SampleState(int id, bool channel, bool pauseOrStop) override {return false;}

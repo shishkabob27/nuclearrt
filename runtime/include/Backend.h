@@ -50,6 +50,8 @@ public:
 	virtual void PauseSample(int id, bool channel, bool pause) {}
 	virtual void SetSampleVolume(float volume, int id, bool channel) {}
 	virtual int GetSampleVolume(int id, bool channel) {return 0;}
+	std::string GetChannelName(int channel) {return "";}
+	virtual void LockChannel(int channel, bool unlock) {}
 	virtual void SetSamplePan(float pan, int id, bool channel) {}
 	virtual void UpdateSample() {}
 	virtual bool SampleState(int id, bool channel, bool pauseOrStop) {return false;}

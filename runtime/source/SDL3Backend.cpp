@@ -692,13 +692,20 @@ bool SDL3Backend::LoadSample(int id) {
 		free(output);
 		std::cout << "Loaded OGG Sample ID : " << id << "\n";
 	}
-	else std::cout << "Audio File" << soundInfo->Type << "not supported.\n";
+	else {
+		std::cout << "Audio File" << soundInfo->Type << "not supported.\n";
+		return false;
+	}
+	samples[id].name = soundInfo->Name;
 	return true;
 	
 }
 int SDL3Backend::FindSample(std::string name) {
 	SoundInfo* soundInfo = SoundBank::Instance().GetSoundName(name);
-	if (soundInfo->Name == name) return soundInfo->Handle;
+	if (soundInfo) {
+		if (soundInfo->Name == name) return soundInfo->Handle;
+	}
+	else std::cout << "Failed to find Sound " << name << "\n";
 	return -1;
 }
 // The frequency could be used later on with the Play Sample (All Parameters)
@@ -747,6 +754,7 @@ void SDL3Backend::PlaySample(int id, int channel, int loops, int freq, bool unin
 	}
 
 	SetSampleVolume(mainVol, channel, true); // Set volume to the main one.
+	samples[id].name = channels[channel].name;
 	std::cout << "Sample ID " << id << " is now playing at channel " << channel << ".\n";
 }
 

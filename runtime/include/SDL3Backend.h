@@ -24,6 +24,7 @@ typedef struct Channel {
 	bool loop = false;
 	bool pause = false;
 	float volume = 1.0f;
+	std::string name = "";
 } Channel;
 class SDL3Backend : public Backend {
 public:
@@ -65,7 +66,9 @@ public:
 	void PauseSample(int id, bool channel, bool pause) override;
 	bool SampleState(int id, bool channel, bool pauseOrStop) override;
 	int GetSampleVolume(int id, bool channel) override;
+	std::string GetChannelName(int channel) override {return channels[channel].name;}
 	void SetSampleVolume(float volume, int id, bool channel) override;
+	void LockChannel(int channel, bool unlock) {if (unlock) SDL_UnlockAudioStream(channels[channel].stream); else SDL_LockAudioStream(channels[channel].stream)}
 	void SetSamplePan(float pan, int id, bool channel) override;
 	void StopSample(int id, bool channel) override;
 	// Sample End

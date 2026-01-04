@@ -71,9 +71,9 @@ public class ExpressionConverter
 
 		//Speaker
 		{ (ObjectType.Speaker, 0), _ => "Application::Instance().GetBackend->GetSampleVolume(-1, false)" }, // Main Volume
-		{ (ObjectType.Speaker, 1), e => $"Application::Instance().GetBackend->GetSampleVolume({(e.Loader as StringExp).Value}, false)" }, // Sample Volume, will have to work on supporting the string later.
+		{ (ObjectType.Speaker, 1), e => $"Application::Instance().GetBackend->GetSampleVolume(Application::Instance().GetBackend()->FindSample({(e.Loader as StringExp).Value}), false)" }, // Sample Volume
 		{ (ObjectType.Speaker, 2), e => $"Application::Instance().GetBackend->GetSampleVolume({(e.Loader as DoubleExp).Value}, true)"}, // Channel Volume
-        { (ObjectType.Speaker, 12), _ => "std::to_string(" }, // ChannelSampleName$ // TODO
+        { (ObjectType.Speaker, 12), e => $"Application::Instance().GetBackend->GetChannelName({(e.Loader as DoubleExp).Value})" }, // Channel Sample Name
 
         // System
         { (ObjectType.System, -3), _ => ", " },

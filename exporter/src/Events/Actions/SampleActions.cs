@@ -21,11 +21,12 @@ public class CheckType
 	public static string Check(EventBase eventBase)
 	{
 		string type;
-		/*if (eventBase.Items[0].Loader is Sample)
-			type = $"{((Sample)eventBase.Items[0].Loader).Handle}";
+		string val;
+		if (eventBase.Items[0].Loader is Sample)
+			val = $"\"{((Sample)eventBase.Items[0].Loader).Name}\"";
 		else
-			type = $"{ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[0].Loader, eventBase)}";*/ // Supposedly the String expression that uses the name of the sample.
-		type = $"Application::Instance().GetBackend()->FindSample(\"{((Sample)eventBase.Items[0].Loader).Name}\")";
+			val = $"{ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[0].Loader, eventBase)}"; // Supposedly the String expression that uses the name of the sample.
+		type = $"Application::Instance().GetBackend()->FindSample({val})";
 		return type;
 	}
 }
@@ -144,4 +145,17 @@ public class PauseAllSamples : ActionBase
 public class ResumeAllSamples : PauseAllSamples
 {
 	public override int Num { get; set; } = 25;
+}
+public class UnlockChannel : ActionBase
+{
+	public override int ObjectType { get; set; } = -2;
+	public override int Num { get; set; } = 30;
+	public override string Build(EventBase eventBase, ref string nextLabel, ref int orIndex, Dictionary<string, object>? parameters = null, string ifStatement = "if (")
+	{
+		return $"Application::Instance().GetBackend()->LockChannel({ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[0].Loader, eventBase)}, {(eventBase.Num == 30 ? "false" : "true")})";
+	}
+}
+public class LockChannel : UnlockChannel
+{
+	public override int Num { get; set; } = 31;
 }
