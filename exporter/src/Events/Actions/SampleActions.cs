@@ -73,8 +73,8 @@ public class PlayAndLoopSampleAtChannel : ActionBase
 	public override string Build(EventBase eventBase, ref string nextLabel, ref int orIndex, Dictionary<string, object>? parameters = null, string ifStatement = "if (")
 	{
 		StringBuilder result = new();
-		result.AppendLine($"Application::Instance().GetBackend()->LoadSample({((Sample)eventBase.Items[0].Loader).Handle});");
-		result.AppendLine($"Application::Instance().GetBackend()->PlaySample({((Sample)eventBase.Items[0].Loader).Handle}, {ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[1].Loader, eventBase)}, {ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[2].Loader, eventBase)}, NULL, false);");
+		result.AppendLine($"Application::Instance().GetBackend()->LoadSample({CheckType.Check(eventBase)});");
+		result.AppendLine($"Application::Instance().GetBackend()->PlaySample({CheckType.Check(eventBase)}, {ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[1].Loader, eventBase)}, {ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[2].Loader, eventBase)}, NULL, false);");
 
 		return result.ToString();
 	}
