@@ -68,7 +68,7 @@ public:
 	int GetSampleVolume(int id, bool channel) override;
 	std::string GetChannelName(int channel) override {return channels[channel].name;}
 	void SetSampleVolume(float volume, int id, bool channel) override;
-	void LockChannel(int channel, bool unlock) {if (unlock) SDL_UnlockAudioStream(channels[channel].stream); else SDL_LockAudioStream(channels[channel].stream);}
+	void LockChannel(int channel, bool unlock) override {if (unlock) SDL_UnlockAudioStream(channels[channel].stream); else SDL_LockAudioStream(channels[channel].stream);}
 	void SetSamplePan(float pan, int id, bool channel) override;
 	void StopSample(int id, bool channel) override;
 	// Sample End
