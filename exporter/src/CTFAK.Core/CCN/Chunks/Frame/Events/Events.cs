@@ -58,18 +58,10 @@ namespace CTFAK.CCN.Chunks.Frame
 				}
 				else if (identifier == EventgroupData)
 				{
+					// We skip ccn events since MFA events are used instead. - shishkabob
 					var size = reader.ReadInt32();
-
 					var endPosition = reader.Tell() + size;
-					while (true)
-					{
-						var eg = new EventGroup();
-						eg.Read(reader);
-						Items.Add(eg);
-
-						if (reader.Tell() >= endPosition) break;
-					}
-
+					reader.Seek(endPosition);
 				}
 				else if (identifier == EventOptions)
 				{
