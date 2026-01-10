@@ -747,13 +747,20 @@ void SDL3Backend::PlaySample(int id, int channel, int loops, int freq, bool unin
 	}
 	channels[channel].curHandle = id;
 	channels[channel].uninterruptable = uninterruptable;
-	if (loops <= 0) channels[channel].loop = true;
+	if (loops <= 0) {
+		channels[channel].loop = true;
+		goto PlaySampleNormal;
+	}
 	else {
 		for (int i = 1; i <= loops; i++) {
 			SDL_PutAudioStreamData(channels[channel].stream, samples[id].data, samples[id].data_len);
 		}
+		goto SampleFinish;
 	}
-
+PlaySampleNormal:
+	SDL_PutAudioStreamData(channels[channel].stream, samples[id].data, samples[id].data_len);
+	goto SampleFinish;
+SampleFinish:
 	SetSampleVolume(mainVol, channel, true); // Set volume to the main one.
 	samples[id].name = channels[channel].name;
 	std::cout << "Sample ID " << id << " is now playing at channel " << channel << ".\n";
