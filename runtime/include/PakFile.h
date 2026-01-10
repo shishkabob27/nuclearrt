@@ -5,7 +5,7 @@
 #include <vector>
 #include <memory>
 #include <fstream>
-
+#include <cstdint>
 struct PakEntry {
     std::string filename;
     unsigned int offset;

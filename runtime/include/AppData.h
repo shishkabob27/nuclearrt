@@ -37,7 +37,8 @@ public:
 
 	bool& GetDontCenterFrame() { return m_dontCenterFrame; }
 	void SetDontCenterFrame(bool dontCenter) { m_dontCenterFrame = dontCenter; }
-
+	bool& GetSampleOverFrame() { return m_sampleOverFrame; }
+	void SetSampleOverFrame(bool sampleFrame) {m_sampleOverFrame = sampleFrame;}
 	std::vector<int>& GetGlobalValues() { return m_globalValues; }
 	int GetGlobalValue(int index) { // 1-indexed
 		if (index < 1 || index > static_cast<int>(m_globalValues.size())) {
@@ -126,6 +127,7 @@ private:
 	bool m_fitInside = false;
 	bool m_resizeDisplay = false;
 	bool m_dontCenterFrame = false;
+	bool m_sampleOverFrame = false;
 	std::vector<int> m_globalValues;
 	std::vector<std::string> m_globalStrings;
 
