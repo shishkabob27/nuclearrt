@@ -71,6 +71,7 @@ public:
 private:
 	SDL_Window* window;
 	SDL_Renderer* renderer;
+	SDL_GPUDevice* gpuDevice;
 	SDL_Texture* renderTarget;
 
 	bool renderedFirstFrame = false;

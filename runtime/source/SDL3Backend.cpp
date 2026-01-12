@@ -15,6 +15,7 @@
 
 #ifdef _DEBUG
 #include "DebugUI.h"
+#include "imgui.h"
 #include <imgui_impl_sdl3.h>
 #endif
 
@@ -50,9 +51,16 @@ void SDL3Backend::Initialize() {
 	}
 
 	// Create the renderer
-	renderer = SDL_CreateRenderer(window, nullptr);
+	SDL_GPUShaderFormat shaderFormats = SDL_GPU_SHADERFORMAT_SPIRV | SDL_GPU_SHADERFORMAT_DXIL | SDL_GPU_SHADERFORMAT_MSL;
+	gpuDevice = SDL_CreateGPUDevice(shaderFormats, false, nullptr);
+	if (gpuDevice == nullptr) {
+		std::cerr << "SDL_CreateGPUDevice Error: " << SDL_GetError() << std::endl;
+		return;
+	}
+
+	renderer = SDL_CreateGPURenderer(gpuDevice, window);
 	if (renderer == nullptr) {
-		std::cerr << "SDL_CreateRenderer Error: " << SDL_GetError() << std::endl;
+		std::cerr << "SDL_CreateGPURenderer Error: " << SDL_GetError() << std::endl;
 		return;
 	}
 
@@ -240,9 +248,14 @@ void SDL3Backend::BeginDrawing()
 	int newWidth = std::min(Application::Instance().GetAppData()->GetWindowWidth(), Application::Instance().GetCurrentFrame()->Width);
 	int newHeight = std::min(Application::Instance().GetAppData()->GetWindowHeight(), Application::Instance().GetCurrentFrame()->Height);
 
-	if (newWidth != renderTarget->w || newHeight != renderTarget->h) {
+	float currentWidth, currentHeight;
+	SDL_GetTextureSize(renderTarget, &currentWidth, &currentHeight);
+	if (newWidth != static_cast<int>(currentWidth) || newHeight != static_cast<int>(currentHeight)) {
 		SDL_DestroyTexture(renderTarget);
 		renderTarget = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_XRGB8888, SDL_TEXTUREACCESS_TARGET, newWidth, newHeight);
+		if (renderTarget == nullptr) {
+			std::cerr << "SDL_CreateTexture Error (resize): " << SDL_GetError() << std::endl;
+		}
 	}
 	
 	SDL_SetRenderTarget(renderer, renderTarget);
