@@ -74,13 +74,6 @@ public:
 	unsigned int GetTicks() override { return SDL_GetTicks(); }
 	float GetTimeDelta() override;
 	void Delay(unsigned int ms) override;
-	void SetTitle(const char* name) override;
-	void HideWindow() override;
-	void ShowWindow() override;
-	void ChangeWindowPosX(int x) override;
-	void ChangeWindowPosY(int y) override;
-	void Windowed() override;
-	void Fullscreen(bool fullscreenDesktop) override;
 	bool IsPixelTransparent(int textureId, int x, int y) override;
 	void GetTextureDimensions(int textureId, int& width, int& height) override;
 

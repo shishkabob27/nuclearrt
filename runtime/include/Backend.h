@@ -65,13 +65,6 @@ public:
 	virtual uint32_t GetMouseState() { return 0; }
 	virtual void HideMouseCursor() {}
 	virtual void ShowMouseCursor() {}
-	virtual void SetTitle(const char* name) = 0;
-	virtual void HideWindow() = 0;
-	virtual void ShowWindow() = 0;
-	virtual void ChangeWindowPosX(int x) = 0;
-	virtual void ChangeWindowPosY(int y) = 0;
-	virtual void Fullscreen(bool fullscreenDesktop) = 0;
-	virtual void Windowed() = 0;
 	virtual bool IsPixelTransparent(int textureId, int x, int y) { return true; }
 	virtual void GetTextureDimensions(int textureId, int& width, int& height) { width = 0; height = 0; }
 

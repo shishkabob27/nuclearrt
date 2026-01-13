@@ -13,7 +13,7 @@
 #include <SDL3/SDL.h>
 #include <SDL3_image/SDL_image.h>
 #include <SDL3_ttf/SDL_ttf.h>
-#include "stb_vorbis.c"
+#include "./libs/stb_vorbis.c" // OGG SUPPORT
 #ifdef _DEBUG
 #include "DebugUI.h"
 #include <imgui_impl_sdl3.h>
