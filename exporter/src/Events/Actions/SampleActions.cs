@@ -1,8 +1,6 @@
 using System.Text;
-using Avalonia.Logging;
 using CTFAK.CCN.Chunks.Frame;
 using CTFAK.MMFParser.EXE.Loaders.Events.Parameters;
-using CTFAK.Utils;
 public class PlaySample : ActionBase
 {
 	public override int ObjectType { get; set; } = -2;
@@ -10,8 +8,7 @@ public class PlaySample : ActionBase
 	public override string Build(EventBase eventBase, ref string nextLabel, ref int orIndex, Dictionary<string, object>? parameters = null, string ifStatement = "if (")
 	{
 		StringBuilder result = new();
-		result.AppendLine($"Application::Instance().GetBackend()->LoadSample({CheckType.Check(eventBase)});");
-		result.AppendLine($"Application::Instance().GetBackend()->PlaySample({CheckType.Check(eventBase)}, -1, 1, NULL, {CheckType.GetUninterruptable(eventBase)});");
+		result.AppendLine($"Application::Instance().GetBackend()->PlaySample({CheckType.Check(eventBase)}, -1, 1, NULL, {CheckType.GetUninterruptable(eventBase)}, -1, -2);");
 
 		return result.ToString();
 	}
@@ -31,6 +28,7 @@ public class CheckType
 	}
 	public static string GetUninterruptable(EventBase eventBase)
 	{
+		CTFAK.Utils.Logger.Log("Flags of Sample " + ((Sample)eventBase.Items[0].Loader).Flags.ToString());
 		string uninterruptable = "false";
 		if (((Sample)eventBase.Items[0].Loader).Flags == 9) uninterruptable = "true";
 		else if (((Sample)eventBase.Items[0].Loader).Flags == 8) uninterruptable = "false";
@@ -45,8 +43,7 @@ public class PlaySampleChannel : ActionBase
 	{
 		StringBuilder result = new();
 
-		result.AppendLine($"Application::Instance().GetBackend()->LoadSample({CheckType.Check(eventBase)});");
-		result.AppendLine($"Application::Instance().GetBackend()->PlaySample({CheckType.Check(eventBase)}, {ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[1].Loader, eventBase)}, 1, NULL, {CheckType.GetUninterruptable(eventBase)});");
+		result.AppendLine($"Application::Instance().GetBackend()->PlaySample({CheckType.Check(eventBase)}, {ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[1].Loader, eventBase)}, 1, NULL, {CheckType.GetUninterruptable(eventBase)}, -1, -2);");
 
 		return result.ToString();
 	}
@@ -58,9 +55,7 @@ public class PlayAndLoopSample : ActionBase
 	public override string Build(EventBase eventBase, ref string nextLabel, ref int orIndex, Dictionary<string, object>? parameters = null, string ifStatement = "if (")
 	{
 		StringBuilder result = new();
-		
-		result.AppendLine($"Application::Instance().GetBackend()->LoadSample({CheckType.Check(eventBase)};");
-		result.AppendLine($"Application::Instance().GetBackend()->PlaySample({CheckType.Check(eventBase)}, -1, {ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[1].Loader, eventBase)}, NULL, {CheckType.GetUninterruptable(eventBase)});");
+		result.AppendLine($"Application::Instance().GetBackend()->PlaySample({CheckType.Check(eventBase)}, -1, {ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[1].Loader, eventBase)}, NULL, {CheckType.GetUninterruptable(eventBase)}, -1, -2);");
 		return result.ToString();
 	}
 }
@@ -80,8 +75,7 @@ public class PlayAndLoopSampleAtChannel : ActionBase
 	public override string Build(EventBase eventBase, ref string nextLabel, ref int orIndex, Dictionary<string, object>? parameters = null, string ifStatement = "if (")
 	{
 		StringBuilder result = new();
-		result.AppendLine($"Application::Instance().GetBackend()->LoadSample({CheckType.Check(eventBase)});");
-		result.AppendLine($"Application::Instance().GetBackend()->PlaySample({CheckType.Check(eventBase)}, {ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[1].Loader, eventBase)}, {ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[2].Loader, eventBase)}, NULL, {CheckType.GetUninterruptable(eventBase)});");
+		result.AppendLine($"Application::Instance().GetBackend()->PlaySample({CheckType.Check(eventBase)}, {ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[1].Loader, eventBase)}, {ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[2].Loader, eventBase)}, NULL, {CheckType.GetUninterruptable(eventBase)}, -1, -2);");
 
 		return result.ToString();
 	}
@@ -159,10 +153,56 @@ public class UnlockChannel : ActionBase
 	public override int Num { get; set; } = 30;
 	public override string Build(EventBase eventBase, ref string nextLabel, ref int orIndex, Dictionary<string, object>? parameters = null, string ifStatement = "if (")
 	{
-		return $"Application::Instance().GetBackend()->LockChannel({ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[0].Loader, eventBase)}, {(eventBase.Num == 30 ? "false" : "true")})";
+		return $"Application::Instance().GetBackend()->LockChannel({ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[0].Loader, eventBase)}, {(eventBase.Num == 30 ? "false" : "true")});";
 	}
 }
 public class LockChannel : UnlockChannel
 {
 	public override int Num { get; set; } = 31;
+}
+public class SetMainPan : ActionBase
+{
+	public override int ObjectType { get; set; } = -2;
+	public override int Num { get; set; } = 22;
+	public override string Build(EventBase eventBase, ref string nextLabel, ref int orIndex, Dictionary<string, object>? parameters = null, string ifStatement = "if (")
+	{
+		return $"Application::Instance().GetBackend()->SetSamplePan({ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[0].Loader, eventBase)}, -1, false);";
+	}
+}
+public class SetSamplePan : ActionBase
+{
+	public override int ObjectType { get; set; } = -2;
+	public override int Num { get; set; } = 23;
+	public override string Build(EventBase eventBase, ref string nextLabel, ref int orIndex, Dictionary<string, object>? parameters = null, string ifStatement = "if (")
+	{
+		return $"Application::Instance().GetBackend()->SetSamplePan({ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[1].Loader, eventBase)}, {CheckType.Check(eventBase)}, false);";
+	}
+}
+
+public class SetChannelPan : ActionBase
+{
+	public override int ObjectType { get; set; } = -2;
+	public override int Num { get; set; } = 18;
+	public override string Build(EventBase eventBase, ref string nextLabel, ref int orIndex, Dictionary<string, object>? parameters = null, string ifStatement = "if (")
+	{
+		return $"Application::Instance().GetBackend()->SetSamplePan({ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[1].Loader, eventBase)}, {ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[0].Loader, eventBase)}, true);";
+	}
+}
+public class SetSampleFrequency : ActionBase
+{
+	public override int ObjectType { get; set; } = -2;
+	public override int Num { get; set; } = 33;
+	public override string Build(EventBase eventBase, ref string nextLabel, ref int orIndex, Dictionary<string, object>? parameters = null, string ifStatement = "if (")
+	{
+		return $"Application::Instance().GetBackend()->SetSampleFreq({ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[1].Loader, eventBase)}, {CheckType.Check(eventBase)}, false);";
+	}
+}
+public class SetChannelFrequency : ActionBase
+{
+	public override int ObjectType { get; set; } = -2;
+	public override int Num { get; set; } = 32;
+	public override string Build(EventBase eventBase, ref string nextLabel, ref int orIndex, Dictionary<string, object>? parameters = null, string ifStatement = "if (")
+	{
+		return $"Application::Instance().GetBackend()->SetSampleFreq({ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[1].Loader, eventBase)}, {ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[0].Loader, eventBase)}, true);";
+	}
 }

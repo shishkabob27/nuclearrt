@@ -11,7 +11,9 @@ void AppData::Initialize()
 	m_fitInside = {{ fit_inside }};
 	m_resizeDisplay = {{ resize_display }};
 	m_dontCenterFrame = {{ dont_center_frame }};
-
+	m_sampleOverFrame = {{ sample_over_frame }};
+	m_multiSamples = {{ multi_samples }};
+	m_sampleFocus = {{ sample_unfocused }};
 	m_globalValues = {{ global_values }};
 	m_globalStrings = {{ global_strings }};
 

@@ -49,8 +49,8 @@ public:
 	void UnloadFont(int id) override;
 	void DrawText(FontInfo* fontInfo, int x, int y, int color, const std::string& text) override;
 	// Sample Start
-	bool LoadSample(int id) override {return false;}
-	void PlaySample(int id, int channel, int loops, int freq, bool uninterruptable) override {}
+	bool LoadSample(int id, int channel) override {return false;}
+	void PlaySample(int id, int channel, int loops, int freq, bool uninterruptable, float volume, float pan) override {}
 	void StopSample(int id, bool channel) override {}
 	int FindSample(std::string name) override {return -1;}
 	void SetSampleVolume(float volume, int id, bool channel) override {}
@@ -59,6 +59,7 @@ public:
 	std::string GetChannelName(int channel) override {return "";}
 	void LockChannel(int channel, bool unlock) override {}
 	void SetSamplePan(float pan, int id, bool channel) override {}
+	void SetSampleFreq(int freq, int id, bool channel) override {}
 	void UpdateSample() override {}
 	bool SampleState(int id, bool channel, bool pauseOrStop) override {return false;}
 	// Sample End

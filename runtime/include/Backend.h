@@ -43,9 +43,9 @@ public:
 	virtual void UnloadFont(int id) {}
 	virtual void DrawText(FontInfo* fontInfo, int x, int y, int color, const std::string& text) {}
 	// Sample Start
-	virtual bool LoadSample(int id) {return false;}
+	virtual bool LoadSample(int id, int channel) {return false;}
 	virtual int FindSample(std::string name) {return -1;}
-	virtual void PlaySample(int id, int channel, int loops, int freq, bool uninterruptable) {}
+	virtual void PlaySample(int id, int channel, int loops, int freq, bool uninterruptable, float volume, float pan) {}
 	virtual void StopSample(int id, bool channel) {}
 	virtual void PauseSample(int id, bool channel, bool pause) {}
 	virtual void SetSampleVolume(float volume, int id, bool channel) {}
@@ -53,6 +53,7 @@ public:
 	virtual std::string GetChannelName(int channel) {return "";}
 	virtual void LockChannel(int channel, bool unlock) {}
 	virtual void SetSamplePan(float pan, int id, bool channel) {}
+	virtual void SetSampleFreq(int freq, int id, bool channel) {}
 	virtual void UpdateSample() {}
 	virtual bool SampleState(int id, bool channel, bool pauseOrStop) {return false;}
 	// Sample End

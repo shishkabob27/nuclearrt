@@ -11,19 +11,19 @@
 #ifdef _DEBUG
 #include "DebugUI.h"
 #endif
-typedef struct Sample {
-	Uint8 *data = nullptr;
-	Uint32 data_len = 0;
-	SDL_AudioSpec spec{};
-	std::string name = "";
-} Sample;
 typedef struct Channel {
+	float *data = nullptr; // We will be using Float32 audio to support panning more easily.
+	size_t data_len = 0;
+	SDL_AudioSpec spec{};
 	bool uninterruptable = false;
 	SDL_AudioStream *stream = nullptr;
+	int position; // Position of the Sample
+	bool finished;
 	int curHandle = -1;
 	bool loop = false;
 	bool pause = false;
 	float volume = 1.0f;
+	float pan = 0.0f;
 	std::string name = "";
 } Channel;
 class SDL3Backend : public Backend {
@@ -59,9 +59,10 @@ public:
 	void UnloadFont(int id) override;
 	void DrawText(FontInfo* fontInfo, int x, int y, int color, const std::string& text) override;
 	// Sample Start
-	bool LoadSample(int id) override;
+	static void SDLCALL AudioCallback(void* userdata, SDL_AudioStream* stream, int additional_amount, int total_amount);
+	bool LoadSample(int id, int channel) override;
 	int FindSample(std::string name) override;
-	void PlaySample(int id, int channel, int loops, int freq, bool uninterruptable) override;
+	void PlaySample(int id, int channel, int loops, int freq, bool uninterruptable, float volume, float pan) override;
 	void UpdateSample() override;
 	void PauseSample(int id, bool channel, bool pause) override;
 	bool SampleState(int id, bool channel, bool pauseOrStop) override;
@@ -70,6 +71,7 @@ public:
 	void SetSampleVolume(float volume, int id, bool channel) override;
 	void LockChannel(int channel, bool unlock) override {if (unlock) SDL_UnlockAudioStream(channels[channel].stream); else SDL_LockAudioStream(channels[channel].stream);}
 	void SetSamplePan(float pan, int id, bool channel) override;
+	void SetSampleFreq(int freq, int id, bool channel) override;
 	void StopSample(int id, bool channel) override;
 	// Sample End
 	const uint8_t* GetKeyboardState() override;
@@ -103,13 +105,16 @@ private:
 	SDL_AudioSpec spec;
 	bool renderedFirstFrame = false;
 	float mainVol = 100.0f;
+	float mainPan = 0.0f;
 	SDL_FRect CalculateRenderTargetRect();
 	SDL_Color RGBToSDLColor(int color);
 	SDL_Color RGBAToSDLColor(int color);
 
 	std::unordered_map<int, SDL_Texture*> textures;
-	std::unordered_map<int, Sample> samples;
+	bool channelTotal = Application::Instance().GetAppData()->GetMultiSamples();
 	Channel channels[49]; // 48 will be the last element.
+	SDL_AudioStream* masterStream;
+	bool windowFocused = true;
 	std::unordered_map<int, TTF_Font*> fonts;
 	std::unordered_map<std::string, std::shared_ptr<std::vector<uint8_t>>> fontBuffers;
 
