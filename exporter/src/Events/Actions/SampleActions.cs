@@ -11,7 +11,7 @@ public class PlaySample : ActionBase
 	{
 		StringBuilder result = new();
 		result.AppendLine($"Application::Instance().GetBackend()->LoadSample({CheckType.Check(eventBase)});");
-		result.AppendLine($"Application::Instance().GetBackend()->PlaySample({CheckType.Check(eventBase)}, -1, 1, NULL, false);");
+		result.AppendLine($"Application::Instance().GetBackend()->PlaySample({CheckType.Check(eventBase)}, -1, 1, NULL, {CheckType.GetUninterruptable(eventBase)});");
 
 		return result.ToString();
 	}
@@ -29,6 +29,13 @@ public class CheckType
 		type = $"Application::Instance().GetBackend()->FindSample({val})";
 		return type;
 	}
+	public static string GetUninterruptable(EventBase eventBase)
+	{
+		string uninterruptable = "false";
+		if (((Sample)eventBase.Items[0].Loader).Flags == 9) uninterruptable = "true";
+		else if (((Sample)eventBase.Items[0].Loader).Flags == 8) uninterruptable = "false";
+		return uninterruptable;
+	}
 }
 public class PlaySampleChannel : ActionBase
 {
@@ -39,7 +46,7 @@ public class PlaySampleChannel : ActionBase
 		StringBuilder result = new();
 
 		result.AppendLine($"Application::Instance().GetBackend()->LoadSample({CheckType.Check(eventBase)});");
-		result.AppendLine($"Application::Instance().GetBackend()->PlaySample({CheckType.Check(eventBase)}, {ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[1].Loader, eventBase)}, 1, NULL, false);");
+		result.AppendLine($"Application::Instance().GetBackend()->PlaySample({CheckType.Check(eventBase)}, {ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[1].Loader, eventBase)}, 1, NULL, {CheckType.GetUninterruptable(eventBase)});");
 
 		return result.ToString();
 	}
@@ -51,9 +58,9 @@ public class PlayAndLoopSample : ActionBase
 	public override string Build(EventBase eventBase, ref string nextLabel, ref int orIndex, Dictionary<string, object>? parameters = null, string ifStatement = "if (")
 	{
 		StringBuilder result = new();
+		
 		result.AppendLine($"Application::Instance().GetBackend()->LoadSample({CheckType.Check(eventBase)};");
-		result.AppendLine($"Application::Instance().GetBackend()->PlaySample({CheckType.Check(eventBase)}, -1, {ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[1].Loader, eventBase)}, NULL, false);");
-
+		result.AppendLine($"Application::Instance().GetBackend()->PlaySample({CheckType.Check(eventBase)}, -1, {ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[1].Loader, eventBase)}, NULL, {CheckType.GetUninterruptable(eventBase)});");
 		return result.ToString();
 	}
 }
@@ -74,7 +81,7 @@ public class PlayAndLoopSampleAtChannel : ActionBase
 	{
 		StringBuilder result = new();
 		result.AppendLine($"Application::Instance().GetBackend()->LoadSample({CheckType.Check(eventBase)});");
-		result.AppendLine($"Application::Instance().GetBackend()->PlaySample({CheckType.Check(eventBase)}, {ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[1].Loader, eventBase)}, {ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[2].Loader, eventBase)}, NULL, false);");
+		result.AppendLine($"Application::Instance().GetBackend()->PlaySample({CheckType.Check(eventBase)}, {ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[1].Loader, eventBase)}, {ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[2].Loader, eventBase)}, NULL, {CheckType.GetUninterruptable(eventBase)});");
 
 		return result.ToString();
 	}
