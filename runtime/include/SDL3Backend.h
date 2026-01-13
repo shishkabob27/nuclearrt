@@ -111,7 +111,7 @@ private:
 	SDL_Color RGBAToSDLColor(int color);
 
 	std::unordered_map<int, SDL_Texture*> textures;
-	bool channelTotal = Application::Instance().GetAppData()->GetMultiSamples();
+
 	Channel channels[49]; // 48 will be the last element.
 	SDL_AudioStream* masterStream;
 	bool windowFocused = true;
