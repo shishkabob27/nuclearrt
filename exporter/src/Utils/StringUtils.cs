@@ -73,6 +73,14 @@ public static class StringUtils
 		{
 			input = "_" + input;
 		}
-		return SanitizeString(input).Replace(" ", "_").Replace(".", "_").Replace("-", "_").Replace(":", "_").Replace(";", "_").Replace(",", "_").Replace("!", "_").Replace("?", "_").Replace("*", "_").Replace("/", "_").Replace("\\", "_").Replace("|", "_").Replace("`", "_").Replace("'", "_").Replace("\"", "_").Replace("'", "_").Replace("\"", "_").Replace("'", "_").Replace("\"", "_").Replace("&", "_").Replace("+", "_").Replace("(", "_").Replace(")", "_");
+		
+		string[] invalidChars = [" ", ".", "-", ":", ";", ",", "!", "?", "*", "/", "\\", "|", "`", "'", "\"", "&", "+", "(", ")", "=", "%"];
+		
+		foreach (string invalidChar in invalidChars)
+		{
+			input = input.Replace(invalidChar, "_");
+		}
+		
+		return input;
 	}
 }
