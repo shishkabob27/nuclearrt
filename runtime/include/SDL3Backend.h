@@ -71,7 +71,15 @@ public:
 	void SetSampleVolume(float volume, int id, bool channel) override;
 	void LockChannel(int channel, bool unlock) override {if (unlock) SDL_UnlockAudioStream(channels[channel].stream); else SDL_LockAudioStream(channels[channel].stream);}
 	void SetSamplePan(float pan, int id, bool channel) override;
+	int GetSamplePan(int id, bool channel) override;
 	void SetSampleFreq(int freq, int id, bool channel) override;
+	int GetSampleFreq(int id, bool channel) override;
+	int GetSampleDuration(int id, bool channel) override {
+		if (channel) return static_cast<int>(channels[id].data_len);
+		if (!channel && id > -1) {
+			for (int i = 1; i < SDL_arraysize(channels); ++i) if (channels[i].curHandle == id) return static_cast<int>(channels[i].data_len);	
+		}
+	}
 	void StopSample(int id, bool channel) override;
 	// Sample End
 	const uint8_t* GetKeyboardState() override;

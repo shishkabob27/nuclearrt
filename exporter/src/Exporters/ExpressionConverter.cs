@@ -70,10 +70,17 @@ public class ExpressionConverter
         { (ObjectType.Game, 15), _ => "0" }, // PixelShaderVersion // TODO
 
 		//Speaker
-		{ (ObjectType.Speaker, 0), _ => "Application::Instance().GetBackend->GetSampleVolume(-1, false)" }, // Main Volume
-		{ (ObjectType.Speaker, 1), e => $"Application::Instance().GetBackend->GetSampleVolume(Application::Instance().GetBackend()->FindSample({(e.Loader as StringExp).Value}), false)" }, // Sample Volume
-		{ (ObjectType.Speaker, 2), e => $"Application::Instance().GetBackend->GetSampleVolume({(e.Loader as DoubleExp).Value}, true)"}, // Channel Volume
-        { (ObjectType.Speaker, 12), e => $"Application::Instance().GetBackend->GetChannelName({(e.Loader as DoubleExp).Value})" }, // Channel Sample Name
+		{ (ObjectType.Speaker, 0), _ => "Application::Instance().GetBackend()->GetSampleVolume(-1, false)" }, // Main Volume
+		{ (ObjectType.Speaker, 1), e => $"Application::Instance().GetBackend()->GetSampleVolume(Application::Instance().GetBackend()->FindSample({(e.Loader as StringExp).Value}), false)" }, // Sample Volume
+		{ (ObjectType.Speaker, 2), e => $"Application::Instance().GetBackend()->GetSampleVolume({(e.Loader as DoubleExp).Value}, true)"}, // Channel Volume
+		{ (ObjectType.Speaker, 3), _ => "Application::Instance().GetBackend()->GetSamplePan(-1, false)" }, // Main Pan
+		{ (ObjectType.Speaker, 4), e => $"Application::Instance().GetBackend()->GetSamplePan(Application::Instance().GetBackend()->FindSample({(e.Loader as StringExp).Value}), false)" }, // Sample Pan
+		{ (ObjectType.Speaker, 5), e => $"Application::Instance().GetBackend()->GetSamplePan({(e.Loader as DoubleExp).Value}, true)"}, // Channel Pan
+		{ (ObjectType.Speaker, 8), e => $"Application::Instance().GetBackend()->GetSampleDuration({(e.Loader as StringExp).Value}, false)"}, // Sample Duration
+		{ (ObjectType.Speaker, 9), e => $"Application::Instance().GetBackend()->GetSampleDuration({(e.Loader as DoubleExp).Value}, true)" }, // Channel Duration
+		{ (ObjectType.Speaker, 10), e => $"Application::Instance().GetBackend()->GetSampleFreq({(e.Loader as StringExp).Value}, true" }, // Sample Frequency
+		{ (ObjectType.Speaker, 11), e => $"Application::Instance().GetBackend()->GetSampleFreq({(e.Loader as DoubleExp).Value}, true" }, // Channel Frequency
+		{ (ObjectType.Speaker, 12), e => $"Application::Instance().GetBackend()->GetChannelName({(e.Loader as DoubleExp).Value})" }, // Channel Sample Name
 
         // System
         { (ObjectType.System, -3), _ => ", " },

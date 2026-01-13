@@ -59,7 +59,10 @@ public:
 	std::string GetChannelName(int channel) override {return "";}
 	void LockChannel(int channel, bool unlock) override {}
 	void SetSamplePan(float pan, int id, bool channel) override {}
+	int GetSamplePan(int id, bool channel) override {return 0;}
 	void SetSampleFreq(int freq, int id, bool channel) override {}
+	int GetSampleFreq(int id, bool channel) override {return 0;}
+	int GetSampleDuration(int id, bool channel) override {return 0;}
 	void UpdateSample() override {}
 	bool SampleState(int id, bool channel, bool pauseOrStop) override {return false;}
 	// Sample End

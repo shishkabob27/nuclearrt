@@ -890,6 +890,18 @@ void SDL3Backend::SetSamplePan(float pan, int id, bool channel) {
 		}
 	}
 }
+int SDL3Backend::GetSamplePan(int id, bool channel) {
+	if (id == -1 && !channel) return mainPan;
+	if (channel) { // Get Channel Volume
+		if (id < 1 || id > SDL_arraysize(channels)) return 0;
+		return channels[id].pan * 100;
+	}
+	if (!channel && id >= 0) {
+		for (int i = 1; i < SDL_arraysize(channels); i++) {
+			if (channels[i].curHandle == id) return channels[i].pan * 100;
+		}
+	}
+}
 void SDL3Backend::SetSampleVolume(float volume, int id, bool channel) {
 	bool setMain = false;
 	if (id == -1 && !channel) { // Set Main Volume
@@ -929,6 +941,17 @@ void SDL3Backend::SetSampleFreq(int freq, int id, bool channel) {
 		for (int i = 1; i < SDL_arraysize(channels); ++i) {
 			if (channels[i].curHandle == id) SetSampleFreq(freq, i, true);
 			else continue;
+		}
+	}
+}
+int SDL3Backend::GetSampleFreq(int id, bool channel) {
+	if (channel) { // Get Channel Freq
+		if (id < 1 || id > SDL_arraysize(channels)) return 0;
+		return channels[id].spec.freq * SDL_GetAudioStreamFrequencyRatio(channels[id].stream);
+	}
+	if (id > -1 && !channel) {
+		for (int i = 1; i < SDL_arraysize(channels); ++i) {
+			if (channels[i].curHandle == id) return channels[i].spec.freq * SDL_GetAudioStreamFrequencyRatio(channels[id].stream);
 		}
 	}
 }
