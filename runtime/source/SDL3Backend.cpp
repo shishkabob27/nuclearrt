@@ -167,6 +167,12 @@ void SDL3Backend::Deinitialize()
 	}
 	textures.clear();
 
+	// cleanup text texture cache
+	for (auto& pair : textCache) {
+		SDL_DestroyTexture(pair.second.texture);
+	}
+	textCache.clear();
+
 	// cleanup fonts
 	for (auto& pair : fonts) {
 		TTF_CloseFont(pair.second);
@@ -573,12 +579,14 @@ void SDL3Backend::UnloadFont(int id)
 			}
 		}
 		
+		ClearTextCacheForFont(id);
+		
 		TTF_CloseFont(it->second);
 		fonts.erase(it);
 	}
 }
 
-void SDL3Backend::DrawText(FontInfo* fontInfo, int x, int y, int color, const std::string& text)
+void SDL3Backend::DrawText(FontInfo* fontInfo, int x, int y, int color, const std::string& text, int objectHandle)
 {
 	if (fonts.find(fontInfo->Handle) == fonts.end()) {
 		return;
@@ -605,22 +613,88 @@ void SDL3Backend::DrawText(FontInfo* fontInfo, int x, int y, int color, const st
 		return;
 	}
 
-	SDL_Surface* surface = TTF_RenderText_Blended_Wrapped(font, modifiedText.c_str(), 0, RGBToSDLColor(color), 0);
-	if (surface == nullptr) {
-		std::cerr << "TTF_RenderText_Blended_Wrapped Error: " << SDL_GetError() << std::endl;
-		return;
+	//check cache for texture
+	TextCacheKey cacheKey{ fontInfo->Handle, modifiedText, color, objectHandle };
+	auto cacheIt = textCache.find(cacheKey);
+	
+	SDL_Texture* texture = nullptr;
+	int width = 0;
+	int height = 0;
+	
+	if (cacheIt != textCache.end()) {
+		texture = cacheIt->second.texture;
+		width = cacheIt->second.width;
+		height = cacheIt->second.height;
+	} else {
+		//something changed in the text, clear texture cache for this object
+		if (objectHandle != -1) {
+			auto it = textCache.begin();
+			while (it != textCache.end()) {
+				if (it->first.objectHandle == objectHandle) {
+					SDL_DestroyTexture(it->second.texture);
+					it = textCache.erase(it);
+				} else {
+					++it;
+				}
+			}
+		}
+		
+		SDL_Surface* surface = TTF_RenderText_Blended_Wrapped(font, modifiedText.c_str(), 0, RGBToSDLColor(color), 0);
+		if (surface == nullptr) {
+			std::cerr << "TTF_RenderText_Blended_Wrapped Error: " << SDL_GetError() << std::endl;
+			return;
+		}
+
+		texture = SDL_CreateTextureFromSurface(renderer, surface);
+		if (texture == nullptr) {
+			std::cerr << "SDL_CreateTextureFromSurface Error: " << SDL_GetError() << std::endl;
+			SDL_DestroySurface(surface);
+			return;
+		}
+
+		width = surface->w;
+		height = surface->h;
+		
+		if (textCache.size() >= 256) {
+			RemoveOldTextCache();
+		}
+		
+		//cache the texture
+		CachedText cached;
+		cached.texture = texture;
+		cached.width = width;
+		cached.height = height;
+		textCache[cacheKey] = cached;
+		
+		SDL_DestroySurface(surface);
 	}
 
-	SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
-	if (texture == nullptr) {
-		std::cerr << "SDL_CreateTextureFromSurface Error: " << SDL_GetError() << std::endl;
-		return;
-	}
-
-	SDL_FRect rect = { static_cast<float>(x), static_cast<float>(y), static_cast<float>(surface->w), static_cast<float>(surface->h) };
+	SDL_FRect rect = { static_cast<float>(x), static_cast<float>(y), static_cast<float>(width), static_cast<float>(height) };
 	SDL_RenderTexture(renderer, texture, nullptr, &rect);
-	SDL_DestroySurface(surface);
-	SDL_DestroyTexture(texture);
+}
+
+void SDL3Backend::RemoveOldTextCache()
+{
+	if (textCache.empty()) {
+		return;
+	}
+
+	auto oldestIt = textCache.begin();
+	SDL_DestroyTexture(oldestIt->second.texture);
+	textCache.erase(oldestIt);
+}
+
+void SDL3Backend::ClearTextCacheForFont(int fontHandle)
+{
+	auto it = textCache.begin();
+	while (it != textCache.end()) {
+		if (it->first.fontHandle == fontHandle) {
+			SDL_DestroyTexture(it->second.texture);
+			it = textCache.erase(it);
+		} else {
+			++it;
+		}
+	}
 }
 
 const uint8_t* SDL3Backend::GetKeyboardState()
