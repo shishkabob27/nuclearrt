@@ -81,6 +81,6 @@ public static class StringUtils
 			input = input.Replace(invalidChar, "_");
 		}
 		
-		return input;
+		return SanitizeString(input);
 	}
 }
