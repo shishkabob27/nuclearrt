@@ -89,7 +89,7 @@ private:
 	std::unordered_map<std::string, std::shared_ptr<std::vector<uint8_t>>> fontBuffers;
 
 	struct TextCacheKey {
-		int fontHandle;
+		unsigned int fontHandle;
 		std::string text;
 		int color;
 		int objectHandle;
@@ -101,7 +101,7 @@ private:
 	
 	struct TextCacheKeyHash {
 		std::size_t operator()(const TextCacheKey& key) const {
-			std::size_t h1 = std::hash<int>{}(key.fontHandle);
+			std::size_t h1 = std::hash<unsigned int>{}(key.fontHandle);
 			std::size_t h2 = std::hash<std::string>{}(key.text);
 			std::size_t h3 = std::hash<int>{}(key.color);
 			std::size_t h4 = std::hash<int>{}(key.objectHandle);
