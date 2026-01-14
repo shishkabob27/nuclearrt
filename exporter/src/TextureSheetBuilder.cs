@@ -35,6 +35,9 @@ public class TextureSheetBuilder
     }
     private static List<Bitmap>? _textureSheets;
 
+    private const int MAX_TEXTURE_SHEET_SIZE = 2048;
+    private const int RECTANGLE_PADDING = 1; //adds this to every side of the rectangle
+
 	public static void Initialize(GameData gameData)
 	{
 		if (_textureSheets == null)
@@ -70,7 +73,7 @@ public class TextureSheetBuilder
             for (int i = 0; i < remainingCount; i++)
             {
                 var (index, image) = validImages[remainingStart + i];
-                rectangles[i] = new PackingRectangle(0, 0, (uint)image.bitmap.Width, (uint)image.bitmap.Height, i);
+                rectangles[i] = new PackingRectangle(0, 0, (uint)image.bitmap.Width + RECTANGLE_PADDING * 2, (uint)image.bitmap.Height + RECTANGLE_PADDING * 2, i);
             }
 
             int packedCount = remainingCount;
@@ -91,7 +94,7 @@ public class TextureSheetBuilder
                 {
                     PackingRectangle[] attemptRectangles = new PackingRectangle[packedCount];
                     Array.Copy(rectangles, attemptRectangles, packedCount);
-                    RectanglePacker.Pack(attemptRectangles, out bounds, maxBoundsWidth: 2048, maxBoundsHeight: 2048);
+                    RectanglePacker.Pack(attemptRectangles, out bounds, maxBoundsWidth: MAX_TEXTURE_SHEET_SIZE, maxBoundsHeight: MAX_TEXTURE_SHEET_SIZE);
                     Array.Copy(attemptRectangles, rectangles, packedCount);
                     success = true;
                 }
@@ -112,7 +115,7 @@ public class TextureSheetBuilder
                 {
                     var rectangle = rectangles[i];
                     var (originalIndex, image) = validImages[remainingStart + rectangle.Id];
-                    g.DrawImage(image.bitmap, (int)rectangle.X, (int)rectangle.Y, image.bitmap.Width, image.bitmap.Height);
+                    g.DrawImage(image.bitmap, (int)rectangle.X + RECTANGLE_PADDING, (int)rectangle.Y + RECTANGLE_PADDING, image.bitmap.Width, image.bitmap.Height);
                     
                     if (_imageAtlasMetadata != null)
                     {
