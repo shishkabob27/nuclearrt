@@ -13,10 +13,13 @@ struct ImageInfo {
     short HotspotY;
     short ActionPointX;
     short ActionPointY;
+    short MosaicIndex;
+    short MosaicX;
+    short MosaicY;
     int TransparentColor;
 
-    ImageInfo(unsigned int handle, int width, int height, short hotspotX, short hotspotY, short actionPointX, short actionPointY, int transparentColor)
-        : Handle(handle), Width(width), Height(height), HotspotX(hotspotX), HotspotY(hotspotY), ActionPointX(actionPointX), ActionPointY(actionPointY), TransparentColor(transparentColor) {}
+    ImageInfo(unsigned int handle, int width, int height, short hotspotX, short hotspotY, short actionPointX, short actionPointY, short mosaicIndex, short mosaicX, short mosaicY, int transparentColor)
+        : Handle(handle), Width(width), Height(height), HotspotX(hotspotX), HotspotY(hotspotY), ActionPointX(actionPointX), ActionPointY(actionPointY), MosaicIndex(mosaicIndex), MosaicX(mosaicX), MosaicY(mosaicY), TransparentColor(transparentColor) {}
 };
 
 class ImageBank {

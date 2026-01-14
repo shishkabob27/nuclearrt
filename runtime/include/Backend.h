@@ -41,7 +41,7 @@ public:
 
 	virtual void LoadFont(int id) {}
 	virtual void UnloadFont(int id) {}
-	virtual void DrawText(FontInfo* fontInfo, int x, int y, int color, const std::string& text) {}
+	virtual void DrawText(FontInfo* fontInfo, int x, int y, int color, const std::string& text, int objectHandle = -1) {}
 	// Sample Start
 	virtual bool LoadSample(int id, int channel) {return false;}
 	virtual int FindSample(std::string name) {return -1;}

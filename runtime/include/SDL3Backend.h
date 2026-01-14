@@ -4,6 +4,7 @@
 
 #include "Backend.h"
 #include <unordered_map>
+#include <set>
 
 #include <SDL3/SDL.h>
 #include <SDL3_ttf/SDL_ttf.h>
@@ -57,7 +58,7 @@ public:
 
 	void LoadFont(int id) override;
 	void UnloadFont(int id) override;
-	void DrawText(FontInfo* fontInfo, int x, int y, int color, const std::string& text) override;
+	void DrawText(FontInfo* fontInfo, int x, int y, int color, const std::string& text, int objectHandle = -1) override;
 	// Sample Start
 	static void SDLCALL AudioCallback(void* userdata, SDL_AudioStream* stream, int additional_amount, int total_amount);
 	bool LoadSample(int id, int channel) override;
@@ -116,6 +117,7 @@ public:
 private:
 	SDL_Window* window;
 	SDL_Renderer* renderer;
+	SDL_GPUDevice* gpuDevice;
 	SDL_Texture* renderTarget;
 	static SDL_AudioDeviceID audio_device;
 	SDL_AudioSpec spec;
@@ -126,7 +128,9 @@ private:
 	SDL_Color RGBToSDLColor(int color);
 	SDL_Color RGBAToSDLColor(int color);
 
-	std::unordered_map<int, SDL_Texture*> textures;
+	std::unordered_map<int, SDL_Texture*> mosaics;
+	std::unordered_map<int, int> imageToMosaic;
+	std::unordered_map<int, std::set<int>> mosaicToImages;
 
 	Channel channels[49]; // 48 will be the last element.
 	SDL_AudioStream* masterStream;
@@ -134,6 +138,37 @@ private:
 	std::unordered_map<int, TTF_Font*> fonts;
 	std::unordered_map<std::string, std::shared_ptr<std::vector<uint8_t>>> fontBuffers;
 
+	struct TextCacheKey {
+		unsigned int fontHandle;
+		std::string text;
+		int color;
+		int objectHandle;
+		
+		bool operator==(const TextCacheKey& other) const {
+			return fontHandle == other.fontHandle && text == other.text && color == other.color && objectHandle == other.objectHandle;
+		}
+	};
+	
+	struct TextCacheKeyHash {
+		std::size_t operator()(const TextCacheKey& key) const {
+			std::size_t h1 = std::hash<unsigned int>{}(key.fontHandle);
+			std::size_t h2 = std::hash<std::string>{}(key.text);
+			std::size_t h3 = std::hash<int>{}(key.color);
+			std::size_t h4 = std::hash<int>{}(key.objectHandle);
+			return h1 ^ (h2 << 1) ^ (h3 << 2) ^ (h4 << 3);
+		}
+	};
+	
+	struct CachedText {
+		SDL_Texture* texture;
+		int width;
+		int height;
+	};
+	
+	std::unordered_map<TextCacheKey, CachedText, TextCacheKeyHash> textCache;
+
+	void RemoveOldTextCache();
+	void ClearTextCacheForFont(int fontHandle);
 	int FusionToSDLKey(short key);
 }; 
 #endif

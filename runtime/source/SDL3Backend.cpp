@@ -8,6 +8,7 @@
 #include "Frame.h"
 #include "FontBank.h"
 #include "SoundBank.h"
+#include "ImageBank.h"
 #include "PakFile.h"
 #include <math.h>
 #include <SDL3/SDL.h>
@@ -16,6 +17,7 @@
 #include "./libs/stb_vorbis.c" // OGG SUPPORT
 #ifdef _DEBUG
 #include "DebugUI.h"
+#include "imgui.h"
 #include <imgui_impl_sdl3.h>
 #endif
 SDL_AudioDeviceID SDL3Backend::audio_device = NULL;
@@ -95,9 +97,16 @@ void SDL3Backend::Initialize() {
 	SDL_SetAudioStreamGetCallback(masterStream, AudioCallback, &channels); // Put callback only runs when SDL_PutAudioStreamData is ran, so use the getcallback to put data instead
 	std::cout << "Opened Audio Device.\n";
 	// Create the renderer
-	renderer = SDL_CreateRenderer(window, nullptr);
+	SDL_GPUShaderFormat shaderFormats = SDL_GPU_SHADERFORMAT_SPIRV | SDL_GPU_SHADERFORMAT_DXIL | SDL_GPU_SHADERFORMAT_MSL;
+	gpuDevice = SDL_CreateGPUDevice(shaderFormats, false, nullptr);
+	if (gpuDevice == nullptr) {
+		std::cerr << "SDL_CreateGPUDevice Error: " << SDL_GetError() << std::endl;
+		return;
+	}
+
+	renderer = SDL_CreateGPURenderer(gpuDevice, window);
 	if (renderer == nullptr) {
-		std::cerr << "SDL_CreateRenderer Error: " << SDL_GetError() << std::endl;
+		std::cerr << "SDL_CreateGPURenderer Error: " << SDL_GetError() << std::endl;
 		return;
 	}
 
@@ -197,13 +206,21 @@ void SDL3Backend::Deinitialize()
 #ifdef _DEBUG
 	DEBUG_UI.Shutdown();
 #endif
-	SDL_HideWindow(window); // Hide the window so the user doesn't see the pause in clearing the audio
-	// cleanup textures
-	for (auto& pair : textures) {
+
+	// cleanup mosaics
+	for (auto& pair : mosaics) {
 		SDL_DestroyTexture(pair.second);
 	}
-	textures.clear();
-	
+	mosaics.clear();
+	imageToMosaic.clear();
+	mosaicToImages.clear();
+
+	// cleanup text texture cache
+	for (auto& pair : textCache) {
+		SDL_DestroyTexture(pair.second.texture);
+	}
+	textCache.clear();
+
 	// cleanup fonts
 	for (auto& pair : fonts) {
 		TTF_CloseFont(pair.second);
@@ -306,9 +323,14 @@ void SDL3Backend::BeginDrawing()
 	int newWidth = std::min(Application::Instance().GetAppData()->GetWindowWidth(), Application::Instance().GetCurrentFrame()->Width);
 	int newHeight = std::min(Application::Instance().GetAppData()->GetWindowHeight(), Application::Instance().GetCurrentFrame()->Height);
 
-	if (newWidth != renderTarget->w || newHeight != renderTarget->h) {
+	float currentWidth, currentHeight;
+	SDL_GetTextureSize(renderTarget, &currentWidth, &currentHeight);
+	if (newWidth != static_cast<int>(currentWidth) || newHeight != static_cast<int>(currentHeight)) {
 		SDL_DestroyTexture(renderTarget);
 		renderTarget = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_XRGB8888, SDL_TEXTUREACCESS_TARGET, newWidth, newHeight);
+		if (renderTarget == nullptr) {
+			std::cerr << "SDL_CreateTexture Error (resize): " << SDL_GetError() << std::endl;
+		}
 	}
 	
 	SDL_SetRenderTarget(renderer, renderTarget);
@@ -357,44 +379,94 @@ void SDL3Backend::Clear(int color)
 }
 
 void SDL3Backend::LoadTexture(int id) {
-
-	//Check if texture is already loaded
-	if (textures.find(id) != textures.end()) {
+	//check if texture is already loaded
+	if (imageToMosaic.find(id) != imageToMosaic.end()) {
 		return;
 	}
 
-	//load texture from pak file
-	std::vector<uint8_t> data = pakFile.GetData("images/" + std::to_string(id) + ".png");
-	if (data.empty()) {
-		std::cerr << "PakFile::GetData Error: " << "Image with id " << id << " not found" << std::endl;
+	auto imageInfo = ImageBank::Instance().GetImage(id);
+	if (!imageInfo) {
+		std::cerr << "ImageBank::GetImage Error: " << "Image with id " << id << " not found" << std::endl;
 		return;
 	}
 
-	//create surface from data
-	SDL_IOStream* stream = SDL_IOFromMem(data.data(), data.size());
-	SDL_Texture* texture = IMG_LoadTexture_IO(renderer, stream, true);
-	if (texture == nullptr) {
-		std::cerr << "IMG_LoadTexture_IO Error: " << SDL_GetError() << std::endl;
+	int mosaicIndex = imageInfo->MosaicIndex;
+	if (mosaicIndex < 0) {
+		std::cerr << "LoadTexture Error: " << "Image with id " << id << " has invalid mosaic index" << std::endl;
 		return;
 	}
+	
+	if (mosaics.find(mosaicIndex) == mosaics.end()) {
+		char mosaicFileName[32];
+		std::snprintf(mosaicFileName, sizeof(mosaicFileName), "images/m%05d.png", mosaicIndex);
+		
+		std::vector<uint8_t> data = pakFile.GetData(mosaicFileName);
+		if (data.empty()) {
+			std::cerr << "PakFile::GetData Error: " << "Mosaic " << mosaicFileName << " not found" << std::endl;
+			return;
+		}
 
-	textures[id] = texture;
+		SDL_IOStream* stream = SDL_IOFromMem(data.data(), data.size());
+		SDL_Texture* mosaicTexture = IMG_LoadTexture_IO(renderer, stream, true);
+		if (mosaicTexture == nullptr) {
+			std::cerr << "IMG_LoadTexture_IO Error: " << SDL_GetError() << std::endl;
+			return;
+		}
+
+		mosaics[mosaicIndex] = mosaicTexture;
+	}
+
+	imageToMosaic[id] = mosaicIndex;
+	mosaicToImages[mosaicIndex].insert(id);
 }
 
 void SDL3Backend::UnloadTexture(int id) {
-	auto it = textures.find(id);
-	if (it != textures.end()) {
-		SDL_DestroyTexture(it->second);
-		textures.erase(it);
+	auto mosaicIt = imageToMosaic.find(id);
+	if (mosaicIt == imageToMosaic.end()) {
+		return;
+	}
+	
+	int mosaicIndex = mosaicIt->second;
+	mosaicToImages[mosaicIndex].erase(id);
+	imageToMosaic.erase(mosaicIt);
+	
+	//if no more images use this mosaic, unload it
+	if (mosaicToImages[mosaicIndex].empty()) {
+		auto mosaicTextureIt = mosaics.find(mosaicIndex);
+		if (mosaicTextureIt != mosaics.end()) {
+			SDL_DestroyTexture(mosaicTextureIt->second);
+			mosaics.erase(mosaicTextureIt);
+		}
+		mosaicToImages.erase(mosaicIndex);
 	}
 }
 
 void SDL3Backend::DrawTexture(int id, int x, int y, int offsetX, int offsetY, int angle, float scale, int color, int effect, unsigned char effectParameter)
 {
-	SDL_Texture* texture = textures[id];
-	if (texture == nullptr) {
+	auto imageInfo = ImageBank::Instance().GetImage(id);
+	if (!imageInfo) {
 		return;
 	}
+	
+	auto mosaicIt = imageToMosaic.find(id);
+	if (mosaicIt == imageToMosaic.end()) {
+		return;
+	}
+	
+	int mosaicIndex = mosaicIt->second;
+	auto mosaicTextureIt = mosaics.find(mosaicIndex);
+	if (mosaicTextureIt == mosaics.end()) {
+		return;
+	}
+	
+	SDL_Texture* texture = mosaicTextureIt->second;
+	
+	SDL_FRect srcRect = {
+		static_cast<float>(imageInfo->MosaicX),
+		static_cast<float>(imageInfo->MosaicY),
+		static_cast<float>(imageInfo->Width),
+		static_cast<float>(imageInfo->Height)
+	};
 	
 	// Save original texture properties
 	Uint8 origR, origG, origB, origA;
@@ -410,8 +482,8 @@ void SDL3Backend::DrawTexture(int id, int x, int y, int offsetX, int offsetY, in
 	SDL_SetTextureColorMod(texture, r, g, b);
 	
 	//get texture dimensions
-	int width, height;
-	GetTextureDimensions(id, width, height);
+	int width = imageInfo->Width;
+	int height = imageInfo->Height;
 	SDL_FRect rect = { static_cast<float>(x - offsetX), static_cast<float>(y - offsetY), static_cast<float>(width), static_cast<float>(height) };
 	
 	//Effects
@@ -431,7 +503,7 @@ void SDL3Backend::DrawTexture(int id, int x, int y, int offsetX, int offsetY, in
 	}
 
 	SDL_FPoint center{ static_cast<float>(offsetX), static_cast<float>(offsetY) };
-	SDL_RenderTextureRotated(renderer, texture, nullptr, &rect, 360 - angle, &center, SDL_FLIP_NONE);
+	SDL_RenderTextureRotated(renderer, texture, &srcRect, &rect, 360 - angle, &center, SDL_FLIP_NONE);
 	
 	// Restore original texture properties
 	SDL_SetTextureColorMod(texture, origR, origG, origB);
@@ -496,13 +568,33 @@ void SDL3Backend::DrawQuickBackdrop(int x, int y, int width, int height, Shape* 
 			}
 		}
 		else if (shape->FillType == 3) { // Motif
-			SDL_Texture* texture = textures[shape->Image];
-			if (texture == nullptr) {
+			auto imageInfo = ImageBank::Instance().GetImage(shape->Image);
+			if (!imageInfo) {
 				return;
 			}
 			
-			int textureWidth, textureHeight;
-			GetTextureDimensions(shape->Image, textureWidth, textureHeight);
+			auto mosaicIt = imageToMosaic.find(shape->Image);
+			if (mosaicIt == imageToMosaic.end()) {
+				return;
+			}
+			
+			int mosaicIndex = mosaicIt->second;
+			auto mosaicTextureIt = mosaics.find(mosaicIndex);
+			if (mosaicTextureIt == mosaics.end()) {
+				return;
+			}
+			
+			SDL_Texture* texture = mosaicTextureIt->second;
+			
+			SDL_FRect baseSrcRect = {
+				static_cast<float>(imageInfo->MosaicX),
+				static_cast<float>(imageInfo->MosaicY),
+				static_cast<float>(imageInfo->Width),
+				static_cast<float>(imageInfo->Height)
+			};
+			
+			int textureWidth = imageInfo->Width;
+			int textureHeight = imageInfo->Height;
 			
 			// Tile the texture across the entire area
 			for (int tileY = y; tileY < y + height; tileY += textureHeight) {
@@ -512,8 +604,14 @@ void SDL3Backend::DrawQuickBackdrop(int x, int y, int width, int height, Shape* 
 					int tileH = std::min(textureHeight, y + height - tileY);
 					
 					SDL_FRect destRect = { static_cast<float>(tileX), static_cast<float>(tileY), static_cast<float>(tileW), static_cast<float>(tileH) };
-					SDL_FRect srcRect = { 0.0f, 0.0f, static_cast<float>(tileW), static_cast<float>(tileH) };
-					SDL_RenderTexture(renderer, texture, &srcRect, &destRect);
+					//adjust source rect for partial tiles
+					SDL_FRect tileSrcRect = {
+						baseSrcRect.x,
+						baseSrcRect.y,
+						static_cast<float>(tileW),
+						static_cast<float>(tileH)
+					};
+					SDL_RenderTexture(renderer, texture, &tileSrcRect, &destRect);
 				}
 			}
 		}
@@ -626,12 +724,14 @@ void SDL3Backend::UnloadFont(int id)
 			}
 		}
 		
+		ClearTextCacheForFont(id);
+		
 		TTF_CloseFont(it->second);
 		fonts.erase(it);
 	}
 }
 
-void SDL3Backend::DrawText(FontInfo* fontInfo, int x, int y, int color, const std::string& text)
+void SDL3Backend::DrawText(FontInfo* fontInfo, int x, int y, int color, const std::string& text, int objectHandle)
 {
 	if (fonts.find(fontInfo->Handle) == fonts.end()) {
 		return;
@@ -658,22 +758,88 @@ void SDL3Backend::DrawText(FontInfo* fontInfo, int x, int y, int color, const st
 		return;
 	}
 
-	SDL_Surface* surface = TTF_RenderText_Blended_Wrapped(font, modifiedText.c_str(), 0, RGBToSDLColor(color), 0);
-	if (surface == nullptr) {
-		std::cerr << "TTF_RenderText_Blended_Wrapped Error: " << SDL_GetError() << std::endl;
-		return;
+	//check cache for texture
+	TextCacheKey cacheKey{ fontInfo->Handle, modifiedText, color, objectHandle };
+	auto cacheIt = textCache.find(cacheKey);
+	
+	SDL_Texture* texture = nullptr;
+	int width = 0;
+	int height = 0;
+	
+	if (cacheIt != textCache.end()) {
+		texture = cacheIt->second.texture;
+		width = cacheIt->second.width;
+		height = cacheIt->second.height;
+	} else {
+		//something changed in the text, clear texture cache for this object
+		if (objectHandle != -1) {
+			auto it = textCache.begin();
+			while (it != textCache.end()) {
+				if (it->first.objectHandle == objectHandle) {
+					SDL_DestroyTexture(it->second.texture);
+					it = textCache.erase(it);
+				} else {
+					++it;
+				}
+			}
+		}
+		
+		SDL_Surface* surface = TTF_RenderText_Blended_Wrapped(font, modifiedText.c_str(), 0, RGBToSDLColor(color), 0);
+		if (surface == nullptr) {
+			std::cerr << "TTF_RenderText_Blended_Wrapped Error: " << SDL_GetError() << std::endl;
+			return;
+		}
+
+		texture = SDL_CreateTextureFromSurface(renderer, surface);
+		if (texture == nullptr) {
+			std::cerr << "SDL_CreateTextureFromSurface Error: " << SDL_GetError() << std::endl;
+			SDL_DestroySurface(surface);
+			return;
+		}
+
+		width = surface->w;
+		height = surface->h;
+		
+		if (textCache.size() >= 256) {
+			RemoveOldTextCache();
+		}
+		
+		//cache the texture
+		CachedText cached;
+		cached.texture = texture;
+		cached.width = width;
+		cached.height = height;
+		textCache[cacheKey] = cached;
+		
+		SDL_DestroySurface(surface);
 	}
 
-	SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
-	if (texture == nullptr) {
-		std::cerr << "SDL_CreateTextureFromSurface Error: " << SDL_GetError() << std::endl;
-		return;
-	}
-
-	SDL_FRect rect = { static_cast<float>(x), static_cast<float>(y), static_cast<float>(surface->w), static_cast<float>(surface->h) };
+	SDL_FRect rect = { static_cast<float>(x), static_cast<float>(y), static_cast<float>(width), static_cast<float>(height) };
 	SDL_RenderTexture(renderer, texture, nullptr, &rect);
-	SDL_DestroySurface(surface);
-	SDL_DestroyTexture(texture);
+}
+
+void SDL3Backend::RemoveOldTextCache()
+{
+	if (textCache.empty()) {
+		return;
+	}
+
+	auto oldestIt = textCache.begin();
+	SDL_DestroyTexture(oldestIt->second.texture);
+	textCache.erase(oldestIt);
+}
+
+void SDL3Backend::ClearTextCacheForFont(int fontHandle)
+{
+	auto it = textCache.begin();
+	while (it != textCache.end()) {
+		if (it->first.fontHandle == fontHandle) {
+			SDL_DestroyTexture(it->second.texture);
+			it = textCache.erase(it);
+		} else {
+			++it;
+		}
+	}
 }
 // Sample Start
 
@@ -1373,12 +1539,27 @@ void SDL3Backend::Delay(unsigned int ms)
 
 bool SDL3Backend::IsPixelTransparent(int textureId, int x, int y)
 {
-	auto it = textures.find(textureId);
-	if (it == textures.end()) return true;
+	auto imageInfo = ImageBank::Instance().GetImage(textureId);
+	if (!imageInfo) return true;
 
-	SDL_Texture* texture = it->second;
-	int width, height;
-	GetTextureDimensions(textureId, width, height);
+	auto mosaicIt = imageToMosaic.find(textureId);
+	if (mosaicIt == imageToMosaic.end()) return true;
+	
+	int mosaicIndex = mosaicIt->second;
+	auto mosaicTextureIt = mosaics.find(mosaicIndex);
+	if (mosaicTextureIt == mosaics.end()) return true;
+	
+	SDL_Texture* texture = mosaicTextureIt->second;
+	
+	SDL_FRect srcRect = {
+		static_cast<float>(imageInfo->MosaicX),
+		static_cast<float>(imageInfo->MosaicY),
+		static_cast<float>(imageInfo->Width),
+		static_cast<float>(imageInfo->Height)
+	};
+
+	int width = imageInfo->Width;
+	int height = imageInfo->Height;
 
 	if (x < 0 || x >= width || y < 0 || y >= height) return true;
 
@@ -1400,7 +1581,8 @@ bool SDL3Backend::IsPixelTransparent(int textureId, int x, int y)
 	SDL_SetRenderTarget(renderer, tempTarget);
 
 	// Copy the original texture to the temporary target
-	SDL_RenderTexture(renderer, texture, nullptr, nullptr);
+	SDL_FRect destRect = { 0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height) };
+	SDL_RenderTexture(renderer, texture, &srcRect, &destRect);
 
 	// Read the pixels from the temporary target
 	SDL_Rect rect = { 0, 0, width, height };
@@ -1426,13 +1608,11 @@ bool SDL3Backend::IsPixelTransparent(int textureId, int x, int y)
 
 void SDL3Backend::GetTextureDimensions(int textureId, int& width, int& height)
 {
-	auto it = textures.find(textureId);
-	if (it != textures.end())
+	auto imageInfo = ImageBank::Instance().GetImage(textureId);
+	if (imageInfo)
 	{
-		float w, h;
-		SDL_GetTextureSize(it->second, &w, &h);
-		width = static_cast<int>(w);
-		height = static_cast<int>(h);
+		width = imageInfo->Width;
+		height = imageInfo->Height;
 	}
 	else
 	{
