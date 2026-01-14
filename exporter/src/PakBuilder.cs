@@ -13,12 +13,11 @@ public class PakBuilder
 		var gameData = reader.getGameData();
 
 		//images
-		foreach (var image in gameData.Images.Items)
+		for (int i = 0; i < TextureSheetBuilder.TextureSheets.Count; i++)
 		{
-			var entry = new PakEntry { Path = $"images/{image.Key}.png" };
-
+			var entry = new PakEntry { Path = $"images/m{i:D5}.png" };
 			using var imageStream = new MemoryStream();
-			image.Value.bitmap.Save(imageStream, System.Drawing.Imaging.ImageFormat.Png);
+			TextureSheetBuilder.TextureSheets[i].Save(imageStream, System.Drawing.Imaging.ImageFormat.Png);
 			entry.Size = (uint)imageStream.Length;
 			entry.Data = imageStream.ToArray();
 			entries.Add(entry);

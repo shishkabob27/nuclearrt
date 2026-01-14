@@ -10,6 +10,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="RectpackSharp" Version="1.2.0" />
     <PackageReference Include="System.Drawing.Common" Version="9.0.5" />
     <PackageReference Include="System.Resources.Extensions" Version="6.0.0" />
     <PackageReference Include="Ionic.Zip" Version="1.9.1.8" />
@@ -23,7 +24,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <AvaloniaResource Include="res/logo.png"/>
+    <AvaloniaResource Include="res/logo.png" />
 </ItemGroup>
 
 </Project>

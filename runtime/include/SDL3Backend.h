@@ -4,6 +4,7 @@
 
 #include "Backend.h"
 #include <unordered_map>
+#include <set>
 
 #include <SDL3/SDL.h>
 #include <SDL3_ttf/SDL_ttf.h>
@@ -80,7 +81,9 @@ private:
 	SDL_Color RGBToSDLColor(int color);
 	SDL_Color RGBAToSDLColor(int color);
 
-	std::unordered_map<int, SDL_Texture*> textures;
+	std::unordered_map<int, SDL_Texture*> mosaics;
+	std::unordered_map<int, int> imageToMosaic;
+	std::unordered_map<int, std::set<int>> mosaicToImages;
 
 	std::unordered_map<int, TTF_Font*> fonts;
 	std::unordered_map<std::string, std::shared_ptr<std::vector<uint8_t>>> fontBuffers;
