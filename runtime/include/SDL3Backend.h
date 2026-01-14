@@ -89,6 +89,7 @@ public:
 		}
 		return 0;
 	}
+	void SetSamplePos(int pos, int id, bool channel);
 	void StopSample(int id, bool channel) override;
 	// Sample End
 	const uint8_t* GetKeyboardState() override;

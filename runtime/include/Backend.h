@@ -58,6 +58,7 @@ public:
 	virtual void SetSampleFreq(int freq, int id, bool channel) {}
 	virtual int GetSampleDuration(int id, bool channel) {return 0;}
 	virtual int GetSamplePos(int id, bool channel) {return 0;}
+	virtual void SetSamplePos(int pos, int id, bool channel) {}
 	virtual void UpdateSample() {}
 	virtual bool SampleState(int id, bool channel, bool pauseOrStop) {return false;}
 	// Sample End

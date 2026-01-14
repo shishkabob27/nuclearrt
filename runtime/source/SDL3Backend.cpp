@@ -31,7 +31,7 @@ void SDLCALL SDL3Backend::AudioCallback(void *userdata, SDL_AudioStream *stream,
 {
 	auto& channels = *(Channel(*)[49])userdata;
 	int frames = additional_amount / (sizeof(float) * 2);
-	static float mixBuffer[8192 * 2] = {0}; // Initilaze array so no garbage data is found
+	float mixBuffer[8192 * 2] = {0}; // Initilaze array so no garbage data is found
 	if (frames > 8192) frames = 8192;
 	for (int i = 0; i < frames; ++i) {
 		float left = 0.0f, right = 0.0f;
@@ -908,7 +908,7 @@ int SDL3Backend::FindSample(std::string name) {
 
 void SDL3Backend::PlaySample(int id, int channel, int loops, int freq, bool uninterruptable, float volume, float pan) {
 	bool replaceSample = false;
-	if (channel < 1 || channel > SDL_arraysize(channels)) {
+	if (channel < 1 || channel >= SDL_arraysize(channels)) {
 		for (int i = 1; i < SDL_arraysize(channels); i++) {
 			if (!channels[i].stream || !channels[i].data) {
 				channel = i;
@@ -967,7 +967,7 @@ bool SDL3Backend::SampleState(int id, bool channel, bool pause) {
 		else return false;
 	}
 	if (channel) { // Check if channel is not playing/paused
-		if (id < 1 || id > SDL_arraysize(channels)) return false;
+		if (id < 1 || id >= SDL_arraysize(channels)) return false;
 		if (pause && channels[id].pause) return true;
 		if (!channels[id].stream && !pause) return true;
 	}
@@ -994,7 +994,7 @@ void SDL3Backend::PauseSample(int id, bool channel, bool pause) {
 		}
 	}
 	if (channel) { // Pause/Resume specific channel
-		if (id < 1 || id > SDL_arraysize(channels)) return;
+		if (id < 1 || id >= SDL_arraysize(channels)) return;
 		if (channels[id].stream) {
 			if (pause) {
 				SDL_PauseAudioStreamDevice(channels[id].stream);
@@ -1027,7 +1027,7 @@ void SDL3Backend::SetSamplePan(float pan, int id, bool channel) {
 	}
 	if (channel) { // Set Channel Pan
 		setMain = false;
-		if (id < 1 || id > SDL_arraysize(channels)) return;
+		if (id < 1 || id >= SDL_arraysize(channels)) return;
 		if (channels[id].stream) channels[id].pan = pan;
 	}
 	if (id > -1 && !channel) { // Set Sample Pan
@@ -1041,12 +1041,32 @@ void SDL3Backend::SetSamplePan(float pan, int id, bool channel) {
 int SDL3Backend::GetSamplePan(int id, bool channel) {
 	if (id == -1 && !channel) return mainPan;
 	if (channel) { // Get Channel Volume
-		if (id < 1 || id > SDL_arraysize(channels)) return 0;
+		if (id < 1 || id >= SDL_arraysize(channels)) return 0;
 		return channels[id].pan * 100;
 	}
 	if (!channel && id >= 0) {
 		for (int i = 1; i < SDL_arraysize(channels); i++) {
 			if (channels[i].curHandle == id) return channels[i].pan * 100;
+		}
+	}
+}
+void SDL3Backend::SetSamplePos(int pos, int id, bool channel)
+{
+	if (channel) {
+		if (id < 0 || id >= SDL_arraysize(channels)) return;
+		if (!channels[id].data || !channels[id].stream) return;
+		int length = channels[id].data_len / (sizeof(float) * 2);
+		pos = SDL_clamp(pos, 0, length);
+		channels[id].position = pos;
+		SDL_ClearAudioStream(channels[id].stream);
+		Uint8* positionData = channels[id].data + pos * sizeof(float) * 2;
+		Uint32 positionLength = channels[id].data_len - pos * sizeof(float) * 2;
+		SDL_PutAudioStreamData(channels[id].stream, positionData, positionLength);
+	}
+	else {
+		if (id < 0) return;
+		for (int i = 0; i < SDL_arraysize(channels); ++i) {
+			if (channels[i].curHandle == id) SetSamplePos(pos, i, true);
 		}
 	}
 }
@@ -1060,7 +1080,7 @@ void SDL3Backend::SetSampleVolume(float volume, int id, bool channel) {
 		}
 	}
 	if (channel) { // Set Channel Volume
-		if (id < 1 || id > SDL_arraysize(channels)) return;
+		if (id < 1 || id >= SDL_arraysize(channels)) return;
 		if (channels[id].stream) {
 			channels[id].volume = volume / 100;
 			if (!setMain) channels[id].volume = volume / 100;
@@ -1079,7 +1099,7 @@ void SDL3Backend::SetSampleVolume(float volume, int id, bool channel) {
 }
 void SDL3Backend::SetSampleFreq(int freq, int id, bool channel) {
 	if (channel) { // Set Channel Freq
-		if (id < 1 || id > SDL_arraysize(channels)) return;
+		if (id < 1 || id >= SDL_arraysize(channels)) return;
 		if (channels[id].stream) {
 			if (freq > 0) SDL_SetAudioStreamFrequencyRatio(channels[id].stream, static_cast<float>(freq) / static_cast<float>(channels[id].spec.freq));
 			else SDL_SetAudioStreamFrequencyRatio(channels[id].stream, 1.0f);
@@ -1094,7 +1114,7 @@ void SDL3Backend::SetSampleFreq(int freq, int id, bool channel) {
 }
 int SDL3Backend::GetSampleFreq(int id, bool channel) {
 	if (channel) { // Get Channel Freq
-		if (id < 1 || id > SDL_arraysize(channels)) return 0;
+		if (id < 1 || id >= SDL_arraysize(channels)) return 0;
 		return channels[id].spec.freq * SDL_GetAudioStreamFrequencyRatio(channels[id].stream);
 	}
 	if (id > -1 && !channel) {
@@ -1106,7 +1126,7 @@ int SDL3Backend::GetSampleFreq(int id, bool channel) {
 int SDL3Backend::GetSampleVolume(int id, bool channel) {
 	if (id == -1 && !channel) return mainVol;
 	if (channel) { // Get Channel Volume
-		if (id < 1 || id > SDL_arraysize(channels)) return -1;
+		if (id < 1 || id >= SDL_arraysize(channels)) return -1;
 		return channels[id].volume;
 	}
 	if (id > -1 && !channel) { // Get Sample Volume
@@ -1123,7 +1143,7 @@ void SDL3Backend::StopSample(int id, bool channel) {
 		return;
 	}
 	if (channel) { // check for the channel
-		if (id < 1 || id > SDL_arraysize(channels)) return;
+		if (id < 1 || id >= SDL_arraysize(channels)) return;
 		if (channels[id].stream) {
 			std::cout << "Stopping Sample : " << id << "\n";
 			SDL_UnbindAudioStream(channels[id].stream);
