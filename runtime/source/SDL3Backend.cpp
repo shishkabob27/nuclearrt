@@ -908,25 +908,28 @@ int SDL3Backend::FindSample(std::string name) {
 
 void SDL3Backend::PlaySample(int id, int channel, int loops, int freq, bool uninterruptable, float volume, float pan) {
 	bool replaceSample = false;
+	bool channelsFilled = false;
+	bool channelFound = false;
 	if (channel < 1 || channel >= SDL_arraysize(channels)) {
 		for (int i = 1; i < SDL_arraysize(channels); i++) {
-			if (!channels[i].stream || !channels[i].data) {
+			if (!channels[i].stream || !channels[i].data || !channels[i].lock) {
 				channel = i;
+				channelFound = true;
 				break;
 			}
 		}
+		if (!channelFound) {
+			channelsFilled = true;
+			channel = 48;
+		}
+		channels[channel].uninterruptable = uninterruptable;
 	}
-	else {
+	else { // Channel is given.
+		channels[channel].uninterruptable = uninterruptable;
 		if (channels[channel].uninterruptable) replaceSample = true;
 	}
 	if (replaceSample) {
-		for (int i = 1; i < SDL_arraysize(channels); i++) {
-			if (!channels[i].uninterruptable) { // Check which ones are interruptable.
-				channel = i;
-				break;
-			}
-			else continue;
-		}
+		StopSample(channel, true);
 	}
 	LoadSample(id, channel);
 

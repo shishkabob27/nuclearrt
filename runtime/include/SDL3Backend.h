@@ -19,6 +19,7 @@ typedef struct Channel {
 	bool uninterruptable = false;
 	SDL_AudioStream *stream = nullptr;
 	int position;
+	bool lock = false;
 	bool finished;
 	int curHandle = -1;
 	bool loop = false;
@@ -70,7 +71,7 @@ public:
 	int GetSampleVolume(int id, bool channel) override;
 	std::string GetChannelName(int channel) override {return channels[channel].name;}
 	void SetSampleVolume(float volume, int id, bool channel) override;
-	void LockChannel(int channel, bool unlock) override {if (unlock) SDL_UnlockAudioStream(channels[channel].stream); else SDL_LockAudioStream(channels[channel].stream);}
+	void LockChannel(int channel, bool unlock) override {if (unlock) channels[channel].lock = false; else channels[channel].lock = true;}
 	void SetSamplePan(float pan, int id, bool channel) override;
 	int GetSamplePan(int id, bool channel) override;
 	void SetSampleFreq(int freq, int id, bool channel) override;
