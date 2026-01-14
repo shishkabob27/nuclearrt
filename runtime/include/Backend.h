@@ -42,7 +42,7 @@ public:
 
 	virtual void LoadFont(int id) {}
 	virtual void UnloadFont(int id) {}
-	virtual void DrawText(FontInfo* fontInfo, int x, int y, int color, const std::string& text) {}
+	virtual void DrawText(FontInfo* fontInfo, int x, int y, int color, const std::string& text, int objectHandle = -1) {}
 
 	virtual const uint8_t* GetKeyboardState() { return nullptr; }
 
