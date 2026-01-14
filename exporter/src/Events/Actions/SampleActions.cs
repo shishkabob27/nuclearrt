@@ -20,7 +20,7 @@ public class PlaySampleAllParameters : ActionBase
 	public override int Num { get; set; } = 36;
 	public override string Build(EventBase eventBase, ref string nextLabel, ref int orIndex, Dictionary<string, object>? parameters = null, string ifStatement = "if (")
 	{
-		return $"Application::Instance().GetBackend()->PlaySample({CheckType.Check(eventBase)}, {ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[0].Loader, eventBase)}, {ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[1].Loader, eventBase)}, {ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[4].Loader, eventBase)}, {CheckType.GetUninterruptable(eventBase)}, {ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[2].Loader, eventBase)}, {ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[3].Loader, eventBase)});";
+		return $"Application::Instance().GetBackend()->PlaySample({CheckType.Check(eventBase)}, {ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[1].Loader, eventBase)}, {ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[2].Loader, eventBase)}, {ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[5].Loader, eventBase)}, {CheckType.GetUninterruptable(eventBase)}, {ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[3].Loader, eventBase)}, {ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[4].Loader, eventBase)});";
 	}
 }
 public class CheckType
@@ -40,8 +40,18 @@ public class CheckType
 	{
 		CTFAK.Utils.Logger.Log("Flags of Sample " + ((Sample)eventBase.Items[0].Loader).Flags.ToString());
 		string uninterruptable = "false";
-		if (((Sample)eventBase.Items[0].Loader).Flags == 9) uninterruptable = "true";
-		else if (((Sample)eventBase.Items[0].Loader).Flags == 8) uninterruptable = "false";
+		switch (((Sample)eventBase.Items[0].Loader).Flags)
+		{
+			case 1: // Play sample all params
+			case 9: // Play sample
+				uninterruptable = "true";
+				break;
+			case 0:
+			case 8:
+			default:
+				uninterruptable = "false";
+				break;
+		}
 		return uninterruptable;
 	}
 }
