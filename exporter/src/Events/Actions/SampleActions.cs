@@ -13,6 +13,16 @@ public class PlaySample : ActionBase
 		return result.ToString();
 	}
 }
+
+public class PlaySampleAllParameters : ActionBase
+{
+	public override int ObjectType { get; set; } = -2;
+	public override int Num { get; set; } = 36;
+	public override string Build(EventBase eventBase, ref string nextLabel, ref int orIndex, Dictionary<string, object>? parameters = null, string ifStatement = "if (")
+	{
+		return $"Application::Instance().GetBackend()->PlaySample({CheckType.Check(eventBase)}, {ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[0].Loader, eventBase)}, {ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[1].Loader, eventBase)}, {ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[4].Loader, eventBase)}, {CheckType.GetUninterruptable(eventBase)}, {ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[2].Loader, eventBase)}, {ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[3].Loader, eventBase)});";
+	}
+}
 public class CheckType
 {
 	public static string Check(EventBase eventBase)

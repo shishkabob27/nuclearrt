@@ -76,6 +76,8 @@ public class ExpressionConverter
 		{ (ObjectType.Speaker, 3), _ => "Application::Instance().GetBackend()->GetSamplePan(-1, false)" }, // Main Pan
 		{ (ObjectType.Speaker, 4), e => $"Application::Instance().GetBackend()->GetSamplePan(Application::Instance().GetBackend()->FindSample({(e.Loader as StringExp).Value}), false)" }, // Sample Pan
 		{ (ObjectType.Speaker, 5), e => $"Application::Instance().GetBackend()->GetSamplePan({(e.Loader as DoubleExp).Value}, true)"}, // Channel Pan
+		{ (ObjectType.Speaker, 6), e => $"Application::Instance().GetBackend()->GetSamplePos({(e.Loader as StringExp).Value}, false)" }, // Sample Position
+		{ (ObjectType.Speaker, 7), e => $"Application::Instance().GetBackend()->GetSamplePos({(e.Loader as DoubleExp).Value}, true)" }, // Channel Position
 		{ (ObjectType.Speaker, 8), e => $"Application::Instance().GetBackend()->GetSampleDuration({(e.Loader as StringExp).Value}, false)"}, // Sample Duration
 		{ (ObjectType.Speaker, 9), e => $"Application::Instance().GetBackend()->GetSampleDuration({(e.Loader as DoubleExp).Value}, true)" }, // Channel Duration
 		{ (ObjectType.Speaker, 10), e => $"Application::Instance().GetBackend()->GetSampleFreq({(e.Loader as StringExp).Value}, true" }, // Sample Frequency

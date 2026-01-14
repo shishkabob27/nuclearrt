@@ -63,6 +63,7 @@ public:
 	void SetSampleFreq(int freq, int id, bool channel) override {}
 	int GetSampleFreq(int id, bool channel) override {return 0;}
 	int GetSampleDuration(int id, bool channel) override {return 0;}
+	int GetSamplePos(int id, bool channel) override {return 0;}
 	void UpdateSample() override {}
 	bool SampleState(int id, bool channel, bool pauseOrStop) override {return false;}
 	// Sample End

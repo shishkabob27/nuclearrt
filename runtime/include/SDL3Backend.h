@@ -12,12 +12,12 @@
 #include "DebugUI.h"
 #endif
 typedef struct Channel {
-	float *data = nullptr; // We will be using Float32 audio to support panning more easily.
-	size_t data_len = 0;
+	Uint8 *data = nullptr; // No need to make floats, as SDL_AudioStream does convert samples into a format you give via SDL_AudioSpec
+	Uint32 data_len = 0;
 	SDL_AudioSpec spec{};
 	bool uninterruptable = false;
 	SDL_AudioStream *stream = nullptr;
-	int position; // Position of the Sample
+	int position;
 	bool finished;
 	int curHandle = -1;
 	bool loop = false;
@@ -75,10 +75,18 @@ public:
 	void SetSampleFreq(int freq, int id, bool channel) override;
 	int GetSampleFreq(int id, bool channel) override;
 	int GetSampleDuration(int id, bool channel) override {
-		if (channel) return static_cast<int>(channels[id].data_len);
+		if (channel && (id > 1 || id < 48)) return static_cast<int>(channels[id].data_len);
 		if (!channel && id > -1) {
 			for (int i = 1; i < SDL_arraysize(channels); ++i) if (channels[i].curHandle == id) return static_cast<int>(channels[i].data_len);	
 		}
+		return 0;
+	}
+	int GetSamplePos(int id, bool channel) override {
+		if (channel && (id > 1 || id < 48)) return channels[id].position;
+		if (!channel && id > -1) {
+			for (int i = 1; i < SDL_arraysize(channels); ++i) if (channels[i].curHandle == id) return channels[i].position;
+		}
+		return 0;
 	}
 	void StopSample(int id, bool channel) override;
 	// Sample End

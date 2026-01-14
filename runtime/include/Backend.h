@@ -53,10 +53,11 @@ public:
 	virtual std::string GetChannelName(int channel) {return "";}
 	virtual void LockChannel(int channel, bool unlock) {}
 	virtual void SetSamplePan(float pan, int id, bool channel) {}
-	virtual int GetSamplePan(int id, bool channel) {}
-	virtual int GetSampleFreq(int id, bool channel) {}
+	virtual int GetSamplePan(int id, bool channel) {return 0;}
+	virtual int GetSampleFreq(int id, bool channel) {return 0;}
 	virtual void SetSampleFreq(int freq, int id, bool channel) {}
-	virtual int GetSampleDuration(int id, bool channel) {}
+	virtual int GetSampleDuration(int id, bool channel) {return 0;}
+	virtual int GetSamplePos(int id, bool channel) {return 0;}
 	virtual void UpdateSample() {}
 	virtual bool SampleState(int id, bool channel, bool pauseOrStop) {return false;}
 	// Sample End

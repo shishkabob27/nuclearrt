@@ -42,6 +42,7 @@ void SDLCALL SDL3Backend::AudioCallback(void *userdata, SDL_AudioStream *stream,
 				channel.finished = true;
 				continue;
 			}
+			channel.position += getData / (sizeof(float) * 2);
 			// Prepare volume + pan handling
 			float angle = (channel.pan + 1.0f) * 0.25f * SDL_PI_F;
 			float leftGain = SDL_cosf(angle) * channel.volume;
@@ -696,30 +697,11 @@ bool SDL3Backend::LoadSample(int id, int channel) {
 		return false;
 	}
 	if (soundInfo->Type == "wav") {
-		SDL_AudioSpec srcSpec;
-		Uint8 *srcData = NULL;
-		Uint32 srcLen = 0;
 		SDL_IOStream* stream = SDL_IOFromMem(data.data(), data.size());
-		if (!SDL_LoadWAV_IO(stream, true, &srcSpec, &srcData, &srcLen)) {
+		if (!SDL_LoadWAV_IO(stream, true, &channels[channel].spec, &channels[channel].data, &channels[channel].data_len)) {
 			std::cout << "SDL_LoadWAV_IO Error (WAV) : " << SDL_GetError() << std::endl;
 			return false;
 		}
-		SDL_AudioSpec dstSpec = srcSpec;
-		dstSpec.format = SDL_AUDIO_F32;
-		dstSpec.channels = 2;
-		dstSpec.freq = 44100;
-		Uint8 *dstData = NULL;
-		int dstLen = 0;
-		if (!SDL_ConvertAudioSamples(&srcSpec, srcData, srcLen, &dstSpec, &dstData, &dstLen)) {
-			std::cout << "Failed to convert audio samples : " << SDL_GetError() << "\n";
-			SDL_free(srcData);
-			return false;
-		}
-		channels[channel].data = (float*)dstData;
-		channels[channel].data_len = dstLen;
-		channels[channel].spec = dstSpec;
-		SDL_free(srcData);
-		//SDL_free(dstData);
 		std::cout << "Loaded WAV Sample ID : " << id << "\n";
 	}
 	else if (soundInfo->Type == "ogg") {
@@ -731,14 +713,13 @@ bool SDL3Backend::LoadSample(int id, int channel) {
 			return false;
 		}
 		int totalSamples = numSamples * channels;
-		this->channels[channel].data_len = totalSamples * sizeof(float);
-		this->channels[channel].data = (float*)SDL_malloc(this->channels[channel].data_len);
-		for (int i = 0; i < numSamples * channels; i++) {
-			this->channels[channel].data[i] = output[i] / 32768.0f; // Normalize Data
-		}
+		this->channels[channel].data_len = totalSamples * sizeof(short);
+
+		this->channels[channel].data = (Uint8*)SDL_malloc(this->channels[channel].data_len);
+		SDL_memcpy(this->channels[channel].data, output, this->channels[channel].data_len);
 		this->channels[channel].spec.freq = samplerate;
 		this->channels[channel].spec.channels = channels;
-		this->channels[channel].spec.format = SDL_AUDIO_F32;
+		this->channels[channel].spec.format = SDL_AUDIO_S16;
 		free(output);
 		std::cout << "Loaded OGG Sample ID : " << id << "\n";
 	}
@@ -799,10 +780,11 @@ void SDL3Backend::PlaySample(int id, int channel, int loops, int freq, bool unin
 			SDL_PutAudioStreamData(channels[channel].stream, channels[channel].data, channels[channel].data_len);
 		}
 	}
-	channels[channel].curHandle = id;
-	channels[channel].uninterruptable = uninterruptable;
 	if (volume > -1) channels[channel].volume = volume;
 	if (pan != -2 ) channels[channel].pan = pan;
+	if (freq > 0 || freq != NULL) SetSampleFreq(freq, channel, true);
+	channels[channel].curHandle = id;
+	channels[channel].uninterruptable = uninterruptable;
 	SetSampleVolume(mainVol, channel, true); // Set volume to the main one.
 	std::cout << "Sample ID " << id << " is now playing at channel " << channel << ".\n";
 }
