@@ -11,6 +11,7 @@
 #include "ImageBank.h"
 #include "PakFile.h"
 #include <math.h>
+#include <filesystem>
 #include <SDL3/SDL.h>
 #include <SDL3_image/SDL_image.h>
 #include <SDL3_ttf/SDL_ttf.h>
@@ -230,9 +231,11 @@ void SDL3Backend::Deinitialize()
 	
 	// Close the Audio Device
 	SDL_PauseAudioDevice(audio_device);
+	SDL_SetAudioStreamGetCallback(masterStream, NULL, NULL);
 	SDL_ClearAudioStream(masterStream);
 	// cleanup audio
-	for (int i = 1; i <= SDL_arraysize(channels); i++) {
+	while (!sampleFiles.empty()) DiscardSampleFile(sampleFiles.begin()->first);
+	for (int i = 1; i < SDL_arraysize(channels); i++) {
 		if (!channels[i].stream) continue;
 		if (channels[i].data) {
 			SDL_free(channels[i].data);
@@ -244,10 +247,10 @@ void SDL3Backend::Deinitialize()
 		SDL_DestroyAudioStream(channels[i].stream);
 		channels[i].stream = nullptr;
 	}
-	SDL_SetAudioStreamGetCallback(masterStream, NULL, NULL);
 	SDL_UnbindAudioStream(masterStream);
 	SDL_DestroyAudioStream(masterStream);
 	SDL_CloseAudioDevice(audio_device);
+	std::cout << "AudioBackend shut down successfully.\n";
 	if (renderTarget != nullptr) {
 		SDL_DestroyTexture(renderTarget);
 		renderTarget = nullptr;
@@ -841,8 +844,8 @@ void SDL3Backend::ClearTextCacheForFont(int fontHandle)
 		}
 	}
 }
-// Sample Start
 
+// Sample Start
 
 bool SDL3Backend::LoadSample(int id, int channel) {
 	std::cout << "Loading Sample : " << id << "\n";
@@ -890,12 +893,49 @@ bool SDL3Backend::LoadSample(int id, int channel) {
 		std::cout << "Loaded OGG Sample ID : " << id << "\n";
 	}
 	else {
-		std::cout << "Audio File" << soundInfo->Type << "not supported.\n";
+		std::cout << "Audio Data Type" << soundInfo->Type << "not supported.\n";
 		return false;
 	}
 	channels[channel].name = soundInfo->Name;
 	return true;
-	
+}
+bool SDL3Backend::LoadSampleFile(std::string path) {
+	std::cout << "Loading Sample File : " << path << "\n";
+	std::filesystem::path fullPath = path;
+	std::string type = fullPath.extension().string();
+	SampleFile sampleFile;
+	if (type == ".wav") {
+		if (!SDL_LoadWAV(path.c_str(), &sampleFile.spec, &sampleFile.data, &sampleFile.data_len)) {
+			std::cout << "Failed to load WAV file : " << SDL_GetError() << "\n";
+			return false;
+		}
+		std::cout << "Loaded WAV Sample File : " << path << "\n";
+	}
+	else if (type == ".ogg") {
+		int channels, samplerate;
+		short* output = nullptr;
+		int numSamples = stb_vorbis_decode_filename(path.c_str(), &channels, &samplerate, &output);
+		if (numSamples <= 0 || !output) {
+			std::cout << "Failed to load OGG file : " << path << "\n";
+			return false;
+		}
+		int totalSamples = numSamples * channels;
+		sampleFile.data_len = totalSamples * sizeof(short);
+		sampleFile.data = (Uint8*)SDL_malloc(sampleFile.data_len);
+		SDL_memcpy(sampleFile.data, output, sampleFile.data_len);
+		sampleFile.spec.freq = samplerate;
+		sampleFile.spec.format = SDL_AUDIO_S16;
+		sampleFile.spec.channels = channels;
+		free(output);
+		std::cout << "Loaded OGG file : " << path << "\n";
+	}
+	else {
+		std::cout << "Audio File" << type << "not supported.\n";
+		return false;
+	}
+	sampleFile.pathName = path;
+	sampleFiles.emplace(sampleFile.pathName, sampleFile);
+	return true;
 }
 int SDL3Backend::FindSample(std::string name) {
 	SoundInfo* soundInfo = SoundBank::Instance().GetSoundName(name);
@@ -931,7 +971,7 @@ void SDL3Backend::PlaySample(int id, int channel, int loops, int freq, bool unin
 	if (replaceSample) {
 		StopSample(channel, true);
 	}
-	LoadSample(id, channel);
+	if (!LoadSample(id, channel)) return;
 
 	if (channels[channel].stream) StopSample(channel, true);
 	channels[channel].stream = SDL_CreateAudioStream(&channels[channel].spec, &spec);
@@ -953,11 +993,52 @@ void SDL3Backend::PlaySample(int id, int channel, int loops, int freq, bool unin
 	if (pan != -2 ) channels[channel].pan = pan;
 	if (freq > 0 || freq != NULL) SetSampleFreq(freq, channel, true);
 	channels[channel].curHandle = id;
-	channels[channel].uninterruptable = uninterruptable;
 	SetSampleVolume(mainVol, channel, true); // Set volume to the main one.
+	
 	std::cout << "Sample ID " << id << " is now playing at channel " << channel << ".\n";
 }
+void SDL3Backend::PlaySampleFile(std::string path, int channel, int loops) {
+	auto it = sampleFiles.find(path);
+	if (it == sampleFiles.end()) {
+		std::cout << "Can't find sample path.\n";
+		return;
+	}
+	SampleFile& sampleFile = it->second;
+	if (channels[channel].stream || channels[channel].data || channels[channel].lock || channels[channel].uninterruptable) return;
+	StopSample(channel, true);
+	channels[channel].data = (Uint8*)SDL_malloc(sampleFile.data_len);
+	SDL_memcpy(channels[channel].data, sampleFile.data, sampleFile.data_len);
+	channels[channel].data_len = sampleFile.data_len;
+	channels[channel].spec = sampleFile.spec;
 
+	channels[channel].stream = SDL_CreateAudioStream(&channels[channel].spec, &spec);
+	channels[channel].loop = (loops <= 0);
+	channels[channel].position = 0;
+	channels[channel].pause = false;
+	channels[channel].name = sampleFile.pathName;
+	channels[channel].uninterruptable = false;
+	if (channels[channel].loop) SDL_PutAudioStreamData(channels[channel].stream, channels[channel].data, channels[channel].data_len);
+	else {
+		for (int i = 1; i <= loops; i++) {
+			SDL_PutAudioStreamData(channels[channel].stream, channels[channel].data, channels[channel].data_len);
+		}
+	}
+	SetSampleVolume(mainVol, channel, true);
+	DiscardSampleFile(path);
+}
+void SDL3Backend::DiscardSampleFile(std::string path) {
+	auto it = sampleFiles.find(path);
+	if (it == sampleFiles.end()) {
+		std::cout << "Can't find sample path.\n";
+		return;
+	}
+	SampleFile& sampleFile = it->second;
+	if (sampleFile.data) {
+		SDL_free(sampleFile.data);
+		sampleFile.data = nullptr;
+	}
+	sampleFiles.erase(it);
+}
 // ALL SAMPLE CONDITIONS HERE
 
 bool SDL3Backend::SampleState(int id, bool channel, bool pause) {

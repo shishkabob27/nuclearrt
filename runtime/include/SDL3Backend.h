@@ -3,6 +3,7 @@
 #ifdef NUCLEAR_BACKEND_SDL3
 
 #include "Backend.h"
+#include <vector>
 #include <unordered_map>
 #include <set>
 
@@ -12,15 +13,21 @@
 #ifdef _DEBUG
 #include "DebugUI.h"
 #endif
+typedef struct SampleFile {
+	Uint8 *data = nullptr;
+	Uint32 data_len = 0;
+	SDL_AudioSpec spec{};
+	std::string pathName = "";
+} SampleFile;
 typedef struct Channel {
 	Uint8 *data = nullptr; // No need to make floats, as SDL_AudioStream does convert samples into a format you give via SDL_AudioSpec
 	Uint32 data_len = 0;
 	SDL_AudioSpec spec{};
 	bool uninterruptable = false;
 	SDL_AudioStream *stream = nullptr;
-	int position;
+	int position = 0;
 	bool lock = false;
-	bool finished;
+	bool finished = false;
 	int curHandle = -1;
 	bool loop = false;
 	bool pause = false;
@@ -63,8 +70,11 @@ public:
 	// Sample Start
 	static void SDLCALL AudioCallback(void* userdata, SDL_AudioStream* stream, int additional_amount, int total_amount);
 	bool LoadSample(int id, int channel) override;
+	bool LoadSampleFile(std::string path) override;
 	int FindSample(std::string name) override;
 	void PlaySample(int id, int channel, int loops, int freq, bool uninterruptable, float volume, float pan) override;
+	void PlaySampleFile(std::string path, int channel, int loops) override;
+	void DiscardSampleFile(std::string path) override;
 	void UpdateSample() override;
 	void PauseSample(int id, bool channel, bool pause) override;
 	bool SampleState(int id, bool channel, bool pauseOrStop) override;
@@ -133,7 +143,7 @@ private:
 	std::unordered_map<int, SDL_Texture*> mosaics;
 	std::unordered_map<int, int> imageToMosaic;
 	std::unordered_map<int, std::set<int>> mosaicToImages;
-
+	std::unordered_map<std::string, SampleFile> sampleFiles;
 	Channel channels[49]; // 48 will be the last element.
 	SDL_AudioStream* masterStream;
 	bool windowFocused = true;

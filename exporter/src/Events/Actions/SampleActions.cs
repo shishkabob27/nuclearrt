@@ -244,3 +244,40 @@ public class SetSamplePos : ActionBase
 		return $"Application::Instance().GetBackend()->SetSamplePos({ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[1].Loader, eventBase)} * 22, {CheckType.Check(eventBase)}, false);";
 	}
 }
+public class PreloadSampleFile : ActionBase
+{
+	public override int ObjectType { get; set; } = -2;
+	public override int Num { get; set; } = 34;
+	public override string Build(EventBase eventBase, ref string nextLabel, ref int orIndex, Dictionary<string, object>? parameters = null, string ifStatement = "if (")
+	{
+		return $"Application::Instance().GetBackend()->{(eventBase.Num == 34 ? "LoadSampleFile" : "DiscardSampleFile")}(\"{(Filename)eventBase.Items[0].Loader}\");";
+	}
+}
+public class DiscardSampleFile : PreloadSampleFile
+{
+	public override int Num { get; set; } = 35;
+}
+public class PlaySampleFileChannel : ActionBase
+{
+	public override int ObjectType { get; set; } = -2;
+	public override int Num { get; set; } = 28;
+	public override string Build(EventBase eventBase, ref string nextLabel, ref int orIndex, Dictionary<string, object>? parameters = null, string ifStatement = "if (")
+	{
+		StringBuilder result = new StringBuilder();
+		result.AppendLine($"Application::Instance().GetBackend()->LoadSampleFile(\"{((Filename)eventBase.Items[0].Loader)}\");");
+		result.AppendLine($"Application::Instance().GetBackend()->PlaySampleFile(\"{((Filename)eventBase.Items[0].Loader).ToString()}\", {ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[1].Loader, eventBase)}, 1);");
+		return result.ToString();
+	}
+}
+public class PlaySampleFileChannelLoop : ActionBase
+{
+	public override int ObjectType { get; set; } = -2;
+	public override int Num { get; set; } = 29;
+	public override string Build(EventBase eventBase, ref string nextLabel, ref int orIndex, Dictionary<string, object>? parameters = null, string ifStatement = "if (")
+	{
+		StringBuilder result = new StringBuilder();
+		result.AppendLine($"Application::Instance().GetBackend()->LoadSampleFile(\"{((Filename)eventBase.Items[0].Loader).ToString()}\");");
+		result.AppendLine($"Application::Instance().GetBackend()->PlaySampleFile(\"{((Filename)eventBase.Items[0].Loader).ToString()}\", {ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[1].Loader, eventBase)}, {ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[2].Loader, eventBase)});");
+		return result.ToString();
+	}
+}
