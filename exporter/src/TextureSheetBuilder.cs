@@ -122,8 +122,8 @@ public class TextureSheetBuilder
                         _imageAtlasMetadata[image.Handle] = new AtlasMetadata
                         {
                             AtlasIndex = atlasIndex,
-                            X = (int)rectangle.X,
-                            Y = (int)rectangle.Y
+                            X = (int)rectangle.X + RECTANGLE_PADDING,
+                            Y = (int)rectangle.Y + RECTANGLE_PADDING
                         };
                     }
                 }
