@@ -16,6 +16,8 @@
 #include <SDL3_image/SDL_image.h>
 #include <SDL3_ttf/SDL_ttf.h>
 #include "./libs/stb_vorbis.c" // OGG SUPPORT
+#define DR_MP3_IMPLEMENTATION
+#include "./libs/dr_mp3.h" // MP3 SUPPORT
 #ifdef _DEBUG
 #include "DebugUI.h"
 #include "imgui.h"
@@ -883,7 +885,6 @@ bool SDL3Backend::LoadSample(int id, int channel) {
 		}
 		int totalSamples = numSamples * channels;
 		this->channels[channel].data_len = totalSamples * sizeof(short);
-
 		this->channels[channel].data = (Uint8*)SDL_malloc(this->channels[channel].data_len);
 		SDL_memcpy(this->channels[channel].data, output, this->channels[channel].data_len);
 		this->channels[channel].spec.freq = samplerate;
@@ -891,6 +892,35 @@ bool SDL3Backend::LoadSample(int id, int channel) {
 		this->channels[channel].spec.format = SDL_AUDIO_S16;
 		free(output);
 		std::cout << "Loaded OGG Sample ID : " << id << "\n";
+	}
+	else if (soundInfo->Type == "mp3") {
+		drmp3 mp3;
+		if (!drmp3_init_memory(&mp3, data.data(), data.size(), NULL)) {
+			std::cout << "Failed to decode mp3 data.\n";
+			drmp3_uninit(&mp3);
+			return false;
+		}
+		drmp3_uint64 frameCount = drmp3_get_pcm_frame_count(&mp3);
+		if (frameCount == 0) {
+			std::cout << "No sample frames in MP3\n";
+			drmp3_uninit(&mp3);
+			return false;
+		}
+		int totalSamples = static_cast<int>(frameCount * mp3.channels);
+		Uint32 dataLen = totalSamples * sizeof(int16_t);
+		channels[channel].data = (Uint8*)SDL_malloc(dataLen);
+		drmp3_uint64 framesRead = drmp3_read_pcm_frames_s16(&mp3, frameCount, (drmp3_int16*)channels[channel].data);
+		if (!channels[channel].data) {
+			std::cout << "Bad MP3 Data\n";
+			SDL_free(channels[channel].data);
+			drmp3_uninit(&mp3);
+			return false;
+		}
+		channels[channel].data_len = dataLen;
+		channels[channel].spec.channels = mp3.channels;
+		channels[channel].spec.format = SDL_AUDIO_S16;
+		channels[channel].spec.freq = mp3.sampleRate;
+		drmp3_uninit(&mp3);
 	}
 	else {
 		std::cout << "Audio Data Type" << soundInfo->Type << "not supported.\n";
@@ -1133,6 +1163,7 @@ int SDL3Backend::GetSamplePan(int id, bool channel) {
 			if (channels[i].curHandle == id) return channels[i].pan * 100;
 		}
 	}
+	return 0;
 }
 void SDL3Backend::SetSamplePos(int pos, int id, bool channel)
 {
@@ -1206,6 +1237,7 @@ int SDL3Backend::GetSampleFreq(int id, bool channel) {
 			if (channels[i].curHandle == id) return channels[i].spec.freq * SDL_GetAudioStreamFrequencyRatio(channels[id].stream);
 		}
 	}
+	return 0;
 }
 int SDL3Backend::GetSampleVolume(int id, bool channel) {
 	if (id == -1 && !channel) return mainVol;
@@ -1218,6 +1250,7 @@ int SDL3Backend::GetSampleVolume(int id, bool channel) {
 			if (channels[i].curHandle == id && channels[i].stream) return channels[i].volume;
 		}
 	}
+	return 0;
 }
 void SDL3Backend::StopSample(int id, bool channel) {
 	if (id == -1) { // Stop any sample
