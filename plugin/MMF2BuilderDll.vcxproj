@@ -82,7 +82,7 @@
       <Culture>0x040c</Culture>
     </ResourceCompile>
     <Link>
-      <OutputFile>D:\Multimedia Fusion Developer 2\Data\Runtime\Anaconda.bld</OutputFile>
+      <OutputFile>nuclearrt.bld</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <ModuleDefinitionFile>.\MMF2BuilderDll.def</ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>

@@ -1,4 +1,5 @@
 using System.Drawing.Text;
+using CTFAK.EXE;
 using CTFAK.FileReaders;
 using CTFAK.Memory;
 using CTFAK.Utils;
@@ -7,10 +8,11 @@ public class PakBuilder
 {
 	private List<PakEntry> entries = [];
 
-	public void Build(IFileReader reader, DirectoryInfo outputPath)
+	public void Build(CCNFileReader ccnReader, MFAFileReader mfaReader, DirectoryInfo outputPath)
 	{
 		//read the game data
-		var gameData = reader.getGameData();
+		var gameData = ccnReader.getGameData();
+		var mfaData = mfaReader.getMfaData();
 
 		//images
 		for (int i = 0; i < TextureSheetBuilder.TextureSheets.Count; i++)
@@ -24,7 +26,7 @@ public class PakBuilder
 		}
 
 		//sounds
-		foreach (var sound in gameData.Sounds.Items)
+		foreach (var sound in mfaData.Sounds.Items)
 		{
 			var entry = new PakEntry { Path = $"sounds/{sound.Handle}.{GetAudioExtension(sound.Data[0..4])}" };
 			entry.Size = (uint)sound.Data.Length;
@@ -113,7 +115,7 @@ public class PakBuilder
 		pak.Close();
 	}
 
-	static string GetAudioExtension(byte[] magic)
+	public static string GetAudioExtension(byte[] magic)
 	{
 		if (magic[0] == 0xFF && magic[1] == 0xFB ||
 			magic[0] == 0xFF && magic[1] == 0xF3 ||

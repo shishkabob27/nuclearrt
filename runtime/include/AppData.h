@@ -37,7 +37,12 @@ public:
 
 	bool& GetDontCenterFrame() { return m_dontCenterFrame; }
 	void SetDontCenterFrame(bool dontCenter) { m_dontCenterFrame = dontCenter; }
-
+	bool& GetSampleOverFrame() { return m_sampleOverFrame; }
+	void SetSampleOverFrame(bool sampleFrame) { m_sampleOverFrame = sampleFrame; }
+	bool& GetMultiSamples() { return m_multiSamples; }
+	void SetMultiSamples(bool multiSamples) { m_multiSamples = multiSamples; }
+	bool& GetSampleFocus() { return m_sampleFocus; }
+	void SetSampleFocus(bool sampleFocus) { m_sampleFocus = sampleFocus; }
 	std::vector<int>& GetGlobalValues() { return m_globalValues; }
 	int GetGlobalValue(int index) { // 1-indexed
 		if (index < 1 || index > static_cast<int>(m_globalValues.size())) {
@@ -126,6 +131,9 @@ private:
 	bool m_fitInside = false;
 	bool m_resizeDisplay = false;
 	bool m_dontCenterFrame = false;
+	bool m_sampleOverFrame = false;
+	bool m_multiSamples = true;
+	bool m_sampleFocus = false;
 	std::vector<int> m_globalValues;
 	std::vector<std::string> m_globalStrings;
 

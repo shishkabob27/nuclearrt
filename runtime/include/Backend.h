@@ -2,7 +2,6 @@
 
 #include <string>
 #include <cstdint>
-
 #include "FontBank.h"
 #include "Shape.h"
 #include "PakFile.h"
@@ -43,9 +42,30 @@ public:
 	virtual void LoadFont(int id) {}
 	virtual void UnloadFont(int id) {}
 	virtual void DrawText(FontInfo* fontInfo, int x, int y, int color, const std::string& text, int objectHandle = -1) {}
-
+	// Sample Start
+	virtual bool LoadSample(int id, int channel) {return false;}
+	virtual bool LoadSampleFile(std::string path) {return false;}
+	virtual int FindSample(std::string name) {return -1;}
+	virtual void PlaySample(int id, int channel, int loops, int freq, bool uninterruptable, float volume, float pan) {}
+	virtual void PlaySampleFile(std::string path, int channel, int loops) {}
+	virtual void DiscardSampleFile(std::string path) {}
+	virtual void StopSample(int id, bool channel) {}
+	virtual void PauseSample(int id, bool channel, bool pause) {}
+	virtual void SetSampleVolume(float volume, int id, bool channel) {}
+	virtual int GetSampleVolume(int id, bool channel) {return 0;}
+	virtual std::string GetChannelName(int channel) {return "";}
+	virtual void LockChannel(int channel, bool unlock) {}
+	virtual void SetSamplePan(float pan, int id, bool channel) {}
+	virtual int GetSamplePan(int id, bool channel) {return 0;}
+	virtual int GetSampleFreq(int id, bool channel) {return 0;}
+	virtual void SetSampleFreq(int freq, int id, bool channel) {}
+	virtual int GetSampleDuration(int id, bool channel) {return 0;}
+	virtual int GetSamplePos(int id, bool channel) {return 0;}
+	virtual void SetSamplePos(int pos, int id, bool channel) {}
+	virtual void UpdateSample() {}
+	virtual bool SampleState(int id, bool channel, bool pauseOrStop) {return false;}
+	// Sample End
 	virtual const uint8_t* GetKeyboardState() { return nullptr; }
-
 	virtual int GetMouseX() { return 0; }
 	virtual int GetMouseY() { return 0; }
 	virtual void SetMouseX(int x) {}
@@ -54,7 +74,6 @@ public:
 	virtual uint32_t GetMouseState() { return 0; }
 	virtual void HideMouseCursor() {}
 	virtual void ShowMouseCursor() {}
-
 	virtual bool IsPixelTransparent(int textureId, int x, int y) { return true; }
 	virtual void GetTextureDimensions(int textureId, int& width, int& height) { width = 0; height = 0; }
 

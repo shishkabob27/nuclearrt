@@ -18,6 +18,9 @@ public class AppDataExporter : BaseExporter
 		appData = appData.Replace("{{ fit_inside }}", GameData.header.Flags.GetFlag("FitInsideBars") ? "true" : "false");
 		appData = appData.Replace("{{ resize_display }}", GameData.header.Flags.GetFlag("ResizeDisplay") ? "true" : "false");
 		appData = appData.Replace("{{ dont_center_frame }}", GameData.header.Flags.GetFlag("DontCenterFrame") ? "true" : "false");
+		appData = appData.Replace("{{ sample_over_frame }}", GameData.header.NewFlags.GetFlag("SamplesOverFrames") ? "true" : "false");
+		appData = appData.Replace("{{ multi_samples }}", GameData.header.Flags.GetFlag("MultiSamples") ? "true" : "false");
+		appData = appData.Replace("{{ sample_unfocused }}", GameData.header.NewFlags.GetFlag("PlaySamplesWhenUnfocused") ? "true" : "false" );
 
 		appData = appData.Replace("{{ global_values }}", BuildGlobalValues());
 		appData = appData.Replace("{{ global_strings }}", BuildGlobalStrings());
