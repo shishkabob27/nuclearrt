@@ -82,7 +82,7 @@ public class ExpressionConverter
 		{ (ObjectType.Speaker, 9), e => $"Application::Instance().GetBackend()->GetSampleDuration({(e.Loader as DoubleExp).Value}, true)" }, // Channel Duration
 		{ (ObjectType.Speaker, 10), e => $"Application::Instance().GetBackend()->GetSampleFreq({(e.Loader as StringExp).Value}, true" }, // Sample Frequency
 		{ (ObjectType.Speaker, 11), e => $"Application::Instance().GetBackend()->GetSampleFreq({(e.Loader as DoubleExp).Value}, true" }, // Channel Frequency
-		{ (ObjectType.Speaker, 12), e => $"Application::Instance().GetBackend()->GetChannelName({(e.Loader as DoubleExp).Value})" }, // Channel Sample Name
+		{ (ObjectType.Speaker, 12), _ => $"Application::Instance().GetBackend()->GetChannelName(" }, // Channel Sample Name
 
         // System
         { (ObjectType.System, -3), _ => ", " },
