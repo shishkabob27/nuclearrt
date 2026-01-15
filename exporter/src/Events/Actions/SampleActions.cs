@@ -36,6 +36,15 @@ public class CheckType
 		type = $"Application::Instance().GetBackend()->FindSample({val})";
 		return type;
 	}
+	public static string CheckFile(EventBase eventBase)
+	{
+		string val;
+		if (eventBase.Items[0].Loader is Filename)
+			val = $"\"{((Filename)eventBase.Items[0].Loader)}\"";
+		else
+			val = $"{ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[0].Loader, eventBase)}";
+		return val;
+	}
 	public static string GetUninterruptable(EventBase eventBase)
 	{
 		CTFAK.Utils.Logger.Log("Flags of Sample " + ((Sample)eventBase.Items[0].Loader).Flags.ToString());
@@ -250,7 +259,7 @@ public class PreloadSampleFile : ActionBase
 	public override int Num { get; set; } = 34;
 	public override string Build(EventBase eventBase, ref string nextLabel, ref int orIndex, Dictionary<string, object>? parameters = null, string ifStatement = "if (")
 	{
-		return $"Application::Instance().GetBackend()->{(eventBase.Num == 34 ? "LoadSampleFile" : "DiscardSampleFile")}(\"{(Filename)eventBase.Items[0].Loader}\");";
+		return $"Application::Instance().GetBackend()->{(eventBase.Num == 34 ? "LoadSampleFile" : "DiscardSampleFile")}({CheckType.CheckFile(eventBase)});";
 	}
 }
 public class DiscardSampleFile : PreloadSampleFile
@@ -264,8 +273,8 @@ public class PlaySampleFileChannel : ActionBase
 	public override string Build(EventBase eventBase, ref string nextLabel, ref int orIndex, Dictionary<string, object>? parameters = null, string ifStatement = "if (")
 	{
 		StringBuilder result = new StringBuilder();
-		result.AppendLine($"Application::Instance().GetBackend()->LoadSampleFile(\"{((Filename)eventBase.Items[0].Loader)}\");");
-		result.AppendLine($"Application::Instance().GetBackend()->PlaySampleFile(\"{((Filename)eventBase.Items[0].Loader).ToString()}\", {ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[1].Loader, eventBase)}, 1);");
+		result.AppendLine($"Application::Instance().GetBackend()->LoadSampleFile({CheckType.CheckFile(eventBase)});");
+		result.AppendLine($"Application::Instance().GetBackend()->PlaySampleFile({CheckType.CheckFile(eventBase)}, {ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[1].Loader, eventBase)}, 1);");
 		return result.ToString();
 	}
 }
@@ -276,8 +285,8 @@ public class PlaySampleFileChannelLoop : ActionBase
 	public override string Build(EventBase eventBase, ref string nextLabel, ref int orIndex, Dictionary<string, object>? parameters = null, string ifStatement = "if (")
 	{
 		StringBuilder result = new StringBuilder();
-		result.AppendLine($"Application::Instance().GetBackend()->LoadSampleFile(\"{((Filename)eventBase.Items[0].Loader).ToString()}\");");
-		result.AppendLine($"Application::Instance().GetBackend()->PlaySampleFile(\"{((Filename)eventBase.Items[0].Loader).ToString()}\", {ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[1].Loader, eventBase)}, {ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[2].Loader, eventBase)});");
+		result.AppendLine($"Application::Instance().GetBackend()->LoadSampleFile({CheckType.CheckFile(eventBase)});");
+		result.AppendLine($"Application::Instance().GetBackend()->PlaySampleFile({CheckType.CheckFile(eventBase)}, {ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[1].Loader, eventBase)}, {ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[2].Loader, eventBase)});");
 		return result.ToString();
 	}
 }
