@@ -48,6 +48,8 @@ private:
 	std::string CurrentGroup;
 	std::string CurrentItem;
 
+	std::filesystem::path GetPlatformSaveDirectory();
+
 	std::unique_ptr<mINI::INIFile> iniFile;
 	mINI::INIStructure ini;
 };

@@ -2,6 +2,13 @@
 #include "Application.h"
 #include <memory>
 #include <string>
+#include <cstdlib>
+
+#if defined(PLATFORM_WINDOWS)
+#include <windows.h>
+#include <shlobj.h>
+#include <KnownFolders.h>
+#endif
 
 void IniExtension::Initialize()
 {
@@ -14,7 +21,15 @@ void IniExtension::Initialize()
 void IniExtension::SetFileName(const std::string& name)
 {
 	Name = name;
-	std::filesystem::path path = Name;
+	
+	std::filesystem::path path = GetPlatformSaveDirectory();
+	if (!std::filesystem::exists(path))
+	{
+		std::filesystem::create_directories(path);
+	}
+
+	path /= Name;
+
 	iniFile = std::make_unique<mINI::INIFile>(path);
 	iniFile->read(ini);
 }
@@ -137,4 +152,45 @@ void IniExtension::DeleteItem(const std::string& group, const std::string& item)
 {
 	ini[group].remove(item);
 	iniFile->write(ini);
+}
+
+std::filesystem::path IniExtension::GetPlatformSaveDirectory()
+{
+#if defined(PLATFORM_WINDOWS)
+	PWSTR path_tmp = nullptr;
+	HRESULT hres = SHGetKnownFolderPath(FOLDERID_RoamingAppData, 0, NULL, &path_tmp);
+
+	if (SUCCEEDED(hres))
+	{
+		std::wstring appdata_path_w(path_tmp);
+		CoTaskMemFree(path_tmp);
+		return std::filesystem::path(appdata_path_w) / "NuclearApplications";
+    }
+	else
+	{
+		return std::filesystem::path();
+	}
+#elif defined(PLATFORM_MACOS)
+	const char* home = std::getenv("HOME");
+	if (home)
+	{
+		return std::filesystem::path(home) / "Library" / "Application Support" / "NuclearApplications";
+	}
+	return std::filesystem::path();
+#elif defined(PLATFORM_LINUX)
+	const char* xdg_data_home = std::getenv("XDG_DATA_HOME");
+	if (xdg_data_home)
+	{
+		return std::filesystem::path(xdg_data_home) / "NuclearApplications";
+	}
+	
+	const char* home = std::getenv("HOME");
+	if (home)
+	{
+		return std::filesystem::path(home) / ".local" / "share" / "NuclearApplications";
+	}
+	return std::filesystem::path();
+#else
+	return std::filesystem::path();
+#endif
 }
