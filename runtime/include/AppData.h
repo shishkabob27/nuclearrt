@@ -85,6 +85,14 @@ public:
 	std::vector<std::string>& GetGlobalStrings() { return m_globalStrings; }
 	void SetGlobalStrings(const std::vector<std::string>& strings) { m_globalStrings = strings; }
 
+	void SetGlobalString(int index, const std::string& string) {
+		m_globalStrings[index] = string;
+	}
+
+	std::string GetGlobalString(int index) {
+		return m_globalStrings[index];
+	}
+
 	std::vector<int>& GetControlTypes() { return m_controlTypes; }
 	void SetControlTypes(const std::vector<int>& types) { m_controlTypes = types; }
 
