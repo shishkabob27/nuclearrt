@@ -25,13 +25,18 @@ public:
 
 	std::string GetText()
 	{
-		if (CurrentParagraph == -1)
+		return GetTextOfParagraph(CurrentParagraph);
+	}
+
+	std::string GetTextOfParagraph(int paragraph)
+	{
+		if (paragraph == -1)
 		{
 			return AlterableText;
 		}
 		else
 		{
-			return Paragraphs[CurrentParagraph].Text;
+			return Paragraphs[paragraph].Text;
 		}
 	}
 
@@ -104,6 +109,11 @@ public:
 	{
 		AlterableText = alterableText;
 		CurrentParagraph = -1;
+	}
+
+	int GetParagraphCount()
+	{
+		return Paragraphs.size();
 	}
 
 	std::vector<unsigned int> GetFontsUsed() override {
