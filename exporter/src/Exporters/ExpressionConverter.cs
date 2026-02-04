@@ -135,7 +135,7 @@ public class ExpressionConverter
         { (ObjectType.System, 67), _ => "ReplaceString(" },
 
         { (ObjectType.System, 46), _ => "Loopindex(" }, // LoopIndex
-		{ (ObjectType.System, 50), e => $"Application::Instance().GetAppData()->GetGlobalStrings()[{(e.Loader as GlobalCommon).Value}]" },
+		{ (ObjectType.System, 50), e => $"Application::Instance().GetAppData()->GetGlobalString({(e.Loader as GlobalCommon).Value})" },
         { (ObjectType.System, 56), _ => "\"\"" }, // AppTempPath$ // TODO
         { (ObjectType.System, 65), _ => "Application::Instance().RandomRange(" }, // RRandom
         { (ObjectType.System, 66), _ => "Application::Instance().GetBackend()->GetPlatformName()" }, // RuntimeName$
