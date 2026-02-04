@@ -89,9 +89,9 @@ public class ExpressionConverter
         { (ObjectType.System, 22), _ => "StringLength(" }, // String Length
 		{ (ObjectType.System, 23), e => (e.Loader as DoubleExp).FloatValue.ToString() },
         { (ObjectType.System, 29), _ => "std::abs(" }, // Abs(
+        { (ObjectType.System, 40), _ => "std::min(" }, // Min(
         { (ObjectType.System, 41), _ => "std::max(" }, // Max(
 		
-        // start of new expressions
         { (ObjectType.System, 5), _ => "std::stod(" }, // Val(string) -> std::stod(
         { (ObjectType.System, 10), _ => "MathHelper::Sin(" },
         { (ObjectType.System, 11), _ => "MathHelper::Cos(" },
@@ -99,31 +99,46 @@ public class ExpressionConverter
         { (ObjectType.System, 13), _ => "std::sqrt(" }, // Sqr
         { (ObjectType.System, 14), _ => "std::log10(" },
         { (ObjectType.System, 15), _ => "std::log(" },
+        { (ObjectType.System, 16), _ => "Hex(" },
+        { (ObjectType.System, 17), _ => "Bin(" },
         { (ObjectType.System, 18), _ => "std::exp(" },
+        { (ObjectType.System, 19), _ => "StringLeft(" },
+        { (ObjectType.System, 20), _ => "StringRight(" },
+        { (ObjectType.System, 21), _ => "Mid(" },
+        { (ObjectType.System, 22), _ => "StringLength(" },
+        { (ObjectType.System, 24), _ => "GlobalValueName(" },
+        { (ObjectType.System, 28), _ => "std::floor(" }, // TODO logic for negative truncation
+        { (ObjectType.System, 29), _ => "std::abs(" },
         { (ObjectType.System, 30), _ => "std::ceil(" },
         { (ObjectType.System, 31), _ => "std::floor(" },
         { (ObjectType.System, 32), _ => "MathHelper::ACos(" },
         { (ObjectType.System, 33), _ => "MathHelper::ASin(" },
         { (ObjectType.System, 34), _ => "MathHelper::ATan(" },
-        { (ObjectType.System, 40), _ => "std::min(" },
-        { (ObjectType.System, 41), _ => "std::max(" },
+        { (ObjectType.System, 36), _ => "0" }, // Number of Dropped Files
+        { (ObjectType.System, 37), _ => "\"\"" }, // Dropped File Path$(index)
+        { (ObjectType.System, 38), _ => "\"\"" }, // Command Line$
+        { (ObjectType.System, 39), _ => "\"\"" }, // Command Item$
         { (ObjectType.System, 42), _ => "MathHelper::GetRGB(" },
         { (ObjectType.System, 43), _ => "MathHelper::GetRed(" },
         { (ObjectType.System, 44), _ => "MathHelper::GetGreen(" },
         { (ObjectType.System, 45), _ => "MathHelper::GetBlue(" },
-        { (ObjectType.System, 47), _ => "std::string(\"\\n\")" },
+        { (ObjectType.System, 47), _ => "NewLine()" },
         { (ObjectType.System, 48), _ => "std::round(" },
+        { (ObjectType.System, 51), _ => "Lower(" },
+        { (ObjectType.System, 52), _ => "Upper(" },
+        { (ObjectType.System, 53), _ => "Find(" },
+        { (ObjectType.System, 54), _ => "ReverseFind(" },
         { (ObjectType.System, 59), _ => "MathHelper::ATan2(" },
         { (ObjectType.System, 62), _ => "MathHelper::Distance(" },
-        { (ObjectType.System, 63), _ => "MathHelper::VectorAngle(" },
+        { (ObjectType.System, 63), _ => "MathHelper::VAngle(" },
         { (ObjectType.System, 64), _ => "MathHelper::Range(" },
-        // end of new expressions
+        { (ObjectType.System, 67), _ => "ReplaceString(" },
 
         { (ObjectType.System, 46), _ => "Loopindex(" }, // LoopIndex
 		{ (ObjectType.System, 50), e => $"Application::Instance().GetAppData()->GetGlobalStrings()[{(e.Loader as GlobalCommon).Value}]" },
         { (ObjectType.System, 56), _ => "\"\"" }, // AppTempPath$ // TODO
         { (ObjectType.System, 65), _ => "Application::Instance().RandomRange(" }, // RRandom
-        { (ObjectType.System, 67), _ => "Application::Instance().GetBackend()->GetPlatformName()" }, // RuntimeName$
+        { (ObjectType.System, 66), _ => "Application::Instance().GetBackend()->GetPlatformName()" }, // RuntimeName$
 
         // Arithmetic
         { (ObjectType.Arithmetic, 2), _ => " + " }, // Add

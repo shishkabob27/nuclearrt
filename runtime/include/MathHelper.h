@@ -68,6 +68,18 @@ namespace MathHelper {
 
     // math utility helpers
     inline double Distance(double x1, double y1, double x2, double y2) { return std::sqrt(std::pow(x2 - x1, 2) + std::pow(y2 - y1, 2)); }
-    inline double VectorAngle(double x1, double y1, double x2, double y2) { return ToDegrees(std::atan2(y1 - y2, x2 - x1)); }
+    
+    inline double VAngle(double x, double y) { 
+        double angle = ToDegrees(std::atan2(-y, x));
+        while (angle < 0) angle += 360.0;
+        while (angle >= 360) angle -= 360.0;
+        return angle;
+    }
+
+    // a guess
+    inline double DistanceFromAngle(double x1, double y1, double x2, double y2) {
+        return VAngle(x2 - x1, y2 - y1);
+    }
+
     inline double Range(double v, double minVal, double maxVal) { return (v < minVal) ? minVal : (v > maxVal ? maxVal : v); }
 }
