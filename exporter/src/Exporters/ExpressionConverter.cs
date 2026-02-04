@@ -162,13 +162,33 @@ public class ExpressionConverter
 						// TODO: support Active (80 (RGBAt))
 						case 7: // Value
 							return stringBuilder.Append($"({objectSelector}->Count() > 0 ? ((Counter*)*({objectSelector}->begin()))->GetValue() : 0)");
+						case 3: // Paragraph
+							{
+								if (expression.ObjectInfo == eventBase.ObjectInfo && expression.ObjectInfoList == eventBase.ObjectInfoList)
+									return stringBuilder.Append($"((StringObject*)instance)->GetNumberOfCurrentParagraph()");
+								else
+									return stringBuilder.Append($"({objectSelector}->Count() > 0 ? ((StringObject*)*({objectSelector}->begin()))->GetNumberOfCurrentParagraph() : 0)");
+							}
+					}
+					break;
+				}
+			case 82:
+				{
+					switch (expression.ObjectType)
+					{
+						case 7: // Max Value
+							{
+								if (expression.ObjectInfo == eventBase.ObjectInfo && expression.ObjectInfoList == eventBase.ObjectInfoList)
+									return stringBuilder.Append($"((Counter*)instance)->MaxValue");
+								else
+									return stringBuilder.Append($"({objectSelector}->Count() > 0 ? ((Counter*)*({objectSelector}->begin()))->MaxValue : 0)");
+							}
 						case 3: // Get Text of a Paragraph
 							{
-								// TODO: get expression value
 								if (expression.ObjectInfo == eventBase.ObjectInfo && expression.ObjectInfoList == eventBase.ObjectInfoList)
-									return stringBuilder.Append("((StringObject*)instance)->GetTextOfParagraph()");
+									return stringBuilder.Append($"((StringObject*)instance)->GetTextOfParagraph(");
 								else
-									return stringBuilder.Append($"({objectSelector}->Count() > 0 ? ((StringObject*)*({objectSelector}->begin()))->GetTextOfParagraph() : std::string())");
+									return stringBuilder.Append($"StringObject::GetTextOfParagraph({objectSelector}, ");
 							}
 					}
 					break;
@@ -259,15 +279,7 @@ public class ExpressionConverter
 
 		// Counter
 		switch (expression.Num)
-		{
-			case 82: // Max Value
-				{
-					if (expression.ObjectInfo == eventBase.ObjectInfo && expression.ObjectInfoList == eventBase.ObjectInfoList)
-						return stringBuilder.Append($"((Counter*)instance)->MaxValue");
-					else
-						return stringBuilder.Append($"({objectSelector}->Count() > 0 ? ((Counter*)*({objectSelector}->begin()))->MaxValue : 0)");
-				}
-		}
+		{}
 
 		// String
 

@@ -22,7 +22,7 @@ public:
 
 	int CurrentParagraph = 0;
 	std::string AlterableText;
-
+	
 	std::string GetText()
 	{
 		return GetTextOfParagraph(CurrentParagraph);
@@ -38,6 +38,15 @@ public:
 		{
 			return Paragraphs[paragraph].Text;
 		}
+	}
+
+	static std::string GetTextOfParagraph(Selector* selector, int paragraph)
+	{
+		if (selector && selector->Count() > 0)
+		{
+			return ((StringObject*)*selector->begin())->GetTextOfParagraph(paragraph);
+		}
+		return ""; // default value
 	}
 
 	unsigned short GetFont()
@@ -75,6 +84,11 @@ public:
 		{
 			CurrentParagraph = 0;
 		}
+	}
+
+	int GetNumberOfCurrentParagraph()
+	{
+		return CurrentParagraph;
 	}
 
 	void SetPreviousParagraph()
