@@ -54,6 +54,7 @@ void Application::Update()
 	}
 
 	input->Update();
+	backend->UpdateSample();
 	currentFrame->Update();
 }
 
@@ -148,8 +149,7 @@ void Application::LoadFrame(int frameIndex)
 	if (frameIndex < 0)
 	{
 		frameIndex = 0;
-	}
-
+	}	
 	std::cout << "Loading frame " << frameIndex << std::endl;
 	std::vector<unsigned int> oldImagesUsed;
 	std::vector<unsigned int> oldFontsUsed;
@@ -227,6 +227,7 @@ void Application::LoadFrame(int frameIndex)
 	}
 
 	std::cout << "Loaded frame " << frameIndex << std::endl;
+	if (!GetAppData()->GetSampleOverFrame()) backend->StopSample(-1, false);
 }
 
 void Application::MergeGlobalObjectData(std::vector<ObjectGlobalData*> frameData)

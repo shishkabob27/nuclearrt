@@ -69,8 +69,20 @@ public class ExpressionConverter
         { (ObjectType.Game, 14), _ => "0" }, // DisplayMode // TODO
         { (ObjectType.Game, 15), _ => "0" }, // PixelShaderVersion // TODO
 
-        //Speaker
-        { (ObjectType.Speaker, 12), _ => "std::to_string(" }, // ChannelSampleName$ // TODO
+		//Speaker
+		{ (ObjectType.Speaker, 0), _ => "Application::Instance().GetBackend()->GetSampleVolume(-1, false)" }, // Main Volume
+		{ (ObjectType.Speaker, 1), e => $"Application::Instance().GetBackend()->GetSampleVolume(Application::Instance().GetBackend()->FindSample({(e.Loader as StringExp).Value}), false)" }, // Sample Volume
+		{ (ObjectType.Speaker, 2), e => $"Application::Instance().GetBackend()->GetSampleVolume({(e.Loader as DoubleExp).Value}, true)"}, // Channel Volume
+		{ (ObjectType.Speaker, 3), _ => "Application::Instance().GetBackend()->GetSamplePan(-1, false)" }, // Main Pan
+		{ (ObjectType.Speaker, 4), e => $"Application::Instance().GetBackend()->GetSamplePan(Application::Instance().GetBackend()->FindSample({(e.Loader as StringExp).Value}), false)" }, // Sample Pan
+		{ (ObjectType.Speaker, 5), e => $"Application::Instance().GetBackend()->GetSamplePan({(e.Loader as DoubleExp).Value}, true)"}, // Channel Pan
+		{ (ObjectType.Speaker, 6), e => $"Application::Instance().GetBackend()->GetSamplePos({(e.Loader as StringExp).Value}, false)" }, // Sample Position
+		{ (ObjectType.Speaker, 7), e => $"Application::Instance().GetBackend()->GetSamplePos({(e.Loader as DoubleExp).Value}, true)" }, // Channel Position
+		{ (ObjectType.Speaker, 8), e => $"Application::Instance().GetBackend()->GetSampleDuration({(e.Loader as StringExp).Value}, false)"}, // Sample Duration
+		{ (ObjectType.Speaker, 9), e => $"Application::Instance().GetBackend()->GetSampleDuration({(e.Loader as DoubleExp).Value}, true)" }, // Channel Duration
+		{ (ObjectType.Speaker, 10), e => $"Application::Instance().GetBackend()->GetSampleFreq({(e.Loader as StringExp).Value}, true" }, // Sample Frequency
+		{ (ObjectType.Speaker, 11), e => $"Application::Instance().GetBackend()->GetSampleFreq({(e.Loader as DoubleExp).Value}, true" }, // Channel Frequency
+		{ (ObjectType.Speaker, 12), _ => $"Application::Instance().GetBackend()->GetChannelName(" }, // Channel Sample Name
 
         // System
         { (ObjectType.System, -3), _ => ", " },
@@ -108,7 +120,6 @@ public class ExpressionConverter
         { (ObjectType.System, 22), _ => "StringLength(" },
         { (ObjectType.System, 24), _ => "GlobalValueName(" },
         { (ObjectType.System, 28), _ => "std::floor(" }, // TODO logic for negative truncation
-        { (ObjectType.System, 29), _ => "std::abs(" },
         { (ObjectType.System, 30), _ => "std::ceil(" },
         { (ObjectType.System, 31), _ => "std::floor(" },
         { (ObjectType.System, 32), _ => "MathHelper::ACos(" },
@@ -135,7 +146,7 @@ public class ExpressionConverter
         { (ObjectType.System, 67), _ => "ReplaceString(" },
 
         { (ObjectType.System, 46), _ => "Loopindex(" }, // LoopIndex
-		{ (ObjectType.System, 50), e => $"Application::Instance().GetAppData()->GetGlobalString({(e.Loader as GlobalCommon).Value})" },
+		{ (ObjectType.System, 50), e => $"Application::Instance().GetAppData()->GetGlobalStrings()[{(e.Loader as GlobalCommon).Value}]" },
         { (ObjectType.System, 56), _ => "\"\"" }, // AppTempPath$ // TODO
         { (ObjectType.System, 65), _ => "Application::Instance().RandomRange(" }, // RRandom
         { (ObjectType.System, 66), _ => "Application::Instance().GetBackend()->GetPlatformName()" }, // RuntimeName$
@@ -267,15 +278,13 @@ public class ExpressionConverter
 
 			if (exporter == null)
 			{
-				Logger.Log($"Extension exporter not found for ObjectInfo {expression.ObjectInfo}");
-				stringBuilder.Append($"Extension exporter not found for ObjectInfo {expression.ObjectInfo}. ({expression.ObjectType}, {expression.Num})");
+				ObjectCommon common = Exporter.Instance.GameData.frameitems[GetObject(expression.ObjectInfo, false, Exporter.Instance.CurrentFrame).Item1].properties as ObjectCommon;
+				Logger.Log($"Extension exporter not found for ObjectInfo {expression.ObjectInfo} ({common.Identifier})");
+				stringBuilder.Append($"Extension exporter not found for ObjectInfo {expression.ObjectInfo} ({common.Identifier}). ({expression.ObjectType}, {expression.Num})");
 				HandleUnimplemented(stringBuilder, expression, eventBase);
 				return stringBuilder;
 			}
-			// TODO: implement
-			//exporter.ExportExpression(stringBuilder, expression, eventBase);
-			stringBuilder.Append(exporter.ExportExpression(expression, eventBase));
-			return stringBuilder;
+			return stringBuilder.Append(exporter.ExportExpression(expression, eventBase));
 		}
 
 		// Active/Backdrop
@@ -365,7 +374,8 @@ public class ExpressionConverter
 		{
 			Expression expression = expressions.Items[i];
 
-			if (expressionsLookup.TryGetValue(((ObjectType)expression.ObjectType, expression.Num), out var generator)) {
+			if (expressionsLookup.TryGetValue(((ObjectType)expression.ObjectType, expression.Num), out var generator))
+			{
 				result.Append(generator(expression));
 				continue;
 			}
@@ -458,9 +468,9 @@ public class ExpressionConverter
 			case 6: return "Lives";
 			case 7: return "Counter";
 			case >= 32:
-			ObjectCommon common = Exporter.Instance.GameData.frameitems[ObjectInfo].properties as ObjectCommon;
-			ExtensionExporter exporter = ExtensionExporterRegistry.GetExporter(common.Identifier);
-			return exporter?.CppClassName ?? "Extension";
+				ObjectCommon common = Exporter.Instance.GameData.frameitems[ObjectInfo].properties as ObjectCommon;
+				ExtensionExporter exporter = ExtensionExporterRegistry.GetExporter(common.Identifier);
+				return exporter?.CppClassName ?? "Extension";
 			default: return "ObjectInstance";
 		}
 	}

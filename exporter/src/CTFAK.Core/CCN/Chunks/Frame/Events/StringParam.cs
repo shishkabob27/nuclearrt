@@ -9,12 +9,12 @@ namespace CTFAK.MMFParser.EXE.Loaders.Events.Parameters
 
 		public override void Read(ByteReader reader)
 		{
-			Value = reader.ReadAscii();
+			Value = reader.ReadYuniversal();
 		}
 
 		public override string ToString()
 		{
-			return $"String: {Value}";
+			return $"{StringUtils.SanitizeString(Value)}";
 		}
 	}
 }

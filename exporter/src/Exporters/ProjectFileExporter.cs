@@ -9,6 +9,7 @@ public class ProjectFileExporter : BaseExporter
 		var cmakelistsPath = Path.Combine(RuntimeBasePath.FullName, "CMakeLists.txt");
 		var cmakelists = File.ReadAllText(cmakelistsPath);
 		cmakelists = cmakelists.Replace("nuclearrt-runtime", SanitizeObjectName(GameData.name));
+		cmakelists = cmakelists.Replace("NuclearRT-Runtime", GameData.name);
 		SaveFile(Path.Combine(OutputPath.FullName, "CMakeLists.txt"), cmakelists);
 	}
 }

@@ -1,8 +1,13 @@
 cmake_minimum_required(VERSION 3.14)
 project(nuclearrt-runtime CXX)
+set(FRIENDLY_NAME "NuclearRT-Runtime")
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+if(APPLE)
+    set(CMAKE_OSX_ARCHITECTURES "arm64;x86_64" CACHE STRING "Build architectures for macOS" FORCE)
+endif()
 
 # Platform-specific compiler flags
 if(MSVC)
@@ -35,7 +40,7 @@ endfunction()
 find_package(SDL3 QUIET)
 if (NOT SDL3_FOUND)
     message(STATUS "Getting SDL3 from Github")
-    include_dependency(SDL3 https://github.com/libsdl-org/SDL.git release-3.2.16)
+    include_dependency(SDL3 https://github.com/libsdl-org/SDL.git release-3.4.0)
 else()
     message(STATUS "Using local SDL3")
 endif()
@@ -50,7 +55,7 @@ set(SDLIMAGE_TIF OFF)
 find_package(SDL3_image QUIET)
 if (NOT SDL3_image_FOUND)
     message(STATUS "Getting SDL3_image from Github")
-    include_dependency(SDL3_image https://github.com/libsdl-org/SDL_image.git release-3.2.4)
+    include_dependency(SDL3_image https://github.com/libsdl-org/SDL_image.git release-3.2.6)
 else()
     message(STATUS "Using local SDL3_image")
 endif()
@@ -114,7 +119,22 @@ file(GLOB_RECURSE SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/source/*.cpp")
 file(GLOB_RECURSE HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/include/*.h")
 
 # Create executable
-add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS} ${IMGUI_SOURCES})
+if(APPLE AND NOT EMSCRIPTEN)
+    add_executable(${PROJECT_NAME} MACOSX_BUNDLE ${SOURCES} ${HEADERS} ${IMGUI_SOURCES})
+    
+    set_target_properties(${PROJECT_NAME} PROPERTIES
+        MACOSX_BUNDLE TRUE
+        PRODUCT_NAME "${FRIENDLY_NAME}"
+        MACOSX_BUNDLE_EXECUTABLE_NAME "${PROJECT_NAME}"
+        MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/Info.plist.in"
+        MACOSX_BUNDLE_BUNDLE_NAME "${FRIENDLY_NAME}"
+        MACOSX_BUNDLE_BUNDLE_VERSION "1.0.0"
+        MACOSX_BUNDLE_SHORT_VERSION_STRING "1.0"
+        MACOSX_BUNDLE_GUI_IDENTIFIER "com.nuclearrt.${PROJECT_NAME}"
+    )
+else()
+    add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS} ${IMGUI_SOURCES})
+endif()
 
 # Platform-specific linking
 if(NOT EMSCRIPTEN)
@@ -139,6 +159,11 @@ if(EMSCRIPTEN)
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/web"
     SUFFIX ".html"
 )
+elseif(APPLE AND NOT EMSCRIPTEN)
+    set_target_properties(${PROJECT_NAME} PROPERTIES
+        MACOSX_BUNDLE TRUE
+        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+    )
 else()
     set_target_properties(${PROJECT_NAME} PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
@@ -149,7 +174,9 @@ endif()
 set(ASSETS_SOURCE_FILE "${CMAKE_CURRENT_SOURCE_DIR}/assets.pak")
 
 # Set assets destination based on platform
-if(MSVC)
+if(APPLE AND NOT EMSCRIPTEN)
+    set(ASSETS_DEST_FILE "$<TARGET_BUNDLE_DIR:${PROJECT_NAME}>/Contents/Resources/assets.pak")
+elseif(MSVC)
     set(ASSETS_DEST_FILE "${CMAKE_BINARY_DIR}/bin/$<CONFIG>/assets.pak")
 else()
     set(ASSETS_DEST_FILE "${CMAKE_BINARY_DIR}/bin/assets.pak")
@@ -189,9 +216,16 @@ if(WIN32 AND NOT EMSCRIPTEN)
 endif()
 
 # Install target
-install(TARGETS ${PROJECT_NAME}
-    RUNTIME DESTINATION bin
-)
+if(APPLE AND NOT EMSCRIPTEN)
+    install(TARGETS ${PROJECT_NAME}
+        BUNDLE DESTINATION .
+        RUNTIME DESTINATION bin
+    )
+else()
+    install(TARGETS ${PROJECT_NAME}
+        RUNTIME DESTINATION bin
+    )
+endif()
 
 # Additional platform-specific linking
 if(WIN32 AND NOT EMSCRIPTEN)
