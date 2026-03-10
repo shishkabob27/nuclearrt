@@ -141,7 +141,32 @@ void SDL2Backend::Initialize() {
 					}
 
 					if (ImGui::IsItemHovered()) {
-						DrawRectangle(instance->X, instance->Y, 32, 32, 0xFFFF0000);
+						if (instance->Type != 0 && instance->Type != 1 && instance->Type != 2) {
+							DrawRectangle(instance->X, instance->Y, 32, 32, 0xFFFF0000);
+						}
+						else {
+							unsigned int imageId = 0;
+							if (instance->Type == 1) // Backdrop
+							{
+								imageId = ((Backdrop*)instance)->Image;
+							}
+							else if (instance->Type == 0) // Quick backdrop
+							{
+								imageId = ((QuickBackdrop*)instance)->shape.Image;
+							}
+							else {
+								imageId = ((Active*)instance)->animations.GetCurrentImageHandle();
+							}
+							auto imageInfo = ImageBank::Instance().GetImage(imageId);
+
+							if (imageInfo) {
+								DrawRectangle(instance->X, instance->Y, imageInfo->Width, imageInfo->Height, 0xFFFF0000);
+							}
+							else {
+								DrawRectangle(instance->X, instance->Y, 32, 32, 0xFFFF0000);
+							}
+
+						}
 					}
 
 					i++;
