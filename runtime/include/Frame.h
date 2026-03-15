@@ -116,12 +116,8 @@ public:
 	bool IsCollidingWithBackground(ObjectInstance* instance);
 	bool IsColliding(ObjectInstance* instance1, ObjectInstance* instance2);
 	bool IsColliding(ObjectInstance* instance, int x, int y);
-	bool IsPointInPolygon(int x, int y, int polygon[][2], int numPoints);
-	bool DoLinesIntersect(int x1, int y1, int x2, int y2, int x3, int y3, int x4, int y4);
 
-	void RotatePoints(int& x1, int& y1, int& x2, int& y2, int& x3, int& y3, int& x4, int& y4, int offsetX, int offsetY, float angle);
-	void RotatePoint(int& x, int& y, float angle);
-	bool IsPointOnLine(int x, int y, int x1, int y1, int x2, int y2);
+	void ClearBoundsCache();
 
 private:
 	std::vector<unsigned int> instancesMarkedForDeletion;
