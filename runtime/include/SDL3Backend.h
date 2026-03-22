@@ -118,7 +118,6 @@ public:
 	float GetTimeDelta() override;
 	void Delay(unsigned int ms) override;
 
-	bool IsPixelTransparent(int textureId, int x, int y) override;
 	void GetTextureDimensions(int textureId, int& width, int& height) override;
 
 #ifdef _DEBUG
