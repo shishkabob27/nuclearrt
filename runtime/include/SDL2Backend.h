@@ -71,7 +71,7 @@ public:
 	void UpdateSample() override {}
 	bool SampleState(int id, bool channel, bool pauseOrStop) override {return false;}
 	// Sample End
-	const uint8_t* GetKeyboardState() override;
+	void GetKeyboardState(uint8_t* outBuffer) override;
 
 	int GetMouseX() override;
 	int GetMouseY() override;

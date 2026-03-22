@@ -65,7 +65,7 @@ public:
 	virtual void UpdateSample() {}
 	virtual bool SampleState(int id, bool channel, bool pauseOrStop) {return false;}
 	// Sample End
-	virtual const uint8_t* GetKeyboardState() { return nullptr; }
+	virtual void GetKeyboardState(uint8_t* outBuffer) {}
 	virtual int GetMouseX() { return 0; }
 	virtual int GetMouseY() { return 0; }
 	virtual void SetMouseX(int x) {}

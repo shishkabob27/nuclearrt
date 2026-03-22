@@ -1329,16 +1329,14 @@ void SDL3Backend::UpdateSample() {
 	}
 }
 // Sample End
-const uint8_t* SDL3Backend::GetKeyboardState()
+void SDL3Backend::GetKeyboardState(uint8_t* outBuffer)
 {
 	//return the keyboard state in a new array which matches the Fusion key codes
 	const bool* keyboardState = SDL_GetKeyboardState(nullptr);
-	uint8_t* fusionKeyboardState = new uint8_t[256];
 	for (int i = 0; i < 256; i++)
 	{
-		fusionKeyboardState[i] = keyboardState[FusionToSDLKey(i)] ? 1 : 0;
+		outBuffer[i] = keyboardState[FusionToSDLKey(i)] ? 1 : 0;
 	}
-	return fusionKeyboardState;
 }
 
 SDL_FRect SDL3Backend::CalculateRenderTargetRect()
