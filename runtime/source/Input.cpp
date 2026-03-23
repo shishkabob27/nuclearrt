@@ -4,8 +4,8 @@
 
 void Input::Update()
 {
-	previousKeyboardState = currentKeyboardState;
-	currentKeyboardState = Application::Instance().GetBackend()->GetKeyboardState();
+	m_currIndex ^= 1;
+	Application::Instance().GetBackend()->GetKeyboardState(m_keyboardState[m_currIndex]);
 
 	previousMouseState = currentMouseState;
 	currentMouseState = Application::Instance().GetBackend()->GetMouseState();
@@ -13,13 +13,7 @@ void Input::Update()
 
 void Input::Reset()
 {
-	previousKeyboardState = new uint8_t[256];
-	currentKeyboardState = new uint8_t[256];
-	for (int i = 0; i < 256; i++)
-	{
-		memset((void*)previousKeyboardState, 0, 256);
-		memset((void*)currentKeyboardState, 0, 256);
-	}
+	memset((void*)m_keyboardState, 0, sizeof(m_keyboardState));
 
 	previousMouseState = 0;
 	currentMouseState = 0;
@@ -27,17 +21,17 @@ void Input::Reset()
 
 bool Input::IsKeyDown(short key)
 {
-	return currentKeyboardState[key] == 1;
+	return m_keyboardState[m_currIndex][key] == 1;
 }
 
 bool Input::IsKeyPressed(short key)
 {
-	return currentKeyboardState[key] == 1 && previousKeyboardState[key] == 0;
+	return m_keyboardState[m_currIndex][key] == 1 && m_keyboardState[m_currIndex ^ 1][key] == 0;
 }
 
 bool Input::IsKeyReleased(short key)
 {
-	return currentKeyboardState[key] == 0 && previousKeyboardState[key] == 1;
+	return m_keyboardState[m_currIndex][key] == 0 && m_keyboardState[m_currIndex ^ 1][key] == 1;
 }
 
 bool Input::IsAnyKeyPressed()
