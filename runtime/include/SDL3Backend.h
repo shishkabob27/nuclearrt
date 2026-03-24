@@ -103,7 +103,7 @@ public:
 	void SetSamplePos(int pos, int id, bool channel);
 	void StopSample(int id, bool channel) override;
 	// Sample End
-	const uint8_t* GetKeyboardState() override;
+	void GetKeyboardState(uint8_t* outBuffer) override;
 
 	int GetMouseX() override;
 	int GetMouseY() override;

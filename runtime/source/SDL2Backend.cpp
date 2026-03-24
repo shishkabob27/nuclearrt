@@ -596,16 +596,14 @@ void SDL2Backend::DrawText(FontInfo* fontInfo, int x, int y, int color, const st
 	SDL_DestroyTexture(texture);
 }
 
-const uint8_t* SDL2Backend::GetKeyboardState()
+void SDL2Backend::GetKeyboardState(uint8_t* outBuffer)
 {
 	//return the keyboard state in a new array which matches the Fusion key codes
 	const uint8_t* keyboardState = SDL_GetKeyboardState(nullptr);
-	uint8_t* fusionKeyboardState = new uint8_t[256];
 	for (int i = 0; i < 256; i++)
 	{
-		fusionKeyboardState[i] = keyboardState[FusionToSDLKey(i)];
+		outBuffer[i] = keyboardState[FusionToSDLKey(i)];
 	}
-	return fusionKeyboardState;
 }
 
 int SDL2Backend::GetMouseX()
