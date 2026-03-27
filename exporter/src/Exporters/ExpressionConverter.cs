@@ -348,9 +348,9 @@ public class ExpressionConverter
 		if (convertToCCN)
 		{
 			var obj = GetObject(objectInfo, isGlobal);
-			if (obj.Item1 > short.MaxValue)
+			if (obj.Item1 >= short.MaxValue)
 			{
-				ObjectType = GetQualifierType(obj.Item1);
+				ObjectType = GetQualifierType(obj.Item2);
 			}
 			else
 			{
@@ -381,9 +381,19 @@ public class ExpressionConverter
 		}
 	}
 
-	static int GetQualifierType(int qualifier)
+	static int GetQualifierType(string qualifier)
 	{
-		return (qualifier & 0x7FFF) + 1;
+		string type = qualifier.Split('.')[1];
+		switch (type)
+		{
+			case "Sprite": return 2;
+			case "Text": return 3;
+			case "Question": return 4;
+			case "Score": return 5;
+			case "Lives": return 6;
+			case "Counter": return 7;
+			default: return 32;
+		}
 	}
 
 	public static Tuple<int, string, ObjectInstance> GetObject(int objectInfo, bool isGlobal = false, int frame = -1)
@@ -395,6 +405,7 @@ public class ExpressionConverter
 		int objectType = 0;
 		int systemQualifier = 0;
 		ObjectInstance objectInstance = null;
+		uint instanceHandle = 0;
 
 		List<EventObject> eventObjects;
 		if (isGlobal)
@@ -413,6 +424,7 @@ public class ExpressionConverter
 				objectName = evtObj.Name;
 				objectType = evtObj.ObjectType;
 				systemQualifier = evtObj.SystemQualifier;
+				instanceHandle = evtObj.InstanceHandle;
 
 				//Find object name in ccn frame
 				foreach (var ccnObj in Exporter.Instance.GameData.Frames[FrameIndex].objects)
@@ -428,7 +440,8 @@ public class ExpressionConverter
 			}
 		}
 
-		if (systemQualifier != 0)
+		if (systemQualifier != 0 ||
+		(objectName == "Group.Player" && systemQualifier == 0 && instanceHandle == 0)) // temp fix since system qualifier returns 0 for the player group
 		{
 			objectName = Utilities.GetQualifierName(systemQualifier, objectType - 1);
 			objectInfo = short.MaxValue + systemQualifier + 1;
