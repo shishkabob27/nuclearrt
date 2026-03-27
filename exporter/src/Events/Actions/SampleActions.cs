@@ -47,7 +47,6 @@ public class CheckType
 	}
 	public static string GetUninterruptable(EventBase eventBase)
 	{
-		CTFAK.Utils.Logger.Log("Flags of Sample " + ((Sample)eventBase.Items[0].Loader).Flags.ToString());
 		string uninterruptable = "false";
 		switch (((Sample)eventBase.Items[0].Loader).Flags)
 		{
