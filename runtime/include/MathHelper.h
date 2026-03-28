@@ -1,5 +1,6 @@
 #pragma once
 #include <iostream>
+#include <string>
 
 namespace MathHelper {
     template<typename T>
@@ -44,4 +45,12 @@ namespace MathHelper {
     }
 
     const SafeDivision& GetSafeDivision();
+
+    inline int Stoi(const std::string& str) {
+        if (str.empty()) {
+            return 0;
+        }
+
+        return std::stoi(str);
+    }
 }

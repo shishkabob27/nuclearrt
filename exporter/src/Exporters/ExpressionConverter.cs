@@ -92,7 +92,7 @@ public class ExpressionConverter
         { (ObjectType.System, 2),  _ => $"Application::Instance().GetAppData()->GetGlobalValue(" }, // Global Value
         { (ObjectType.System, 3),  e => $"std::string(\"{e.Loader.ToString()}\")" },
 		{ (ObjectType.System, 4),  _ => $"std::to_string(" }, // Str$
-		{ (ObjectType.System, 5),  _ => $"std::stod(" }, // Val(
+		{ (ObjectType.System, 5),  _ => $"MathHelper::Stoi(" }, // Val(
         { (ObjectType.System, 6),  _ => "\"\"" }, // Appdrive$ // TODO
         { (ObjectType.System, 7),  _ => "\"\"" }, // Appdir$ // TODO
         { (ObjectType.System, 8),  _ => "\"\"" }, // Apppath$ // TODO
