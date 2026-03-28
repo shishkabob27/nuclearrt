@@ -47,8 +47,8 @@ public class ExpressionConverter
         { (ObjectType.Player, 1), e => $"Application::Instance().GetAppData()->GetPlayerLives({e.ObjectInfo})" }, // Player Lives
 
         //Keyboard / Mouse
-        { (ObjectType.Keyboard, 0), _ => "Application::Instance().GetInput()->GetMouseX()" }, // XMouse
-        { (ObjectType.Keyboard, 1), _ => "Application::Instance().GetInput()->GetMouseY()" }, // YMouse
+        { (ObjectType.Keyboard, 0), _ => "GetMouseX()" }, // XMouse
+        { (ObjectType.Keyboard, 1), _ => "GetMouseY()" }, // YMouse
         { (ObjectType.Keyboard, 2), _ => "Application::Instance().GetInput()->GetMouseWheelMove()" }, // WheelDelta
 
         //Create

@@ -512,12 +512,12 @@ void Frame::MoveObjectBehindOf(ObjectInstance* instance, unsigned int oiHandle)
 
 int Frame::GetMouseX()
 {
-	return Application::Instance().GetBackend()->GetMouseX();
+	return Application::Instance().GetBackend()->GetMouseX() + scrollX;
 }
 
 int Frame::GetMouseY()
 {
-	return Application::Instance().GetBackend()->GetMouseY();
+	return Application::Instance().GetBackend()->GetMouseY() + scrollY;
 }
 
 void Frame::ApplyGlobalObjectData(std::vector<ObjectGlobalData*> savedData)
@@ -897,6 +897,9 @@ bool Frame::IsColliding(ObjectInstance *instance1, ObjectInstance *instance2)
 bool Frame::IsColliding(ObjectInstance *instance, int x, int y)
 {
 	if (instance->Type != 0 && instance->Type != 1 && instance->Type != 2) return false;
+
+	x -= scrollX;
+	y -= scrollY;
 
 	CollisionInstanceBounds bounds = GetInstanceBounds(this, instance, scrollX, scrollY);
 	if (x < bounds.minX || x > bounds.maxX || y < bounds.minY || y > bounds.maxY)
