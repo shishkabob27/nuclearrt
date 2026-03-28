@@ -17,7 +17,7 @@ public class CreateObjectAction : ActionBase
 		if (create.Position.ObjectInfoParent != ushort.MaxValue)
 		{
 			result.AppendLine($"ObjectInstance* parent = nullptr;");
-			result.AppendLine($"if ({GetSelector((int)create.Position.ObjectInfoParent)}->Size() > 0) {{");
+			result.AppendLine($"if ({GetSelector((int)create.Position.ObjectInfoParent)}->Count() > 0) {{");
 			result.AppendLine($"    parent = *{GetSelector((int)create.Position.ObjectInfoParent)}->begin();");
 			result.AppendLine($"}}");
 		}
