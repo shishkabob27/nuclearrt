@@ -51,6 +51,10 @@ public:
 	void SetScroll(int x, int y, int layer = -1);
 	void SetScrollX(int x);
 	void SetScrollY(int y);
+	int GetXLeftEdge();
+	int GetXRightEdge();
+	int GetYTopEdge();
+	int GetYBottomEdge();
 
 	//mark an instance for deletion
 	void MarkForDeletion(ObjectInstance* instance) {

@@ -98,6 +98,26 @@ void Frame::SetScrollY(int y)
 	scrollY = y;
 }
 
+int Frame::GetXLeftEdge()
+{
+	return scrollX;
+}
+
+int Frame::GetXRightEdge()
+{
+	return scrollX + Application::Instance().GetAppData()->GetWindowWidth();
+}
+
+int Frame::GetYTopEdge()
+{
+	return scrollY;
+}
+
+int Frame::GetYBottomEdge()
+{
+	return scrollY + Application::Instance().GetAppData()->GetWindowHeight();
+}
+
 void Frame::DrawLayer(Layer& layer)
 {
 	for (auto& instance : layer.instances)
