@@ -11,11 +11,11 @@ public class SubtractGlobalValueAction : ActionBase
 	{
 		if (eventBase.Items[0].Loader is GlobalValue globalValue)
 		{
-			return $"Application::Instance().GetAppData()->SubtractGlobalValue({globalValue.Value + 1}, {ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[1].Loader, eventBase)});"; // +1 because SubtractGlobalValue is 1-indexed
+			return $"Application::Instance().GetAppData()->SubtractGlobalValue({globalValue.Value}, {ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[1].Loader, eventBase)});";
 		}
 		if (eventBase.Items[0].Loader is ExpressionParameter expressionParameter)
 		{
-			return $"Application::Instance().GetAppData()->SubtractGlobalValue({ExpressionConverter.ConvertExpression(expressionParameter, eventBase)}, {ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[1].Loader, eventBase)});";
+			return $"Application::Instance().GetAppData()->SubtractGlobalValue({ExpressionConverter.ConvertExpression(expressionParameter, eventBase)} - 1, {ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[1].Loader, eventBase)});"; // -1 since SubtractGlobalValue is 0-indexed
 		}
 		return "";
 	}

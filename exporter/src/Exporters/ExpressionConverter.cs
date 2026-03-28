@@ -102,12 +102,12 @@ public class ExpressionConverter
         { (ObjectType.System, 20), _ => "StringRight(" }, // String Right
         { (ObjectType.System, 22), _ => "StringLength(" }, // String Length
 		{ (ObjectType.System, 23), e => (e.Loader as DoubleExp).FloatValue.ToString() },
-		{ (ObjectType.System, 24), e => $"Application::Instance().GetAppData()->GetGlobalValue({(e.Loader as GlobalCommon).Value})" }, // Global Value
+		{ (ObjectType.System, 24), e => $"Application::Instance().GetAppData()->GetGlobalValue({GetGlobalValueIndex(e.Loader as GlobalCommon)})" }, // Global Value
 		{ (ObjectType.System, 29), _ => "std::abs(" }, // Abs(Loop Index
         { (ObjectType.System, 41), _ => "std::max(" }, // Max(
         { (ObjectType.System, 46), _ => "Loopindex(" }, // LoopIndex
 		{ (ObjectType.System, 48), _ => "std::round(" }, // Round
-		{ (ObjectType.System, 50), e => $"Application::Instance().GetAppData()->GetGlobalStrings()[{(e.Loader as GlobalCommon).Value}]" },
+		{ (ObjectType.System, 50), e => $"Application::Instance().GetAppData()->GetGlobalString({GetGlobalValueIndex(e.Loader as GlobalCommon)})" },
 		{ (ObjectType.System, 56), _ => "\"\"" }, // AppTempPath$ // TODO
         { (ObjectType.System, 65), _ => "Application::Instance().RandomRange(" }, // RRandom
         { (ObjectType.System, 67), _ => "Application::Instance().GetBackend()->GetPlatformName()" }, // RuntimeName$
@@ -118,6 +118,16 @@ public class ExpressionConverter
         { (ObjectType.Arithmetic, 6), _ => " * " }, // Multiply
         { (ObjectType.Arithmetic, 8), _ => " /MathHelper::GetSafeDivision()/ " }, // Division
     };
+
+	public static int GetGlobalValueIndex(GlobalCommon value)
+	{
+		if ((int)value.Value < short.MinValue)
+		{
+			return (int)value.Value + ushort.MaxValue + 1;
+		}
+
+		return (int)value.Value;
+	}
 
 	private static void HandleSystemExpr(StringBuilder stringBuilder, Expression expression, EventBase eventBase = null)
 	{
