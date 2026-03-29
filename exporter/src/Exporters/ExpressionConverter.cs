@@ -235,6 +235,20 @@ public class ExpressionConverter
 					else
 						return stringBuilder.Append($"({GetSelector(expression.ObjectInfo)}->Count() > 0 ? ((Active*)*({GetSelector(expression.ObjectInfo)}->begin()))->animations.GetCurrentSequenceIndex() : 0)");
 				}
+			case 32: // Distance with a point
+				{
+					if (expression.ObjectInfo == eventBase.ObjectInfo && expression.ObjectInfoList == eventBase.ObjectInfoList)
+						return stringBuilder.Append($"ODistance(instance, ");
+					else
+						return stringBuilder.Append($"ODistance({GetSelector(expression.ObjectInfo)}, ");
+				}
+			case 33: // Angle of a Vector
+				{
+					if (expression.ObjectInfo == eventBase.ObjectInfo && expression.ObjectInfoList == eventBase.ObjectInfoList)
+						return stringBuilder.Append($"OAngle(instance, ");
+					else
+						return stringBuilder.Append($"OAngle({GetSelector(expression.ObjectInfo)}, ");
+				}
 			case 83: // Angle
 				{
 					if (expression.ObjectInfo == eventBase.ObjectInfo && expression.ObjectInfoList == eventBase.ObjectInfoList)

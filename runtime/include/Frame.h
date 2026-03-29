@@ -111,6 +111,42 @@ public:
 		return str.substr(str.length() - length);
 	}
 
+	int OAngle(ObjectInstance* instance, int xTarget, int yTarget) {
+		int angle = 0;
+		int distanceX = xTarget - instance->X;
+		int distanceY = yTarget - instance->Y;
+		angle = atan2(distanceY, distanceX) * 180 / 3.14159265358979323846;
+		while (angle < 0) {
+			angle += 360;
+		}
+		while (angle >= 360) {
+			angle -= 360;
+		}
+		int result = 360 - angle;
+		if (result == 360) result = 0;
+		return result;
+	}
+
+	int OAngle(std::shared_ptr<ObjectSelector> selector, int xTarget, int yTarget) {
+		if (!selector || selector->Count() == 0) {
+			return 0;
+		}
+		return OAngle(*(selector->begin()), xTarget, yTarget);
+	}
+
+	int ODistance(ObjectInstance* instance, int xTarget, int yTarget) {
+		int distanceX = xTarget - instance->X;
+		int distanceY = yTarget - instance->Y;
+		return sqrt(distanceX * distanceX + distanceY * distanceY);
+	}
+
+	int ODistance(std::shared_ptr<ObjectSelector> selector, int xTarget, int yTarget) {
+		if (!selector || selector->Count() == 0) {
+			return 0;
+		}
+		return ODistance(*(selector->begin()), xTarget, yTarget);
+	}
+
 	int Loopindex(std::string loopName) {
 		//TODO: loopindex will return 0 untul the loop system can support expressions
 		return 0;
