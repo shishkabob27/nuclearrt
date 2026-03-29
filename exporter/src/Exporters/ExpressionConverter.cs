@@ -68,6 +68,8 @@ public class ExpressionConverter
 		{ (ObjectType.Game, 3), _ => $"GetXRightEdge()" }, // XRightEdge
 		{ (ObjectType.Game, 4), _ => $"GetYTopEdge()" }, // YTopEdge
 		{ (ObjectType.Game, 5), _ => $"GetYBottomEdge()" }, // YBottomEdge
+		{ (ObjectType.Game, 6), _ => $"Width" }, // Frame Width
+		{ (ObjectType.Game, 7), _ => $"Height" }, // Frame Height
         { (ObjectType.Game, 8),  _ => $"Index + 1" }, // Frame
         { (ObjectType.Game, 10), _ => "Application::Instance().GetAppData()->GetTargetFPS()" }, // FrameRate // TODO: Verify this
         { (ObjectType.Game, 14), _ => "0" }, // DisplayMode // TODO
