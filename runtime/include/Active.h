@@ -45,6 +45,14 @@ public:
 		Values = globalData->values;
 		Strings = globalData->strings;
 	}
+
+	int GetXActionPoint() const {
+		return X + animations.GetXActionPoint() - animations.GetXHotspot();
+	}
+
+	int GetYActionPoint() const {
+		return Y + animations.GetYActionPoint() - animations.GetYHotspot();
+	}
 };
 
  

@@ -235,6 +235,20 @@ public class ExpressionConverter
 					else
 						return stringBuilder.Append($"({GetSelector(expression.ObjectInfo)}->Count() > 0 ? ((Active*)*({GetSelector(expression.ObjectInfo)}->begin()))->animations.GetCurrentSequenceIndex() : 0)");
 				}
+			case 25: // Action Point X
+				{
+					if (expression.ObjectInfo == eventBase.ObjectInfo && expression.ObjectInfoList == eventBase.ObjectInfoList)
+						return stringBuilder.Append("((Active*)instance)->GetXActionPoint()");
+					else
+						return stringBuilder.Append($"({GetSelector(expression.ObjectInfo)}->Count() > 0 ? ((Active*)*({GetSelector(expression.ObjectInfo)}->begin()))->GetXActionPoint() : 0)");
+				}
+			case 26: // Action Point Y
+				{
+					if (expression.ObjectInfo == eventBase.ObjectInfo && expression.ObjectInfoList == eventBase.ObjectInfoList)
+						return stringBuilder.Append("((Active*)instance)->GetYActionPoint()");
+					else
+						return stringBuilder.Append($"({GetSelector(expression.ObjectInfo)}->Count() > 0 ? ((Active*)*({GetSelector(expression.ObjectInfo)}->begin()))->GetYActionPoint() : 0)");
+				}
 			case 32: // Distance with a point
 				{
 					if (expression.ObjectInfo == eventBase.ObjectInfo && expression.ObjectInfoList == eventBase.ObjectInfoList)

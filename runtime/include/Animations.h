@@ -5,6 +5,7 @@
 #include <unordered_map>
 
 #include "Sequence.h"
+#include "ImageBank.h"
 
 class Animations {
 public:
@@ -19,6 +20,11 @@ public:
 	unsigned int GetCurrentDirection() const;
 	unsigned int GetCurrentFrameIndex() const;
 	int GetAutomaticRotationDirection() const;
+
+	int GetXActionPoint() const;
+	int GetYActionPoint() const;
+	int GetXHotspot() const;
+	int GetYHotspot() const;
 	
 	void Start();
 	void Stop();
