@@ -82,4 +82,11 @@ namespace MathHelper {
     }
 
     inline double Range(double v, double minVal, double maxVal) { return (v < minVal) ? minVal : (v > maxVal ? maxVal : v); }
+    inline int Stoi(const std::string& str) {
+        if (str.empty()) {
+            return 0;
+        }
+
+        return std::stoi(str);
+    }
 }

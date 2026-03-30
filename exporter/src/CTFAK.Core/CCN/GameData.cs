@@ -14,7 +14,6 @@ using System.Text;
 using System.Threading.Tasks;
 using CTFAK.EXE;
 using CTFAK.MMFParser.EXE.Loaders;
-using Ionic.Zlib;
 using CTFAK.FileReaders;
 using CTFAK.Core.CCN.Chunks;
 using System.Reflection.Metadata.Ecma335;
@@ -335,7 +334,7 @@ namespace CTFAK.CCN
 							var currentPosition = chunkReader.Tell();
 							var chunkSize = chunkReader.ReadInt32();
 							var data = chunkReader.ReadBytes(chunkSize);
-							var decompressed = ZlibStream.UncompressBuffer(data);
+							var decompressed = Decompressor.DecompressBlock(data);
 							var decompressedReader = new ByteReader(decompressed);
 
 							var objectData = frameitems[current];

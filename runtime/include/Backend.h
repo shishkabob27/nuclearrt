@@ -2,6 +2,8 @@
 
 #include <string>
 #include <cstdint>
+#include <unordered_map>
+#include <vector>
 #include "FontBank.h"
 #include "Shape.h"
 #include "PakFile.h"
@@ -65,7 +67,7 @@ public:
 	virtual void UpdateSample() {}
 	virtual bool SampleState(int id, bool channel, bool pauseOrStop) {return false;}
 	// Sample End
-	virtual const uint8_t* GetKeyboardState() { return nullptr; }
+	virtual void GetKeyboardState(uint8_t* outBuffer) {}
 	virtual int GetMouseX() { return 0; }
 	virtual int GetMouseY() { return 0; }
 	virtual void SetMouseX(int x) {}
@@ -74,9 +76,24 @@ public:
 	virtual uint32_t GetMouseState() { return 0; }
 	virtual void HideMouseCursor() {}
 	virtual void ShowMouseCursor() {}
-	virtual bool IsPixelTransparent(int textureId, int x, int y) { return true; }
 	virtual void GetTextureDimensions(int textureId, int& width, int& height) { width = 0; height = 0; }
+
+	//Pak file stuff, maybe move to application class? - shish
+	virtual bool PakFileEntryExists(std::string entry) { return pakFile.Exists(entry); }
+	virtual std::vector<uint8_t> GetPakFileEntryData(std::string entry) { return pakFile.GetData(entry); }
+
+	const std::vector<uint8_t>* GetCollisionMaskData(unsigned int imageId) {
+		auto it = collisionMaskCache.find(imageId);
+		if (it != collisionMaskCache.end())
+			return &it->second;
+		std::vector<uint8_t> data = pakFile.GetData("images/masks/" + std::to_string(imageId) + ".bin");
+		if (data.empty())
+			return nullptr;
+		it = collisionMaskCache.emplace(imageId, std::move(data)).first;
+		return &it->second;
+	}
 
 protected:
 	PakFile pakFile;
+	std::unordered_map<unsigned int, std::vector<uint8_t>> collisionMaskCache;
 }; 

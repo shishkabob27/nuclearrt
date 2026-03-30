@@ -43,59 +43,73 @@ public:
 	void SetMultiSamples(bool multiSamples) { m_multiSamples = multiSamples; }
 	bool& GetSampleFocus() { return m_sampleFocus; }
 	void SetSampleFocus(bool sampleFocus) { m_sampleFocus = sampleFocus; }
+
 	std::vector<int>& GetGlobalValues() { return m_globalValues; }
-	int GetGlobalValue(int index) { // 1-indexed
-		if (index < 1 || index > static_cast<int>(m_globalValues.size())) {
+	void SetGlobalValues(const std::vector<int>& values) { m_globalValues = values; }
+
+	int GetGlobalValue(int index) { // 0-indexed
+		if (index < 0 || index > static_cast<int>(m_globalValues.size()) - 1) {
 			return 0;
 		}
-		return m_globalValues[index - 1];
+		return m_globalValues[index];
 	}
-	void SetGlobalValues(const std::vector<int>& values) { m_globalValues = values; }
-	void SetGlobalValue(int index, int value) { // 1-indexed
-		if (index < 1) {
+	
+	void SetGlobalValue(int index, int value) { // 0-indexed
+		if (index < 0) {
 			return;
 		}
 
-		if (index > static_cast<int>(m_globalValues.size())) {
-			m_globalValues.resize(index, 0);
+		if (index > static_cast<int>(m_globalValues.size()) - 1) {
+			m_globalValues.resize(index + 1, 0);
 		}
 
-		m_globalValues[index - 1] = value;
+		m_globalValues[index] = value;
 	}
 
-	void AddGlobalValue(int index, int value) { // 1-indexed
-		if (index < 1) {
+	void AddGlobalValue(int index, int value) { // 0-indexed
+		if (index < 0) {
 			return;
 		}
 
-		if (index > static_cast<int>(m_globalValues.size())) {
-			m_globalValues.resize(index, 0);
+		if (index > static_cast<int>(m_globalValues.size()) - 1) {
+			m_globalValues.resize(index + 1, 0);
 		}
 
-		m_globalValues[index - 1] += value;
+		m_globalValues[index] += value;
 	}
 
-	void SubtractGlobalValue(int index, int value) { // 1-indexed
-		if (index < 1) {
+	void SubtractGlobalValue(int index, int value) { // 0-indexed
+		if (index < 0) {
 			return;
 		}
 
-		if (index > static_cast<int>(m_globalValues.size())) {
-			m_globalValues.resize(index, 0);
+		if (index > static_cast<int>(m_globalValues.size()) - 1) {
+			m_globalValues.resize(index + 1, 0);
 		}
 
-		m_globalValues[index - 1] -= value;
+		m_globalValues[index] -= value;
 	}
 
 	std::vector<std::string>& GetGlobalStrings() { return m_globalStrings; }
 	void SetGlobalStrings(const std::vector<std::string>& strings) { m_globalStrings = strings; }
 
-	void SetGlobalString(int index, const std::string& string) {
-		m_globalStrings[index] = string;
+	std::string GetGlobalString(int index) {
+		if (index < 0 || index > static_cast<int>(m_globalStrings.size()) - 1) {
+			return "";
+		}
+		return m_globalStrings[index];
 	}
 
-	std::string GetGlobalString(int index) {
-		return m_globalStrings[index];
+	void SetGlobalString(int index, const std::string& string) {
+		if (index < 0) {
+			return;
+		}
+		
+		if (index > static_cast<int>(m_globalStrings.size()) - 1) {
+			m_globalStrings.resize(index + 1, "");
+		}
+
+		m_globalStrings[index] = string;
 	}
 
 	std::vector<int>& GetControlTypes() { return m_controlTypes; }

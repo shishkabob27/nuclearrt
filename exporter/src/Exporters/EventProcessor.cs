@@ -221,6 +221,11 @@ public class EventProcessor
 			relevantObjectInfos.AddRange(GetRelevantObjectInfos(condition, Exporter.Instance.CurrentFrame, eventGroup.IsGlobal).Item2);
 		}
 
+		foreach (var action in eventGroup.Actions)
+		{
+			relevantObjectInfos.AddRange(GetRelevantObjectInfos(action, Exporter.Instance.CurrentFrame, eventGroup.IsGlobal).Item2);
+		}
+
 		return relevantObjectInfos.Distinct().ToList();
 	}
 
@@ -294,7 +299,8 @@ public class EventProcessor
 					int objectType = evtObj.ObjectType;
 					int systemQualifier = evtObj.SystemQualifier;
 
-					if (systemQualifier != 0)
+					if (systemQualifier != 0 ||
+					(objectName == "Group.Player" && systemQualifier == 0 && evtObj.InstanceHandle == 0)) // temp fix since system qualifier returns 0 for the player group
 					{
 						relevantObjectInfos.Add(new Tuple<int, string>(short.MaxValue + systemQualifier + 1, Utilities.GetQualifierName(systemQualifier, objectType - 1)));
 						break;

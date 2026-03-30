@@ -47,8 +47,8 @@ public class ExpressionConverter
         { (ObjectType.Player, 1), e => $"Application::Instance().GetAppData()->GetPlayerLives({e.ObjectInfo})" }, // Player Lives
 
         //Keyboard / Mouse
-        { (ObjectType.Keyboard, 0), _ => "Application::Instance().GetInput()->GetMouseX()" }, // XMouse
-        { (ObjectType.Keyboard, 1), _ => "Application::Instance().GetInput()->GetMouseY()" }, // YMouse
+        { (ObjectType.Keyboard, 0), _ => "GetMouseX()" }, // XMouse
+        { (ObjectType.Keyboard, 1), _ => "GetMouseY()" }, // YMouse
         { (ObjectType.Keyboard, 2), _ => "Application::Instance().GetInput()->GetMouseWheelMove()" }, // WheelDelta
 
         //Create
@@ -64,6 +64,12 @@ public class ExpressionConverter
 
         //Game
         { (ObjectType.Game, 0),  _ => $"Index + 1" }, // Frame
+		{ (ObjectType.Game, 2), _ => $"GetXLeftEdge()" }, // XLeftEdge
+		{ (ObjectType.Game, 3), _ => $"GetXRightEdge()" }, // XRightEdge
+		{ (ObjectType.Game, 4), _ => $"GetYTopEdge()" }, // YTopEdge
+		{ (ObjectType.Game, 5), _ => $"GetYBottomEdge()" }, // YBottomEdge
+		{ (ObjectType.Game, 6), _ => $"Width" }, // Frame Width
+		{ (ObjectType.Game, 7), _ => $"Height" }, // Frame Height
         { (ObjectType.Game, 8),  _ => $"Index + 1" }, // Frame
         { (ObjectType.Game, 10), _ => "Application::Instance().GetAppData()->GetTargetFPS()" }, // FrameRate // TODO: Verify this
         { (ObjectType.Game, 14), _ => "0" }, // DisplayMode // TODO
@@ -92,16 +98,19 @@ public class ExpressionConverter
         { (ObjectType.System, 2),  _ => $"Application::Instance().GetAppData()->GetGlobalValue(" }, // Global Value
         { (ObjectType.System, 3),  e => $"std::string(\"{e.Loader.ToString()}\")" },
 		{ (ObjectType.System, 4),  _ => $"std::to_string(" }, // Str$
+		{ (ObjectType.System, 5),  _ => $"MathHelper::Stoi(" }, // Val(
         { (ObjectType.System, 6),  _ => "\"\"" }, // Appdrive$ // TODO
         { (ObjectType.System, 7),  _ => "\"\"" }, // Appdir$ // TODO
         { (ObjectType.System, 8),  _ => "\"\"" }, // Apppath$ // TODO
         { (ObjectType.System, 9),  _ => "\"\"" }, // Appname$ // TODO
+		{ (ObjectType.System, 13),  _ => "std::sqrt(" }, // Square Root
         { (ObjectType.System, 19), _ => "StringLeft(" }, // String Left
         { (ObjectType.System, 20), _ => "StringRight(" }, // String Right
         { (ObjectType.System, 22), _ => "StringLength(" }, // String Length
-		{ (ObjectType.System, 23), e => (e.Loader as DoubleExp).FloatValue.ToString() },
+	  	{ (ObjectType.System, 23), e => (e.Loader as DoubleExp).FloatValue.ToString() },
         { (ObjectType.System, 29), _ => "std::abs(" }, // Abs(
         { (ObjectType.System, 40), _ => "std::min(" }, // Min(
+		{ (ObjectType.System, 24), e => $"Application::Instance().GetAppData()->GetGlobalValue({GetGlobalValueIndex(e.Loader as GlobalCommon)})" }, // Global Value
         { (ObjectType.System, 41), _ => "std::max(" }, // Max(
 		
         { (ObjectType.System, 5), _ => "std::stod(" }, // Val(string) -> std::stod(
@@ -148,7 +157,9 @@ public class ExpressionConverter
         { (ObjectType.System, 46), _ => "Loopindex(" }, // LoopIndex
 		{ (ObjectType.System, 50), e => $"Application::Instance().GetAppData()->GetGlobalString({(e.Loader as GlobalCommon).Value})" },
         { (ObjectType.System, 56), _ => "\"\"" }, // AppTempPath$ // TODO
-        { (ObjectType.System, 65), _ => "Application::Instance().RandomRange(" }, // RRandom
+		{ (ObjectType.System, 50), e => $"Application::Instance().GetAppData()->GetGlobalString({GetGlobalValueIndex(e.Loader as GlobalCommon)})" },
+		{ (ObjectType.System, 56), _ => "\"\"" }, // AppTempPath$ // TODO
+        { (ObjectType.System, 65), _ => "Application::Instan,ce().RandomRange(" }, // RRandom
         { (ObjectType.System, 66), _ => "Application::Instance().GetBackend()->GetPlatformName()" }, // RuntimeName$
 
         // Arithmetic
@@ -162,6 +173,16 @@ public class ExpressionConverter
         { (ObjectType.Arithmetic, 16), _ => " | " },
         { (ObjectType.Arithmetic, 18), _ => " ^ " }
     };
+
+	public static int GetGlobalValueIndex(GlobalCommon value)
+	{
+		if ((int)value.Value < short.MinValue)
+		{
+			return (int)value.Value + ushort.MaxValue + 1;
+		}
+
+		return (int)value.Value;
+	}
 
 	private static void HandleSystemExpr(StringBuilder stringBuilder, Expression expression, EventBase eventBase = null)
 	{
@@ -319,6 +340,34 @@ public class ExpressionConverter
 					else
 						return stringBuilder.Append($"({objectSelector}->Count() > 0 ? ((Active*)*({objectSelector}->begin()))->animations.GetCurrentSequenceIndex() : 0)");
 				}
+			case 25: // Action Point X
+				{
+					if (expression.ObjectInfo == eventBase.ObjectInfo && expression.ObjectInfoList == eventBase.ObjectInfoList)
+						return stringBuilder.Append("((Active*)instance)->GetXActionPoint()");
+					else
+						return stringBuilder.Append($"({GetSelector(expression.ObjectInfo)}->Count() > 0 ? ((Active*)*({GetSelector(expression.ObjectInfo)}->begin()))->GetXActionPoint() : 0)");
+				}
+			case 26: // Action Point Y
+				{
+					if (expression.ObjectInfo == eventBase.ObjectInfo && expression.ObjectInfoList == eventBase.ObjectInfoList)
+						return stringBuilder.Append("((Active*)instance)->GetYActionPoint()");
+					else
+						return stringBuilder.Append($"({GetSelector(expression.ObjectInfo)}->Count() > 0 ? ((Active*)*({GetSelector(expression.ObjectInfo)}->begin()))->GetYActionPoint() : 0)");
+				}
+			case 32: // Distance with a point
+				{
+					if (expression.ObjectInfo == eventBase.ObjectInfo && expression.ObjectInfoList == eventBase.ObjectInfoList)
+						return stringBuilder.Append($"ODistance(instance, ");
+					else
+						return stringBuilder.Append($"ODistance({GetSelector(expression.ObjectInfo)}, ");
+				}
+			case 33: // Angle of a Vector
+				{
+					if (expression.ObjectInfo == eventBase.ObjectInfo && expression.ObjectInfoList == eventBase.ObjectInfoList)
+						return stringBuilder.Append($"OAngle(instance, ");
+					else
+						return stringBuilder.Append($"OAngle({GetSelector(expression.ObjectInfo)}, ");
+				}
 			case 83: // Angle
 				{
 					if (expression.ObjectInfo == eventBase.ObjectInfo && expression.ObjectInfoList == eventBase.ObjectInfoList)
@@ -442,9 +491,9 @@ public class ExpressionConverter
 		if (convertToCCN)
 		{
 			var obj = GetObject(objectInfo, isGlobal);
-			if (obj.Item1 > short.MaxValue)
+			if (obj.Item1 >= short.MaxValue)
 			{
-				ObjectType = GetQualifierType(obj.Item1);
+				ObjectType = GetQualifierType(obj.Item2);
 			}
 			else
 			{
@@ -475,9 +524,19 @@ public class ExpressionConverter
 		}
 	}
 
-	static int GetQualifierType(int qualifier)
+	static int GetQualifierType(string qualifier)
 	{
-		return (qualifier & 0x7FFF) + 1;
+		string type = qualifier.Split('.')[1];
+		switch (type)
+		{
+			case "Sprite": return 2;
+			case "Text": return 3;
+			case "Question": return 4;
+			case "Score": return 5;
+			case "Lives": return 6;
+			case "Counter": return 7;
+			default: return 32;
+		}
 	}
 
 	public static Tuple<int, string, ObjectInstance> GetObject(int objectInfo, bool isGlobal = false, int frame = -1)
@@ -489,6 +548,7 @@ public class ExpressionConverter
 		int objectType = 0;
 		int systemQualifier = 0;
 		ObjectInstance objectInstance = null;
+		uint instanceHandle = 0;
 
 		List<EventObject> eventObjects;
 		if (isGlobal)
@@ -507,6 +567,7 @@ public class ExpressionConverter
 				objectName = evtObj.Name;
 				objectType = evtObj.ObjectType;
 				systemQualifier = evtObj.SystemQualifier;
+				instanceHandle = evtObj.InstanceHandle;
 
 				//Find object name in ccn frame
 				foreach (var ccnObj in Exporter.Instance.GameData.Frames[FrameIndex].objects)
@@ -522,7 +583,8 @@ public class ExpressionConverter
 			}
 		}
 
-		if (systemQualifier != 0)
+		if (systemQualifier != 0 ||
+		(objectName == "Group.Player" && systemQualifier == 0 && instanceHandle == 0)) // temp fix since system qualifier returns 0 for the player group
 		{
 			objectName = Utilities.GetQualifierName(systemQualifier, objectType - 1);
 			objectInfo = short.MaxValue + systemQualifier + 1;

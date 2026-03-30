@@ -26,8 +26,8 @@ public:
 	bool IsMouseButtonPressed(int button, bool doubleClick = false);
 
 private:
-	const uint8_t* currentKeyboardState;
-	const uint8_t* previousKeyboardState;
+	uint8_t m_keyboardState[2][256];
+	int m_currIndex = 0;
 
 	uint32_t currentMouseState;
 	uint32_t previousMouseState;

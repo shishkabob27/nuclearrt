@@ -73,7 +73,6 @@ void Application::Draw()
 void Application::Shutdown()
 {
 	std::cout << "Shutting down..." << std::endl;
-	backend->Deinitialize();
 }
 
 static void Loop()
