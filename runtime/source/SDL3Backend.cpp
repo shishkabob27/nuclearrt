@@ -192,9 +192,34 @@ void SDL3Backend::Initialize() {
 					}
 
 					if (ImGui::IsItemHovered()) {
-						DrawRectangle(instance->X, instance->Y, 32, 32, 0xFFFF0000);
-					}
+						if (instance->Type != 0 && instance->Type != 1 && instance->Type != 2) {
+							DrawRectangle(instance->X, instance->Y, 32, 32, 0xFFFF0000);
+						}
+						else {
+							unsigned int imageId = 0;
+							if (instance->Type == 1) // Backdrop
+							{
+								imageId = ((Backdrop*)instance)->Image;
+							}
+							else if (instance->Type == 0) // Quick backdrop
+							{
+								imageId = ((QuickBackdrop*)instance)->shape.Image;
+							}
+							else {
+								imageId = ((Active*)instance)->animations.GetCurrentImageHandle();
+							}
+							auto imageInfo = ImageBank::Instance().GetImage(imageId);
 
+							if (imageInfo) {
+								DrawRectangle(instance->X, instance->Y, imageInfo->Width, imageInfo->Height, 0xFFFF0000);
+							}
+							else {
+								DrawRectangle(instance->X, instance->Y, 32, 32, 0xFFFF0000);
+							}
+
+						}
+					}
+						// 
 					i++;
 				}
 				ImGui::TreePop();
@@ -1304,16 +1329,14 @@ void SDL3Backend::UpdateSample() {
 	}
 }
 // Sample End
-const uint8_t* SDL3Backend::GetKeyboardState()
+void SDL3Backend::GetKeyboardState(uint8_t* outBuffer)
 {
 	//return the keyboard state in a new array which matches the Fusion key codes
 	const bool* keyboardState = SDL_GetKeyboardState(nullptr);
-	uint8_t* fusionKeyboardState = new uint8_t[256];
 	for (int i = 0; i < 256; i++)
 	{
-		fusionKeyboardState[i] = keyboardState[FusionToSDLKey(i)] ? 1 : 0;
+		outBuffer[i] = keyboardState[FusionToSDLKey(i)] ? 1 : 0;
 	}
-	return fusionKeyboardState;
 }
 
 SDL_FRect SDL3Backend::CalculateRenderTargetRect()
@@ -1672,75 +1695,6 @@ float SDL3Backend::GetTimeDelta()
 void SDL3Backend::Delay(unsigned int ms)
 {
 	SDL_Delay(ms);
-}
-
-bool SDL3Backend::IsPixelTransparent(int textureId, int x, int y)
-{
-	auto imageInfo = ImageBank::Instance().GetImage(textureId);
-	if (!imageInfo) return true;
-
-	auto mosaicIt = imageToMosaic.find(textureId);
-	if (mosaicIt == imageToMosaic.end()) return true;
-	
-	int mosaicIndex = mosaicIt->second;
-	auto mosaicTextureIt = mosaics.find(mosaicIndex);
-	if (mosaicTextureIt == mosaics.end()) return true;
-	
-	SDL_Texture* texture = mosaicTextureIt->second;
-	
-	SDL_FRect srcRect = {
-		static_cast<float>(imageInfo->MosaicX),
-		static_cast<float>(imageInfo->MosaicY),
-		static_cast<float>(imageInfo->Width),
-		static_cast<float>(imageInfo->Height)
-	};
-
-	int width = imageInfo->Width;
-	int height = imageInfo->Height;
-
-	if (x < 0 || x >= width || y < 0 || y >= height) return true;
-
-	// Create a surface to read the texture data
-	SDL_Surface* surface = SDL_CreateSurface(width, height, SDL_GetPixelFormatForMasks(32, 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000));
-	if (!surface) return true;
-
-	// Create a temporary render target
-	SDL_Texture* tempTarget = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_TARGET, width, height);
-	if (!tempTarget) {
-		SDL_DestroySurface(surface);
-		return true;
-	}
-
-	// Save the current render target
-	SDL_Texture* currentTarget = SDL_GetRenderTarget(renderer);
-
-	// Set the temporary render target
-	SDL_SetRenderTarget(renderer, tempTarget);
-
-	// Copy the original texture to the temporary target
-	SDL_FRect destRect = { 0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height) };
-	SDL_RenderTexture(renderer, texture, &srcRect, &destRect);
-
-	// Read the pixels from the temporary target
-	SDL_Rect rect = { 0, 0, width, height };
-	SDL_Surface* surface2 = SDL_RenderReadPixels(renderer, &rect);
-
-	// Restore the original render target
-	SDL_SetRenderTarget(renderer, currentTarget);
-
-	// Get the pixel data
-	Uint32* pixels = static_cast<Uint32*>(surface2->pixels);
-	Uint32 pixel = pixels[y * width + x];
-	
-	// Check alpha channel
-	bool isTransparent = (pixel & 0xFF000000) == 0;
-
-	// Clean up
-	SDL_DestroyTexture(tempTarget);
-	SDL_DestroySurface(surface);
-	SDL_DestroySurface(surface2);
-
-	return isTransparent;
 }
 
 void SDL3Backend::GetTextureDimensions(int textureId, int& width, int& height)

@@ -74,13 +74,13 @@ public static class StringUtils
 			input = "_" + input;
 		}
 		
-		string[] invalidChars = [" ", ".", "-", ":", ";", ",", "!", "?", "*", "/", "\\", "|", "`", "'", "\"", "&", "+", "(", ")", "=", "%"];
+		string[] invalidChars = [" ", ".", "-", ":", ";", ",", "!", "?", "*", "/", "\\", "|", "`", "'", "\"", "&", "+", "(", ")", "=", "%", "[", "]"];
 		
 		foreach (string invalidChar in invalidChars)
 		{
 			input = input.Replace(invalidChar, "_");
 		}
 		
-		return SanitizeString(input);
+		return SanitizeString(input).Replace("\\", "_");
 	}
 }

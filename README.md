@@ -4,6 +4,12 @@ NuclearRT is a fast, open-source, cross-platform C++ runtime for Clickteam Fusio
 
 ![NuclearRT Banner](assets/banner.png)
 
+<p align="center">
+    <a href="https://discord.gg/dgEjYe7UQa">
+        <img src="https://img.shields.io/badge/Discord-Join%20Server-5865F2?logo=discord&logoColor=white&style=for-the-badge" alt="Discord Server">
+    </a>
+</p>
+
 > [!CAUTION]
 > This project is still in development and is not ready for general use.
 
@@ -19,9 +25,9 @@ NuclearRT is a fast, open-source, cross-platform C++ runtime for Clickteam Fusio
 ## Supported Platforms
 - Windows
 - Linux
-- macOS
+- macOS (Intel & Apple Silicon)
 - Web
-- Switch (Homebrew) (SDL2)
+- Switch (Homebrew)
 
 ## Supported Backends
 - SDL3
@@ -31,8 +37,10 @@ NuclearRT is a fast, open-source, cross-platform C++ runtime for Clickteam Fusio
 - Clickteam Fusion 2.5 R295.10 or higher
 - CMake 3.14 or higher
 - A C++ compiler, such as MSVC or GCC
-- Emscripten (for Web builds)
-- DevkitPro, SDL2 Portlibs (for Switch builds)
+- Web:
+  - Emscripten
+- Switch:
+  - DevkitPro, SDL2 Portlibs
 
 ## Usage
 

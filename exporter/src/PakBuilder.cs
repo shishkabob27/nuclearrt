@@ -25,6 +25,16 @@ public class PakBuilder
 			entries.Add(entry);
 		}
 
+		//collision masks
+		var collisionMasks = CollisionMaskBuilder.BuildCollisionMask(gameData);
+		foreach (var mask in collisionMasks)
+		{
+			var entry = new PakEntry { Path = $"images/masks/{mask.Handle}.bin" };
+			entry.Size = (uint)mask.Data.Length;
+			entry.Data = mask.Data;
+			entries.Add(entry);
+		}
+
 		//sounds
 		foreach (var sound in mfaData.Sounds.Items)
 		{

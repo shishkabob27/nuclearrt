@@ -10,11 +10,11 @@ public class CompareGlobalValueCondition : ConditionBase
 	{
 		if (eventBase.Items[0].Loader is GlobalValue globalValue)
 		{
-			return $"{ifStatement} (Application::Instance().GetAppData()->GetGlobalValue({globalValue.Value + 1}) {ExpressionConverter.GetComparisonSymbol(((ExpressionParameter)eventBase.Items[1].Loader).Comparsion)} {ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[1].Loader, eventBase)})) goto {nextLabel};"; // +1 because GetGlobalValue is 1-indexed
+			return $"{ifStatement} (Application::Instance().GetAppData()->GetGlobalValue({globalValue.Value}) {ExpressionConverter.GetComparisonSymbol(((ExpressionParameter)eventBase.Items[1].Loader).Comparsion)} {ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[1].Loader, eventBase)})) goto {nextLabel};";
 		}
 		if (eventBase.Items[0].Loader is ExpressionParameter expressionParameter)
 		{
-			return $"{ifStatement} ((Application::Instance().GetAppData()->GetGlobalValue({ExpressionConverter.ConvertExpression(expressionParameter, eventBase)}) {ExpressionConverter.GetComparisonSymbol(((ExpressionParameter)eventBase.Items[1].Loader).Comparsion)} {ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[1].Loader, eventBase)}))) goto {nextLabel};";
+			return $"{ifStatement} ((Application::Instance().GetAppData()->GetGlobalValue({ExpressionConverter.ConvertExpression(expressionParameter, eventBase)} - 1) {ExpressionConverter.GetComparisonSymbol(((ExpressionParameter)eventBase.Items[1].Loader).Comparsion)} {ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[1].Loader, eventBase)} - 1))) goto {nextLabel};"; // -1 since GetGlobalValue is 0-indexed
 		}
 		return "";
 	}

@@ -141,7 +141,32 @@ void SDL2Backend::Initialize() {
 					}
 
 					if (ImGui::IsItemHovered()) {
-						DrawRectangle(instance->X, instance->Y, 32, 32, 0xFFFF0000);
+						if (instance->Type != 0 && instance->Type != 1 && instance->Type != 2) {
+							DrawRectangle(instance->X, instance->Y, 32, 32, 0xFFFF0000);
+						}
+						else {
+							unsigned int imageId = 0;
+							if (instance->Type == 1) // Backdrop
+							{
+								imageId = ((Backdrop*)instance)->Image;
+							}
+							else if (instance->Type == 0) // Quick backdrop
+							{
+								imageId = ((QuickBackdrop*)instance)->shape.Image;
+							}
+							else {
+								imageId = ((Active*)instance)->animations.GetCurrentImageHandle();
+							}
+							auto imageInfo = ImageBank::Instance().GetImage(imageId);
+
+							if (imageInfo) {
+								DrawRectangle(instance->X, instance->Y, imageInfo->Width, imageInfo->Height, 0xFFFF0000);
+							}
+							else {
+								DrawRectangle(instance->X, instance->Y, 32, 32, 0xFFFF0000);
+							}
+
+						}
 					}
 
 					i++;
@@ -571,16 +596,14 @@ void SDL2Backend::DrawText(FontInfo* fontInfo, int x, int y, int color, const st
 	SDL_DestroyTexture(texture);
 }
 
-const uint8_t* SDL2Backend::GetKeyboardState()
+void SDL2Backend::GetKeyboardState(uint8_t* outBuffer)
 {
 	//return the keyboard state in a new array which matches the Fusion key codes
 	const uint8_t* keyboardState = SDL_GetKeyboardState(nullptr);
-	uint8_t* fusionKeyboardState = new uint8_t[256];
 	for (int i = 0; i < 256; i++)
 	{
-		fusionKeyboardState[i] = keyboardState[FusionToSDLKey(i)];
+		outBuffer[i] = keyboardState[FusionToSDLKey(i)];
 	}
-	return fusionKeyboardState;
 }
 
 int SDL2Backend::GetMouseX()
@@ -869,57 +892,6 @@ float SDL2Backend::GetTimeDelta()
 void SDL2Backend::Delay(unsigned int ms)
 {
     SDL_Delay(ms);
-}
-
-bool SDL2Backend::IsPixelTransparent(int textureId, int x, int y)
-{
-    auto it = textures.find(textureId);
-    if (it == textures.end()) return true;
-
-    SDL_Texture* texture = it->second;
-    int width, height;
-    SDL_QueryTexture(texture, nullptr, nullptr, &width, &height);
-
-    if (x < 0 || x >= width || y < 0 || y >= height) return true;
-
-    // Create a surface to read the texture data
-    SDL_Surface* surface = SDL_CreateRGBSurface(0, width, height, 32, 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000);
-    if (!surface) return true;
-
-    // Create a temporary render target
-    SDL_Texture* tempTarget = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_TARGET, width, height);
-    if (!tempTarget) {
-        SDL_FreeSurface(surface);
-        return true;
-    }
-
-    // Save the current render target
-    SDL_Texture* currentTarget = SDL_GetRenderTarget(renderer);
-
-    // Set the temporary render target
-    SDL_SetRenderTarget(renderer, tempTarget);
-
-    // Copy the original texture to the temporary target
-    SDL_RenderCopy(renderer, texture, nullptr, nullptr);
-
-    // Read the pixels from the temporary target
-    SDL_RenderReadPixels(renderer, nullptr, SDL_PIXELFORMAT_ARGB8888, surface->pixels, surface->pitch);
-
-    // Restore the original render target
-    SDL_SetRenderTarget(renderer, currentTarget);
-
-    // Get the pixel data
-    Uint32* pixels = static_cast<Uint32*>(surface->pixels);
-    Uint32 pixel = pixels[y * width + x];
-    
-    // Check alpha channel
-    bool isTransparent = (pixel & 0xFF000000) == 0;
-
-    // Clean up
-    SDL_DestroyTexture(tempTarget);
-    SDL_FreeSurface(surface);
-
-    return isTransparent;
 }
 
 void SDL2Backend::GetTextureDimensions(int textureId, int& width, int& height)

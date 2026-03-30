@@ -3,6 +3,7 @@
 #include <map>
 #include <algorithm>
 #include <math.h>
+#include <unordered_map>
 
 #include "Application.h"
 #include "Counter.h"
@@ -23,6 +24,7 @@ void Frame::PostInitialize()
 
 void Frame::Update()
 {
+	ClearBoundsCache();
 	float deltaTime = Application::Instance().GetBackend()->GetTimeDelta();
 	GameTimer.Update(deltaTime);
 
@@ -94,6 +96,26 @@ void Frame::SetScrollY(int y)
 	y = std::max(0, y);
 	y = std::min(Height - windowHeight, y);
 	scrollY = y;
+}
+
+int Frame::GetXLeftEdge()
+{
+	return scrollX;
+}
+
+int Frame::GetXRightEdge()
+{
+	return scrollX + Application::Instance().GetAppData()->GetWindowWidth();
+}
+
+int Frame::GetYTopEdge()
+{
+	return scrollY;
+}
+
+int Frame::GetYBottomEdge()
+{
+	return scrollY + Application::Instance().GetAppData()->GetWindowHeight();
 }
 
 void Frame::DrawLayer(Layer& layer)
@@ -490,12 +512,12 @@ void Frame::MoveObjectBehindOf(ObjectInstance* instance, unsigned int oiHandle)
 
 int Frame::GetMouseX()
 {
-	return Application::Instance().GetBackend()->GetMouseX();
+	return Application::Instance().GetBackend()->GetMouseX() + scrollX;
 }
 
 int Frame::GetMouseY()
 {
-	return Application::Instance().GetBackend()->GetMouseY();
+	return Application::Instance().GetBackend()->GetMouseY() + scrollY;
 }
 
 void Frame::ApplyGlobalObjectData(std::vector<ObjectGlobalData*> savedData)
@@ -609,6 +631,143 @@ bool Frame::IsCollidingWithBackground(ObjectInstance *instance)
 	return false; // No collision with any backdrop
 }
 
+struct CollisionInstanceBounds {
+	int minX, minY, maxX, maxY;
+	int width, height;
+	int centerX, centerY;
+	int angle;
+	unsigned int imageId;
+	int hotspotX, hotspotY;
+};
+
+static std::unordered_map<Frame*, std::unordered_map<ObjectInstance*, CollisionInstanceBounds>> s_instanceBoundsCache;
+
+void Frame::ClearBoundsCache() {
+	auto it = s_instanceBoundsCache.find(this);
+	if (it != s_instanceBoundsCache.end())
+		it->second.clear();
+}
+
+static CollisionInstanceBounds GetInstanceBounds(Frame* frame, ObjectInstance* instance, int scrollX, int scrollY) {
+	auto& cache = s_instanceBoundsCache[frame];
+	auto cit = cache.find(instance);
+	if (cit != cache.end())
+		return cit->second;
+
+	CollisionInstanceBounds bounds = {0};
+	bounds.angle = instance->GetAngle();
+	
+	unsigned int imageId = 0;
+	int drawX = 0, drawY = 0;
+	int hotspotX = 0, hotspotY = 0;
+	
+	if (instance->Type == 0) { // Quick backdrop
+		imageId = ((QuickBackdrop*)instance)->shape.Image;
+		drawX = instance->X - (scrollX * frame->Layers[instance->Layer].XCoefficient);
+		drawY = instance->Y - (scrollY * frame->Layers[instance->Layer].YCoefficient);
+		bounds.width = ((QuickBackdrop*)instance)->Width;
+		bounds.height = ((QuickBackdrop*)instance)->Height;
+	} else if (instance->Type == 1) { // Backdrop
+		imageId = ((Backdrop*)instance)->Image;
+		drawX = instance->X - (scrollX * frame->Layers[instance->Layer].XCoefficient);
+		drawY = instance->Y - (scrollY * frame->Layers[instance->Layer].YCoefficient);
+		auto imageInfo = ImageBank::Instance().GetImage(imageId);
+		if (imageInfo) {
+			bounds.width = imageInfo->Width;
+			bounds.height = imageInfo->Height;
+		}
+	} else { // Active object
+		imageId = ((Active*)instance)->animations.GetCurrentImageHandle();
+		int scrollXOffset = 0, scrollYOffset = 0;
+		if (((Active*)instance)->FollowFrame) {
+			scrollXOffset = scrollX * frame->Layers[instance->Layer].XCoefficient;
+			scrollYOffset = scrollY * frame->Layers[instance->Layer].YCoefficient;
+		}
+		drawX = instance->X - scrollXOffset;
+		drawY = instance->Y - scrollYOffset;
+		auto imageInfo = ImageBank::Instance().GetImage(imageId);
+		if (imageInfo) {
+			hotspotX = imageInfo->HotspotX;
+			hotspotY = imageInfo->HotspotY;
+			bounds.width = imageInfo->Width;
+			bounds.height = imageInfo->Height;
+		}
+	}
+	
+	bounds.centerX = drawX;
+	bounds.centerY = drawY;
+	bounds.imageId = imageId;
+	bounds.hotspotX = hotspotX;
+	bounds.hotspotY = hotspotY;
+	
+	int x1 = drawX - hotspotX;
+	int y1 = drawY - hotspotY;
+	int x2 = x1 + bounds.width;
+	int y2 = y1;
+	int x3 = x1;
+	int y3 = y1 + bounds.height;
+	int x4 = x2;
+	int y4 = y3;
+	
+	if (bounds.angle != 0) {
+		float rotationAngle = 360.0f - bounds.angle;
+		float radians = rotationAngle * (PI / 180.0f);
+		float cosA = cos(radians);
+		float sinA = sin(radians);
+		float dx1 = x1 - bounds.centerX, dy1 = y1 - bounds.centerY;
+		float dx2 = x2 - bounds.centerX, dy2 = y2 - bounds.centerY;
+		float dx3 = x3 - bounds.centerX, dy3 = y3 - bounds.centerY;
+		float dx4 = x4 - bounds.centerX, dy4 = y4 - bounds.centerY;
+		
+		x1 = bounds.centerX + (int)(dx1 * cosA - dy1 * sinA);
+		y1 = bounds.centerY + (int)(dx1 * sinA + dy1 * cosA);
+		x2 = bounds.centerX + (int)(dx2 * cosA - dy2 * sinA);
+		y2 = bounds.centerY + (int)(dx2 * sinA + dy2 * cosA);
+		x3 = bounds.centerX + (int)(dx3 * cosA - dy3 * sinA);
+		y3 = bounds.centerY + (int)(dx3 * sinA + dy3 * cosA);
+		x4 = bounds.centerX + (int)(dx4 * cosA - dy4 * sinA);
+		y4 = bounds.centerY + (int)(dx4 * sinA + dy4 * cosA);
+	}
+
+	bounds.minX = std::min({x1, x2, x3, x4});
+	bounds.minY = std::min({y1, y2, y3, y4});
+	bounds.maxX = std::max({x1, x2, x3, x4});
+	bounds.maxY = std::max({y1, y2, y3, y4});
+
+	cache[instance] = bounds;
+	return bounds;
+}
+
+static bool IsPointInRotatedBox(int worldX, int worldY, const CollisionInstanceBounds& bounds) {
+	float dx = worldX - bounds.centerX;
+	float dy = worldY - bounds.centerY;
+	if (bounds.angle != 0) {
+		float rotationAngle = 360.0f - bounds.angle;
+		float radians = -rotationAngle * (PI / 180.0f);
+		float cosA = cos(radians);
+		float sinA = sin(radians);
+		float newX = dx * cosA - dy * sinA;
+		float newY = dx * sinA + dy * cosA;
+		dx = newX;
+		dy = newY;
+	}
+	int localX = (int)(dx + bounds.hotspotX);
+	int localY = (int)(dy + bounds.hotspotY);
+	return localX >= 0 && localX < bounds.width && localY >= 0 && localY < bounds.height;
+}
+
+static bool IsPixelSolid(const std::vector<uint8_t>& maskData, int width, int height, int x, int y) {
+	if (x < 0 || x >= width || y < 0 || y >= height) return false;
+	
+	int bytesPerRow = (width + 7) / 8;
+	int byteIndex = y * bytesPerRow + (x / 8);
+	int bitIndex = 7 - (x % 8);
+	
+	if (byteIndex >= (int)maskData.size()) return false;
+	
+	return (maskData[byteIndex] & (1 << bitIndex)) != 0;
+}
+
 bool Frame::IsColliding(ObjectInstance *instance1, ObjectInstance *instance2)
 {
 	//Only check collision for relevant object types
@@ -619,457 +778,174 @@ bool Frame::IsColliding(ObjectInstance *instance1, ObjectInstance *instance2)
 	// Check if the objects are on the same layer
 	if (instance1->Layer != instance2->Layer) return false;
 
-	// Get image IDs for both instances
-	unsigned int imageId1, imageId2;
+	CollisionInstanceBounds bounds1 = GetInstanceBounds(this, instance1, scrollX, scrollY);
+	CollisionInstanceBounds bounds2 = GetInstanceBounds(this, instance2, scrollX, scrollY);
 	
-	// Calculate draw positions for both instances exactly as they'd be drawn
-	int drawX1, drawY1, drawX2, drawY2;
-	int hotspotX1 = 0, hotspotY1 = 0;
-	int hotspotX2 = 0, hotspotY2 = 0;
+	if (bounds1.maxX < bounds2.minX || bounds1.minX > bounds2.maxX ||
+		bounds1.maxY < bounds2.minY || bounds1.minY > bounds2.maxY)
+		return false;
+
+	unsigned int imageId1 = 0, imageId2 = 0;
 	
-	// Get information for instance1
-	if (instance1->Type == 0) // Quick backdrop
-	{
+	if (instance1->Type == 0) {
 		imageId1 = ((QuickBackdrop*)instance1)->shape.Image;
-		
-		// Position exactly as in DrawLayer for quick backdrops
-		drawX1 = instance1->X - (scrollX * Layers[instance1->Layer].XCoefficient);
-		drawY1 = instance1->Y - (scrollY * Layers[instance1->Layer].YCoefficient);
-	}
-	else if (instance1->Type == 1) // Backdrop
-	{
+	} else if (instance1->Type == 1) {
 		imageId1 = ((Backdrop*)instance1)->Image;
-		
-		// Position exactly as in DrawLayer for backdrops
-		drawX1 = instance1->X - (scrollX * Layers[instance1->Layer].XCoefficient);
-		drawY1 = instance1->Y - (scrollY * Layers[instance1->Layer].YCoefficient);
-	}
-	else // Common object
-	{
+	} else {
 		imageId1 = ((Active*)instance1)->animations.GetCurrentImageHandle();
-		
-		// Position exactly as in DrawLayer for common objects
-		int scrollXOffset = 0;
-		int scrollYOffset = 0;
-		if (((Active*)instance1)->FollowFrame)
-		{
-			scrollXOffset = scrollX * Layers[instance1->Layer].XCoefficient;
-			scrollYOffset = scrollY * Layers[instance1->Layer].YCoefficient;
-		}
-		
-		drawX1 = instance1->X - scrollXOffset;
-		drawY1 = instance1->Y - scrollYOffset;
-		
-		auto imageInfo = ImageBank::Instance().GetImage(imageId1);
-		if (imageInfo)
-		{
-			hotspotX1 = imageInfo->HotspotX;
-			hotspotY1 = imageInfo->HotspotY;
-		}
 	}
-
-	// Get information for instance2
-	if (instance2->Type == 0) // Quick backdrop
-	{
+	
+	if (instance2->Type == 0) {
 		imageId2 = ((QuickBackdrop*)instance2)->shape.Image;
-		
-		// Position exactly as in DrawLayer for quick backdrops
-		drawX2 = instance2->X - (scrollX * Layers[instance2->Layer].XCoefficient);
-		drawY2 = instance2->Y - (scrollY * Layers[instance2->Layer].YCoefficient);
-	}
-	else if (instance2->Type == 1) // Backdrop
-	{
+	} else if (instance2->Type == 1) {
 		imageId2 = ((Backdrop*)instance2)->Image;
-		
-		// Position exactly as in DrawLayer for backdrops
-		drawX2 = instance2->X - (scrollX * Layers[instance2->Layer].XCoefficient);
-		drawY2 = instance2->Y - (scrollY * Layers[instance2->Layer].YCoefficient);
-	}
-	else // Common object
-	{
+	} else {
 		imageId2 = ((Active*)instance2)->animations.GetCurrentImageHandle();
-		
-		// Position exactly as in DrawLayer for common objects
-		int scrollXOffset = 0;
-		int scrollYOffset = 0;
-		if (((Active*)instance2)->FollowFrame)
-		{
-			scrollXOffset = scrollX * Layers[instance2->Layer].XCoefficient;
-			scrollYOffset = scrollY * Layers[instance2->Layer].YCoefficient;
-		}
-		
-		drawX2 = instance2->X - scrollXOffset;
-		drawY2 = instance2->Y - scrollYOffset;
-		
-		auto imageInfo = ImageBank::Instance().GetImage(imageId2);
-		if (imageInfo)
-		{
-			hotspotX2 = imageInfo->HotspotX;
-			hotspotY2 = imageInfo->HotspotY;
-		}
 	}
+	
+	Backend* backend = Application::Instance().GetBackend().get();
+	const std::vector<uint8_t>* maskData1 = backend->GetCollisionMaskData(imageId1);
+	const std::vector<uint8_t>* maskData2 = backend->GetCollisionMaskData(imageId2);
 
-	// Get image info for both instances
+	bool useMask1 = maskData1 && !maskData1->empty() && (instance1->Type == 1 || (instance1->Type == 2 && ((Active*)instance1)->FineDetection));
+	bool useMask2 = maskData2 && !maskData2->empty() && (instance2->Type == 1 || (instance2->Type == 2 && ((Active*)instance2)->FineDetection));
+	
 	auto imageInfo1 = ImageBank::Instance().GetImage(imageId1);
 	auto imageInfo2 = ImageBank::Instance().GetImage(imageId2);
-	if (!imageInfo1 || !imageInfo2) return false;
-
-	int image1Width = imageInfo1->Width;
-	int image1Height = imageInfo1->Height;
-	int image2Width = imageInfo2->Width;
-	int image2Height = imageInfo2->Height;
-
-	if (instance1->Type == 0)
-	{
-		image1Width = ((QuickBackdrop*)instance1)->Width;
-		image1Height = ((QuickBackdrop*)instance1)->Height;
-	}
-
-	if (instance2->Type == 0)
-	{
-		image2Width = ((QuickBackdrop*)instance2)->Width;
-		image2Height = ((QuickBackdrop*)instance2)->Height;
-	}
-
-	// Calculate bounding box for instance1
-	int x1_1 = drawX1 - hotspotX1;
-	int y1_1 = drawY1 - hotspotY1;
-	int x2_1 = x1_1 + image1Width;
-	int y2_1 = y1_1;
-	int x3_1 = x1_1;
-	int y3_1 = y1_1 + image1Height;
-	int x4_1 = x2_1;
-	int y4_1 = y3_1;
-
-	// Calculate bounding box for instance2
-	int x1_2 = drawX2 - hotspotX2;
-	int y1_2 = drawY2 - hotspotY2;
-	int x2_2 = x1_2 + image2Width;
-	int y2_2 = y1_2;
-	int x3_2 = x1_2;
-	int y3_2 = y1_2 + image2Height;
-	int x4_2 = x2_2;
-	int y4_2 = y3_2;
-	
-	// Apply rotation to bounding boxes if needed
-	if (instance1->GetAngle() != 0)
-	{
-		RotatePoints(x1_1, y1_1, x2_1, y2_1, x3_1, y3_1, x4_1, y4_1, 
-			drawX1, drawY1, instance1->GetAngle());
-	}
-	
-	if (instance2->GetAngle() != 0)
-	{
-		RotatePoints(x1_2, y1_2, x2_2, y2_2, x3_2, y3_2, x4_2, y4_2, 
-			drawX2, drawY2, instance2->GetAngle());
-	}
-
-	// If either object is rotated, use polygon intersection test
-	if (instance1->GetAngle() != 0 || instance2->GetAngle() != 0)
-	{
-		// Define the polygons
-		int poly1[][2] = {{x1_1, y1_1}, {x2_1, y2_1}, {x4_1, y4_1}, {x3_1, y3_1}};
-		int poly2[][2] = {{x1_2, y1_2}, {x2_2, y2_2}, {x4_2, y4_2}, {x3_2, y3_2}};
-		
-		// Check for any edge intersection
-		for (int i = 0; i < 4; i++)
-		{
-			int j = (i + 1) % 4;
-			for (int k = 0; k < 4; k++)
-			{
-				int l = (k + 1) % 4;
-				
-				// Check if line segments intersect
-				if (DoLinesIntersect(
-					poly1[i][0], poly1[i][1], poly1[j][0], poly1[j][1],
-					poly2[k][0], poly2[k][1], poly2[l][0], poly2[l][1]))
-				{
+	if (!imageInfo1 || !imageInfo2) {
+		int overlapMinX = std::max(bounds1.minX, bounds2.minX);
+		int overlapMinY = std::max(bounds1.minY, bounds2.minY);
+		int overlapMaxX = std::min(bounds1.maxX, bounds2.maxX);
+		int overlapMaxY = std::min(bounds1.maxY, bounds2.maxY);
+		for (int py = overlapMinY; py <= overlapMaxY; py++)
+			for (int px = overlapMinX; px <= overlapMaxX; px++)
+				if (IsPointInRotatedBox(px, py, bounds1) && IsPointInRotatedBox(px, py, bounds2))
 					return true;
-				}
-			}
-		}
-		
-		// Check if one polygon is inside the other
-		// Test if a point from poly1 is inside poly2
-		if (IsPointInPolygon(poly1[0][0], poly1[0][1], poly2, 4))
-			return true;
-		
-		// Test if a point from poly2 is inside poly1
-		if (IsPointInPolygon(poly2[0][0], poly2[0][1], poly1, 4))
-			return true;
-		
 		return false;
 	}
-	else
-	{
-		// Simple AABB collision for non-rotated objects
-		// Check if the rectangles overlap - using half-open intervals [x, x+width)
-		return (x1_1 < x2_2 && x1_2 < x2_1 && y1_1 < y3_2 && y1_2 < y3_1);
+	
+	int width1 = bounds1.width;
+	int height1 = bounds1.height;
+	int width2 = bounds2.width;
+	int height2 = bounds2.height;
+	if (instance1->Type == 0) {
+		width1 = ((QuickBackdrop*)instance1)->Width;
+		height1 = ((QuickBackdrop*)instance1)->Height;
 	}
-}
+	if (instance2->Type == 0) {
+		width2 = ((QuickBackdrop*)instance2)->Width;
+		height2 = ((QuickBackdrop*)instance2)->Height;
+	}
+	
+	int hotspotX1 = 0, hotspotY1 = 0;
+	int hotspotX2 = 0, hotspotY2 = 0;
+	if (instance1->Type == 2 && imageInfo1) {
+		hotspotX1 = imageInfo1->HotspotX;
+		hotspotY1 = imageInfo1->HotspotY;
+	}
+	if (instance2->Type == 2 && imageInfo2) {
+		hotspotX2 = imageInfo2->HotspotX;
+		hotspotY2 = imageInfo2->HotspotY;
+	}
+	
+	float cos1 = 1.0f, sin1 = 0.0f;
+	float cos2 = 1.0f, sin2 = 0.0f;
+	if (bounds1.angle != 0) {
+		float radians = -(360.0f - bounds1.angle) * (PI / 180.0f);
+		cos1 = cos(radians);
+		sin1 = sin(radians);
+	}
+	if (bounds2.angle != 0) {
+		float radians = -(360.0f - bounds2.angle) * (PI / 180.0f);
+		cos2 = cos(radians);
+		sin2 = sin(radians);
+	}
+	
+	int overlapMinX = std::max(bounds1.minX, bounds2.minX);
+	int overlapMinY = std::max(bounds1.minY, bounds2.minY);
+	int overlapMaxX = std::min(bounds1.maxX, bounds2.maxX);
+	int overlapMaxY = std::min(bounds1.maxY, bounds2.maxY);
+	
+	for (int py = overlapMinY; py <= overlapMaxY; py++) {
+		for (int px = overlapMinX; px <= overlapMaxX; px++) {
+			float dx1 = px - bounds1.centerX, dy1 = py - bounds1.centerY;
+			if (bounds1.angle != 0) {
+				float nx = dx1 * cos1 - dy1 * sin1, ny = dx1 * sin1 + dy1 * cos1;
+				dx1 = nx; dy1 = ny;
+			}
+			int lx1 = (int)(dx1 + hotspotX1), ly1 = (int)(dy1 + hotspotY1);
+			bool solid1 = useMask1 ? IsPixelSolid(*maskData1, width1, height1, lx1, ly1)
+				: (lx1 >= 0 && lx1 < width1 && ly1 >= 0 && ly1 < height1);
 
-// Helper method to determine if a point is inside a polygon
-bool Frame::IsPointInPolygon(int x, int y, int polygon[][2], int numPoints)
-{
-	bool inside = false;
-	for (int i = 0, j = numPoints - 1; i < numPoints; j = i++)
-	{
-		// Check if point is exactly on an edge (more precise edge detection)
-		if (IsPointOnLine(x, y, polygon[i][0], polygon[i][1], polygon[j][0], polygon[j][1]))
-			return true;
-			
-		// Standard ray-casting algorithm
-		if (((polygon[i][1] > y) != (polygon[j][1] > y)) &&
-			(x < (polygon[j][0] - polygon[i][0]) * (y - polygon[i][1]) / (float)(polygon[j][1] - polygon[i][1]) + polygon[i][0]))
-		{
-			inside = !inside;
+			float dx2 = px - bounds2.centerX, dy2 = py - bounds2.centerY;
+			if (bounds2.angle != 0) {
+				float nx = dx2 * cos2 - dy2 * sin2, ny = dx2 * sin2 + dy2 * cos2;
+				dx2 = nx; dy2 = ny;
+			}
+			int lx2 = (int)(dx2 + hotspotX2), ly2 = (int)(dy2 + hotspotY2);
+			bool solid2 = useMask2 ? IsPixelSolid(*maskData2, width2, height2, lx2, ly2)
+				: (lx2 >= 0 && lx2 < width2 && ly2 >= 0 && ly2 < height2);
+
+			if (solid1 && solid2)
+				return true;
 		}
 	}
-	return inside;
+	return false;
 }
 
-// Helper method to determine if two line segments intersect
-bool Frame::DoLinesIntersect(int x1, int y1, int x2, int y2, int x3, int y3, int x4, int y4)
-{
-	// Calculate the direction of the lines
-	float uA = ((x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)) / 
-			(float)((y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1));
-	float uB = ((x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3)) / 
-			(float)((y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1));
-
-	// If uA and uB are between 0-1, lines are colliding
-	// Adding a small epsilon for floating point precision
-	const float epsilon = 0.0001f;
-	return (uA >= 0 && uA <= 1 && uB >= 0 && uB <= 1) &&
-	       !(fabs(uA) < epsilon || fabs(uA - 1.0f) < epsilon || 
-	         fabs(uB) < epsilon || fabs(uB - 1.0f) < epsilon);
-}
 
 bool Frame::IsColliding(ObjectInstance *instance, int x, int y)
 {
 	if (instance->Type != 0 && instance->Type != 1 && instance->Type != 2) return false;
 
-	unsigned int imageId;
+	x -= scrollX;
+	y -= scrollY;
+
+	CollisionInstanceBounds bounds = GetInstanceBounds(this, instance, scrollX, scrollY);
+	if (x < bounds.minX || x > bounds.maxX || y < bounds.minY || y > bounds.maxY)
+		return false;
+
+	unsigned int imageId = 0;
 	bool fineDetection = false;
 	
-	// Calculate the draw position exactly as it would be drawn in DrawLayer
-	int drawX, drawY;
-	int hotspotX = 0, hotspotY = 0;
-	
-	if (instance->Type == 1) // Backdrop
-	{
-		imageId = ((Backdrop*)instance)->Image;
-		
-		// Position exactly as in DrawLayer for backdrops
-		drawX = instance->X - (scrollX * Layers[instance->Layer].XCoefficient);
-		drawY = instance->Y - (scrollY * Layers[instance->Layer].YCoefficient);
-	}
-	else if (instance->Type == 0) // Quick backdrop
-	{
+	if (instance->Type == 0) {
 		imageId = ((QuickBackdrop*)instance)->shape.Image;
-		
-		// Position exactly as in DrawLayer for quick backdrops
-		drawX = instance->X - (scrollX * Layers[instance->Layer].XCoefficient);
-		drawY = instance->Y - (scrollY * Layers[instance->Layer].YCoefficient);
-	}
-	else // Common object
-	{
+	} else if (instance->Type == 1) {
+		imageId = ((Backdrop*)instance)->Image;
+		fineDetection = true;
+	} else {
 		imageId = ((Active*)instance)->animations.GetCurrentImageHandle();
-		
 		fineDetection = ((Active*)instance)->FineDetection;
-		
-		// Position exactly as in DrawLayer for common objects
-		int scrollXOffset = 0;
-		int scrollYOffset = 0;
-		if (((Active*)instance)->FollowFrame)
-		{
-			scrollXOffset = scrollX * Layers[instance->Layer].XCoefficient;
-			scrollYOffset = scrollY * Layers[instance->Layer].YCoefficient;
-		}
-		
-		drawX = instance->X - scrollXOffset;
-		drawY = instance->Y - scrollYOffset;
-		
-		auto imageInfo = ImageBank::Instance().GetImage(imageId);
-		if (imageInfo)
-		{
-			hotspotX = imageInfo->HotspotX;
-			hotspotY = imageInfo->HotspotY;
-		}
 	}
+	if (!fineDetection)
+		return IsPointInRotatedBox(x, y, bounds);
+	
+	const std::vector<uint8_t>* maskData = Application::Instance().GetBackend().get()->GetCollisionMaskData(imageId);
+	if (!maskData || maskData->empty())
+		return IsPointInRotatedBox(x, y, bounds);
 
 	auto imageInfo = ImageBank::Instance().GetImage(imageId);
-	if (!imageInfo) return false;
+	if (!imageInfo) return IsPointInRotatedBox(x, y, bounds);
 
-	// Mouse coordinates don't need adjusting
-	int targetX = x;
-	int targetY = y;
-
-	if (!fineDetection)
-	{
-		// Calculate bounding box points
-		int x1 = drawX - hotspotX;
-		int y1 = drawY - hotspotY;
-		int x2 = x1 + imageInfo->Width;
-		int y2 = y1;
-		int x3 = x1;
-		int y3 = y1 + imageInfo->Height;
-		int x4 = x2;
-		int y4 = y3;
-
-		if (instance->GetAngle() != 0)
-		{
-			RotatePoints(x1, y1, x2, y2, x3, y3, x4, y4, drawX, drawY, instance->GetAngle());
-			
-			// Check edges
-			if (IsPointOnLine(targetX, targetY, x1, y1, x2, y2) || IsPointOnLine(targetX, targetY, x1, y1, x3, y3) ||
-				IsPointOnLine(targetX, targetY, x3, y3, x4, y4) || IsPointOnLine(targetX, targetY, x4, y4, x2, y2))
-				return true;
-
-			// Ray casting
-			bool inside = false;
-			int points[][2] = {{x1,y1}, {x2,y2}, {x4,y4}, {x3,y3}};
-			
-			for (int i = 0, j = 3; i < 4; j = i++)
-			{
-				if (((points[i][1] > targetY) != (points[j][1] > targetY)) &&
-					(targetX < (points[j][0] - points[i][0]) * (targetY - points[i][1]) / (float)(points[j][1] - points[i][1]) + points[i][0]))
-					inside = !inside;
-			}
-			return inside;
-		}
-		return (targetX >= x1 && targetX < x4 && targetY >= y1 && targetY < y4);
-	}
-	else
-	{
-		auto backend = Application::Instance().GetBackend();
-
-		// Get texture dimensions
-		int texWidth, texHeight;
-		backend->GetTextureDimensions(imageId, texWidth, texHeight);
-
-		// Calculate position on texture
-		int relX, relY;
-		
-		// For non-rotated objects, directly calculate position
-		if (instance->GetAngle() == 0)
-		{
-			// Texture coordinates relative to object's top-left
-			relX = targetX - (drawX - hotspotX);
-			relY = targetY - (drawY - hotspotY);
-		}
-		else
-		{
-			// For rotated objects, we need to calculate the position differently
-			// First, get position relative to the object's center
-			float pointX = targetX - drawX;
-			float pointY = targetY - drawY;
-			
-			// Rotate the point in the opposite direction
-			float radians = instance->GetAngle() * (PI / 180.0f);
-			float cosA = cos(radians);
-			float sinA = sin(radians);
-			
-			float newX = pointX * cosA - pointY * sinA;
-			float newY = pointX * sinA + pointY * cosA;
-			
-			// Adjust for hotspot
-			relX = static_cast<int>(newX + hotspotX);
-			relY = static_cast<int>(newY + hotspotY);
-		}
-		
-		// Check bounds
-		if (relX < 0 || relX >= texWidth || relY < 0 || relY >= texHeight)
-			return false;
-			
-		// Check transparency
-		return !backend->IsPixelTransparent(imageId, relX, relY);
-	}
-}
-
-bool Frame::IsPointOnLine(int x, int y, int x1, int y1, int x2, int y2)
-{
-	// Calculate the distance from point to line segment
-	float A = x - x1;
-	float B = y - y1;
-	float C = x2 - x1;
-	float D = y2 - y1;
-
-	float dot = A * C + B * D;
-	float len_sq = C * C + D * D;
-	float param = -1;
-
-	if (len_sq != 0)
-		param = dot / len_sq;
-
-	float xx, yy;
-
-	if (param < 0)
-	{
-		xx = x1;
-		yy = y1;
-	}
-	else if (param > 1)
-	{
-		xx = x2;
-		yy = y2;
-	}
-	else
-	{
-		xx = x1 + param * C;
-		yy = y1 + param * D;
+	int width = bounds.width;
+	int height = bounds.height;
+	if (instance->Type == 0) {
+		width = ((QuickBackdrop*)instance)->Width;
+		height = ((QuickBackdrop*)instance)->Height;
 	}
 
-	float dx = x - xx;
-	float dy = y - yy;
-	float distance = sqrt(dx * dx + dy * dy);
-
-	// Return true if point is exactly on the line or very close
-	return distance < 0.5f;
-}
-
-void Frame::RotatePoints(int& x1, int& y1, int& x2, int& y2, int& x3, int& y3, int& x4, int& y4, int offsetX, int offsetY, float angle)
-{
-	//invert angle
-	angle = 360 - angle;
-
-	// Move points relative to offset point
-	x1 -= offsetX;
-	y1 -= offsetY;
-	x2 -= offsetX;
-	y2 -= offsetY;
-	x3 -= offsetX;
-	y3 -= offsetY;
-	x4 -= offsetX;
-	y4 -= offsetY;
-	
-	// Rotate points
-	RotatePoint(x1, y1, angle);
-	RotatePoint(x2, y2, angle);
-	RotatePoint(x3, y3, angle);
-	RotatePoint(x4, y4, angle);
-
-	// Move points back
-	x1 += offsetX;
-	y1 += offsetY;
-	x2 += offsetX;
-	y2 += offsetY;
-	x3 += offsetX;
-	y3 += offsetY;
-	x4 += offsetX;
-	y4 += offsetY;
-	
-}
-
-void Frame::RotatePoint(int& x, int& y, float angle)
-{
-	// Convert to radians
-	float radians = angle * (PI / 180.0f);
-
-	// Rotate point around origin
-	float xNew = x * cos(radians) - y * sin(radians);
-	float yNew = x * sin(radians) + y * cos(radians);
-
-	x = static_cast<int>(xNew);
-	y = static_cast<int>(yNew);
+	float dx = x - bounds.centerX;
+	float dy = y - bounds.centerY;
+	if (bounds.angle != 0) {
+		float radians = -(360.0f - bounds.angle) * (PI / 180.0f);
+		float cosA = cos(radians);
+		float sinA = sin(radians);
+		float newX = dx * cosA - dy * sinA;
+		float newY = dx * sinA + dy * cosA;
+		dx = newX;
+		dy = newY;
+	}
+	int localX = (int)(dx + bounds.hotspotX);
+	int localY = (int)(dy + bounds.hotspotY);
+	return IsPixelSolid(*maskData, width, height, localX, localY);
 }

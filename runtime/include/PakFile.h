@@ -16,6 +16,7 @@ class PakFile {
 public:
     bool Load(const std::string& filename);
     std::vector<uint8_t> GetData(const std::string& filename);
+    bool Exists(const std::string& filename);
 private:
     std::ifstream pakStream;
     std::unordered_map<std::string, PakEntry> entries;

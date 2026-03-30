@@ -92,6 +92,26 @@ int Animations::GetAutomaticRotationDirection() const {
 	return automaticRotationDirection;
 }
 
+int Animations::GetXActionPoint() const {
+	unsigned int currentImageHandle = GetCurrentImageHandle();
+	return ImageBank::Instance().GetImage(currentImageHandle)->ActionPointX;
+}
+
+int Animations::GetYActionPoint() const {
+	unsigned int currentImageHandle = GetCurrentImageHandle();
+	return ImageBank::Instance().GetImage(currentImageHandle)->ActionPointY;
+}
+
+int Animations::GetXHotspot() const {
+	unsigned int currentImageHandle = GetCurrentImageHandle();
+	return ImageBank::Instance().GetImage(currentImageHandle)->HotspotX;
+}
+
+int Animations::GetYHotspot() const {
+	unsigned int currentImageHandle = GetCurrentImageHandle();
+	return ImageBank::Instance().GetImage(currentImageHandle)->HotspotY;
+}
+
 void Animations::Start() {
 	started = true;
 }

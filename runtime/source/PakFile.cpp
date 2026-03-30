@@ -88,3 +88,7 @@ std::vector<uint8_t> PakFile::GetData(const std::string& filename) {
 	
 	return data;
 }
+
+bool PakFile::Exists(const std::string& filename) {
+	return entries.find(filename) != entries.end();
+}
