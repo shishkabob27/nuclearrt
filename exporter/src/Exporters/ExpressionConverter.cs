@@ -66,6 +66,8 @@ public class ExpressionConverter
         { (ObjectType.Game, 0),  _ => $"Index + 1" }, // Frame
         { (ObjectType.Game, 8),  _ => $"Index + 1" }, // Frame
         { (ObjectType.Game, 10), _ => "Application::Instance().GetAppData()->GetTargetFPS()" }, // FrameRate // TODO: Verify this
+		{ (ObjectType.Game, 11), _ => $"Width" }, // VirtualWidth
+		{ (ObjectType.Game, 12), _ => $"Height" }, // VirtualHeight
         { (ObjectType.Game, 14), _ => "0" }, // DisplayMode // TODO
         { (ObjectType.Game, 15), _ => "0" }, // PixelShaderVersion // TODO
 
