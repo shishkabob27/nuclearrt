@@ -44,7 +44,11 @@ public class ExpressionConverter
 	private static readonly Dictionary<(ObjectType, int), Func<Expression, string>> expressionsLookup = new()
 	{
         //Player
+		{ (ObjectType.Player, 0), e => $"Application::Instance().GetAppData()->GetPlayerScores({e.ObjectInfo})" }, // Player Score
         { (ObjectType.Player, 1), e => $"Application::Instance().GetAppData()->GetPlayerLives({e.ObjectInfo})" }, // Player Lives
+		// { (ObjectType.Player, 2), _ => "" }, // Input
+		// { (ObjectType.Player, 3), _ => "" }, // Key
+		// { (ObjectType.Player, 4), _ => "" }, // Player Name
 
         //Keyboard / Mouse
         { (ObjectType.Keyboard, 0), _ => "GetMouseX()" }, // XMouse
@@ -74,6 +78,7 @@ public class ExpressionConverter
         { (ObjectType.Game, 10), _ => "Application::Instance().GetAppData()->GetTargetFPS()" }, // FrameRate // TODO: Verify this
 		{ (ObjectType.Game, 11), _ => $"Width" }, // VirtualWidth
 		{ (ObjectType.Game, 12), _ => $"Height" }, // VirtualHeight
+		{ (ObjectType.Game, 13), _ => "BackgroundColor" }, // FrameBkdColor
         { (ObjectType.Game, 14), _ => "0" }, // DisplayMode // TODO
         { (ObjectType.Game, 15), _ => "0" }, // PixelShaderVersion // TODO
 
@@ -217,6 +222,27 @@ public class ExpressionConverter
 				return stringBuilder.Append($"{objectSelector}->Count()");
 			case 46: // Instance Value
 				return stringBuilder.Append("instance->InstanceValue");
+			case 23: // Layer
+				{
+					if (expression.ObjectInfo == eventBase.ObjectInfo && expression.ObjectInfoList == eventBase.ObjectInfoList)
+						return stringBuilder.Append("instance->Layer");
+					else
+						return stringBuilder.Append($"({objectSelector}->Count() > 0 ? (*{objectSelector}->begin())->Layer : 0)");
+				}
+			case 28: // RGBCoef
+				{
+					if (expression.ObjectInfo == eventBase.ObjectInfo && expression.ObjectInfoList == eventBase.ObjectInfoList)
+						return stringBuilder.Append("instance->RGBCoefficient");
+					else
+						return stringBuilder.Append($"({objectSelector}->Count() > 0 ? (*{objectSelector}->begin())->RGBCoefficient : 0)");
+				}
+			case 44: // OName$
+				{
+					if (expression.ObjectInfo == eventBase.ObjectInfo && expression.ObjectInfoList == eventBase.ObjectInfoList)
+						return stringBuilder.Append("instance->Name");
+					else
+						return stringBuilder.Append($"({objectSelector}->Count() > 0 ? (*{objectSelector}->begin())->Name : \"\")");
+				}
 			case 1: // Y Position
 				{
 					if (expression.ObjectInfo == eventBase.ObjectInfo && expression.ObjectInfoList == eventBase.ObjectInfoList)
@@ -383,6 +409,13 @@ public class ExpressionConverter
 						return stringBuilder.Append("instance->GetEffectParameter()");
 					else
 						return stringBuilder.Append($"({objectSelector}->Count() > 0 ? (*{objectSelector}->begin())->GetEffectParameter() : 0)");
+				}
+			case 18: // NMovement
+				{
+					if (expression.ObjectInfo == eventBase.ObjectInfo && expression.ObjectInfoList == eventBase.ObjectInfoList)
+						return stringBuilder.Append("((Active*)instance)->movements.currentMovementIndex");
+					else
+						return stringBuilder.Append($"({objectSelector}->Count() > 0 ? ((Active*)*({objectSelector}->begin()))->movements.currentMovementIndex : 0)");
 				}
 		}
 
