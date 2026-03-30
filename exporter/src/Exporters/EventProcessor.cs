@@ -22,7 +22,7 @@ public class EventProcessor
 		for (int j = 0; j < _exporter.MfaData.Frames[frameIndex].Events.Items.Count; j++)
 		{
 			var evt = _exporter.MfaData.Frames[frameIndex].Events.Items[j];
-			string eventName = $"Event_{j}";
+			string eventName = $"Event_{evt.Identifier}";
 
 			for (int k = 0; k < evt.RestrictCpt; k++) //TODO: check if this is correct
 			{
@@ -62,7 +62,7 @@ public class EventProcessor
 
 			if (evt.Conditions[0].IsOfType(new GroupStartCondition()) || evt.Conditions[0].IsOfType(new GroupEndCondition()) || evt.Conditions[0].IsOfType(new CommentCondition())) continue; //if this event is a group start or end, don't include it in the event includes
 
-			result.AppendLine($"void GeneratedFrame{frameIndex}::Event_{j}()");
+			result.AppendLine($"void GeneratedFrame{frameIndex}::Event_{evt.Identifier}()");
 			result.AppendLine("{");
 
 			if (DoesEventHaveOneActionLoop(evt))
@@ -201,7 +201,7 @@ public class EventProcessor
 					if (loopNameSanitized == loopName)
 					{
 						//TODO: Check if group is active?
-						result.AppendLine($"\tEvent_{j}();");
+						result.AppendLine($"\tEvent_{evt.Identifier}();");
 					}
 				}
 			}
@@ -334,7 +334,7 @@ public class EventProcessor
 
 			if (evt.Conditions[0].IsOfType(new GroupStartCondition()) || evt.Conditions[0].IsOfType(new GroupEndCondition()) || evt.Conditions[0].IsOfType(new CommentCondition())) continue; //if this event is a group start or end, don't include it in the event includes
 
-			result.AppendLine($"void Event_{j}();");
+			result.AppendLine($"void Event_{evt.Identifier}();");
 		}
 
 		return result.ToString();
