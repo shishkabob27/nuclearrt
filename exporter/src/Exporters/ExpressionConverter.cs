@@ -44,7 +44,7 @@ public class ExpressionConverter
 	private static readonly Dictionary<(ObjectType, int), Func<Expression, string>> expressionsLookup = new()
 	{
         //Player
-		{ (ObjectType.Player, 0), e => $"Application::Instance().GetAppData()->GetPlayerScores({e.ObjectInfo})" }, // Player Score
+		{ (ObjectType.Player, 0), e => $"Application::Instance().GetAppData()->GetPlayerScore({e.ObjectInfo})" }, // Player Score
         { (ObjectType.Player, 1), e => $"Application::Instance().GetAppData()->GetPlayerLives({e.ObjectInfo})" }, // Player Lives
 		// { (ObjectType.Player, 2), _ => "" }, // Input
 		// { (ObjectType.Player, 3), _ => "" }, // Key
@@ -115,6 +115,7 @@ public class ExpressionConverter
         { (ObjectType.System, 20), _ => "StringRight(" }, // String Right
         { (ObjectType.System, 22), _ => "StringLength(" }, // String Length
 	  	{ (ObjectType.System, 23), e => (e.Loader as DoubleExp).FloatValue.ToString() },
+		{ (ObjectType.System, 35), _ => "!" }, // NOT
         { (ObjectType.System, 29), _ => "std::abs(" }, // Abs(
         { (ObjectType.System, 40), _ => "std::min(" }, // Min(
 		{ (ObjectType.System, 24), e => $"Application::Instance().GetAppData()->GetGlobalValue({GetGlobalValueIndex(e.Loader as GlobalCommon)})" }, // Global Value
@@ -256,6 +257,13 @@ public class ExpressionConverter
 						return stringBuilder.Append("instance->X");
 					else
 						return stringBuilder.Append($"({objectSelector}->Count() > 0 ? (*{objectSelector}->begin())->X : 0)");
+				}
+			case 13: return stringBuilder.Append($"(({GetObjectClassName(expression.ObjectInfo)}*)instance)->Flags.GetFlag("); // Flag(index)
+            case 30: return stringBuilder.Append($"(({GetObjectClassName(expression.ObjectInfo)}*)instance)->Values.GetValue("); // AltValN(index)
+            case 31: return stringBuilder.Append($"(({GetObjectClassName(expression.ObjectInfo)}*)instance)->Strings.GetString("); // AltStrN(index)
+            case 19: // Alterable String (A-J)
+                {
+                    return stringBuilder.Append($"(({GetObjectClassName(expression.ObjectInfo)}*)instance)->Strings.GetString({((ShortExp)expression.Loader).Value})");
 				}
 			case 16: // Alterable Value
 				{
@@ -628,3 +636,4 @@ public class ExpressionConverter
 		return new Tuple<int, string, ObjectInstance>(objectInfo, objectName, objectInstance);
 	}
 }
+
