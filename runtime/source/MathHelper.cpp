@@ -6,7 +6,7 @@ namespace MathHelper {
         return instance;
     }
     
-    inline const Power& GetPower() {
+    const Power& GetPower() {
         static Power p;
         return p;
     }

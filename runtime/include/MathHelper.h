@@ -56,7 +56,7 @@ namespace MathHelper {
         return PowResult<T>(lhs);
     }
 
-    inline const Power& GetPower();
+    const Power& GetPower();
 
     // trig/math helpers (NOTE: ctf uses degrees, C++ uses radians)
     inline double ToRadians(double degrees) { return degrees * (3.14159265358979323846 / 180.0); }
