@@ -89,4 +89,11 @@ namespace MathHelper {
 
         return std::stoi(str);
     }
+    inline double Stod(const std::string& str) {
+        if (str.empty()) {
+            return 0.0;
+        }
+
+        return std::stod(str);
+    }
 }
