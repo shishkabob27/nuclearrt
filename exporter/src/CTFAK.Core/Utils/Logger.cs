@@ -19,7 +19,7 @@ namespace CTFAK.Utils
 		static Logger()
 		{
 			File.Delete("Latest.log");
-			_writer = new StreamWriter("Latest.log", false);
+			_writer = new StreamWriter("Latest.log", false, System.Text.Encoding.UTF8);
 			_writer.AutoFlush = true;
 		}
 
