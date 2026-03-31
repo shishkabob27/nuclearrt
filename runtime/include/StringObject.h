@@ -6,6 +6,7 @@
 #include "ObjectGlobalDataString.h"
 #include "Paragraph.h"
 #include "Shape.h"
+#include "ObjectSelector.h"
 
 class StringObject : public ObjectInstance {
 public:
@@ -40,7 +41,7 @@ public:
 		}
 	}
 
-	static std::string GetTextOfParagraph(Selector* selector, int paragraph)
+	static std::string GetTextOfParagraph(ObjectSelector* selector, int paragraph)
 	{
 		if (selector && selector->Count() > 0)
 		{
