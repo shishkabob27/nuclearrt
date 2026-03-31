@@ -5,48 +5,58 @@
 #include <algorithm>
 
 namespace MathHelper {
-    template<typename T>
-    T SafeDivide(T numerator, T denominator) {
-        if (denominator == 0) {
-            return 0;
-        }
-        T result = numerator / denominator;
-        return result;
-    }
-
-    struct SafeDivision;
-
+    
     template<typename T>
     struct SafeDivResult {
-        T value;
+        T lhs;
+        explicit SafeDivResult(T val) : lhs(val) {}
 
-        explicit SafeDivResult(T val) : value(val) {}
-
-        T operator/(T denom) const {
-            return SafeDivide(value, denom);
+        template<typename TR>
+        auto operator/(TR rhs) const {
+            // static_cast ensures we don't do integer division (matches Clickteam)
+            return (rhs == 0) ? 0.0 : (static_cast<double>(lhs) / rhs);
         }
     };
 
     struct SafeDivision {
-        SafeDivResult<int> operator/(int num) const {
-            return SafeDivResult<int>(num);
-        }
-
-        SafeDivResult<float> operator/(float num) const {
-            return SafeDivResult<float>(num);
-        }
-
-        SafeDivResult<long> operator/(long num) const {
-            return SafeDivResult<long>(num);
+        template<typename T>
+        SafeDivResult<T> operator/(T num) const {
+            return SafeDivResult<T>(num);
         }
     };
 
     template<typename T>
-    SafeDivResult<T> operator/(T num, const SafeDivision&) {
-        return SafeDivResult<T>(num);
+    SafeDivResult<T> operator/(T lhs, const SafeDivision&) {
+        return SafeDivResult<T>(lhs);
     }
 
     const SafeDivision& GetSafeDivision();
+
+
+    template<typename T>
+    struct PowResult {
+        T lhs;
+        explicit PowResult(T val) : lhs(val) {}
+
+        template<typename TR>
+        auto operator/(TR rhs) const {
+            return std::pow(lhs, rhs);
+        }
+    };
+
+    struct Power {
+        template<typename T>
+        PowResult<T> operator/(T num) const {
+            return PowResult<T>(num);
+        }
+    };
+
+    template<typename T>
+    PowResult<T> operator/(T lhs, const Power&) {
+        return PowResult<T>(lhs);
+    }
+
+    inline const Power& GetPower();
 
     // trig/math helpers (NOTE: ctf uses degrees, C++ uses radians)
     inline double ToRadians(double degrees) { return degrees * (3.14159265358979323846 / 180.0); }

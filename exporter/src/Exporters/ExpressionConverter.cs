@@ -171,7 +171,7 @@ public class ExpressionConverter
         { (ObjectType.Arithmetic, 6), _ => " * " }, // Multiply
         { (ObjectType.Arithmetic, 8), _ => " /MathHelper::GetSafeDivision()/ " }, // Division
         { (ObjectType.Arithmetic, 10), _ => " % " },
-        { (ObjectType.Arithmetic, 12), _ => "std::pow(" },
+        { (ObjectType.Arithmetic, 12), _ => " /MathHelper::GetPower()/ " },
         { (ObjectType.Arithmetic, 14), _ => " & " },
         { (ObjectType.Arithmetic, 16), _ => " | " },
         { (ObjectType.Arithmetic, 18), _ => " ^ " }
@@ -254,14 +254,32 @@ public class ExpressionConverter
 						return stringBuilder.Append($"({objectSelector}->Count() > 0 ? (*{objectSelector}->begin())->X : 0)");
 				}
 			case 13: // Flag(index)
-				return stringBuilder.Append($"(({GetObjectClassName(expression.ObjectInfo)}*)instance)->Flags.GetFlag(");
+				{
+					if (expression.ObjectInfo == eventBase.ObjectInfo && expression.ObjectInfoList == eventBase.ObjectInfoList)
+						return stringBuilder.Append($"(({GetObjectClassName(expression.ObjectInfo)}*)instance)->Flags.GetFlag(");
+					else
+						return stringBuilder.Append($"(({GetObjectClassName(expression.ObjectInfo)}*)*({objectSelector}->begin()))->Flags.GetFlag(");
+				}
 			case 30: // AltValN(index)
-				return stringBuilder.Append($"(({GetObjectClassName(expression.ObjectInfo)}*)instance)->Values.GetValue(");
+				{
+					if (expression.ObjectInfo == eventBase.ObjectInfo && expression.ObjectInfoList == eventBase.ObjectInfoList)
+						return stringBuilder.Append($"(({GetObjectClassName(expression.ObjectInfo)}*)instance)->Values.GetValue(");
+					else
+						return stringBuilder.Append($"(({GetObjectClassName(expression.ObjectInfo)}*)*({objectSelector}->begin()))->Values.GetValue(");
+				}
 			case 31: // AltStrN$(index)
-				return stringBuilder.Append($"(({GetObjectClassName(expression.ObjectInfo)}*)instance)->Strings.GetString(");
+				{
+					if (expression.ObjectInfo == eventBase.ObjectInfo && expression.ObjectInfoList == eventBase.ObjectInfoList)
+						return stringBuilder.Append($"(({GetObjectClassName(expression.ObjectInfo)}*)instance)->Strings.GetString(");
+					else
+						return stringBuilder.Append($"(({GetObjectClassName(expression.ObjectInfo)}*)*({objectSelector}->begin()))->Strings.GetString(");
+				}
 			case 19: // AltStr (alterable string A-J by fixed index)
 				{
-					return stringBuilder.Append($"(({GetObjectClassName(expression.ObjectInfo)}*)instance)->Strings.GetString({((ShortExp)expression.Loader).Value})");
+					if (expression.ObjectInfo == eventBase.ObjectInfo && expression.ObjectInfoList == eventBase.ObjectInfoList)
+						return stringBuilder.Append($"(({GetObjectClassName(expression.ObjectInfo)}*)instance)->Strings.GetString({((ShortExp)expression.Loader).Value})");
+					else
+						return stringBuilder.Append($"({objectSelector}->Count() > 0 ? (({GetObjectClassName(expression.ObjectInfo)}*)*({objectSelector}->begin()))->Strings.GetString({((ShortExp)expression.Loader).Value}) : std::string(\"\"))");
 				}
 			case 16: // AlterableValue
 				{
