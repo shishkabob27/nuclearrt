@@ -32,6 +32,7 @@ public:
     short InstanceValue = 0;
     
     bool global = false;
+	bool isSelected = false;
 private:
     unsigned char EffectParameter = 0;
 public:
