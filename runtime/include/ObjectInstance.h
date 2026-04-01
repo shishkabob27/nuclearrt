@@ -50,14 +50,9 @@ public:
     }
 
     void SetAngle(int angle) {
-        while (angle < 0) {
-            angle += 360;
-        }
-        while (angle >= 360) {
-            angle -= 360;
-        }
-        
-        Angle = angle;
+        angle %= 360;
+        if (angle < 0) angle += 360;
+        Angle = static_cast<unsigned int>(angle);
     }
 
     virtual ObjectGlobalData* CreateGlobalData() { return nullptr; };
