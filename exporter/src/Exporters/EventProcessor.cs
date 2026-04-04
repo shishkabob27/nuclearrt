@@ -33,7 +33,7 @@ public class EventProcessor
 		for (int j = 0; j < _exporter.MfaData.Frames[frameIndex].Events.Items.Count; j++)
 		{
 			var evt = _exporter.MfaData.Frames[frameIndex].Events.Items[j];
-			string eventName = $"Event_{j}";
+			string eventName = $"Event_{evt.Identifier}";
 
 			for (int k = 0; k < evt.RestrictCpt; k++) //TODO: check if this is correct
 			{
@@ -72,7 +72,7 @@ public class EventProcessor
 
 			if (ShouldSkipEvent(evt)) continue;
 
-			result.AppendLine($"void GeneratedFrame{frameIndex}::Event_{j}()");
+			result.AppendLine($"void GeneratedFrame{frameIndex}::Event_{evt.Identifier}()");
 			result.AppendLine("{");
 
 			if (DoesEventHaveOneActionLoop(evt))
@@ -211,7 +211,7 @@ public class EventProcessor
 					if (loopNameSanitized == loopName)
 					{
 						//TODO: Check if group is active?
-						result.AppendLine($"\tEvent_{j}();");
+						result.AppendLine($"\tEvent_{evt.Identifier}();");
 					}
 				}
 			}
@@ -344,7 +344,7 @@ public class EventProcessor
 
 			if (ShouldSkipEvent(evt)) continue;
 
-			result.AppendLine($"void Event_{j}();");
+			result.AppendLine($"void Event_{evt.Identifier}();");
 		}
 
 		return result.ToString();
