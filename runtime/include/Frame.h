@@ -112,19 +112,11 @@ public:
 	}
 
 	int OAngle(ObjectInstance* instance, int xTarget, int yTarget) {
-		int angle = 0;
-		int distanceX = xTarget - instance->X;
-		int distanceY = yTarget - instance->Y;
-		angle = atan2(distanceY, distanceX) * 180 / 3.14159265358979323846;
-		while (angle < 0) {
-			angle += 360;
-		}
-		while (angle >= 360) {
-			angle -= 360;
-		}
-		int result = 360 - angle;
-		if (result == 360) result = 0;
-		return result;
+		int distanceX  = xTarget - instance->X;
+		int distanceY  = yTarget - instance->Y;
+		int angle = static_cast<int>(atan2(-distanceY, distanceX) * 180 / 3.14159265358979323846);
+		angle = (angle + 360) % 360;
+		return angle;
 	}
 
 	int OAngle(std::shared_ptr<ObjectSelector> selector, int xTarget, int yTarget) {
@@ -137,7 +129,7 @@ public:
 	int ODistance(ObjectInstance* instance, int xTarget, int yTarget) {
 		int distanceX = xTarget - instance->X;
 		int distanceY = yTarget - instance->Y;
-		return sqrt(distanceX * distanceX + distanceY * distanceY);
+		return static_cast<int>(sqrt(distanceX * distanceX + distanceY * distanceY));
 	}
 
 	int ODistance(std::shared_ptr<ObjectSelector> selector, int xTarget, int yTarget) {
