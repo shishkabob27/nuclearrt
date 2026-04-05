@@ -15,6 +15,17 @@ public class EventProcessor
 		_exporter = exporter;
 	}
 
+	public bool ShouldSkipEvent(EventGroup evt)
+	{
+		if ((evt.Flags & 16384) != 0) return true; // Inactive line
+
+		foreach (var condition in evt.Conditions)
+		{
+			if (condition.IsOfType(new GroupStartCondition()) || condition.IsOfType(new GroupEndCondition()) || condition.IsOfType(new CommentCondition())) continue;
+		}
+		return false;
+	}
+
 	public string BuildEventUpdateLoop(int frameIndex, bool isTimerUpdateLoop = false)
 	{
 		var result = new StringBuilder();
@@ -30,19 +41,18 @@ public class EventProcessor
 			}
 
 			// TODO: if a group is empty, don't include it.
-			if (evt.Conditions[0].IsOfType(new GroupStartCondition())) //if this event is a group start, don't include it in the main event update loop
+			if (ShouldSkipEvent(evt))
 			{
-				result.Append($"if (IsGroupActive({(evt.Conditions[0].Items[0].Loader as Group).Id})) {{\n");
-				continue;
-			}
-			else if (evt.Conditions[0].IsOfType(new GroupEndCondition())) //if this event is a group end, don't include it in the main event update loop, just close the current group
-			{
-				result.Remove(result.Length - 1, 1); //Remove the last tab
-				result.Append("}\n");
-				continue;
-			}
-			else if (evt.Conditions[0].IsOfType(new CommentCondition()))
-			{
+				if (evt.Conditions[0].IsOfType(new GroupStartCondition())) //if this event is a group start, don't include it in the main event update loop
+				{
+					result.Append($"if (IsGroupActive({(evt.Conditions[0].Items[0].Loader as Group).Id})) {{\n");
+				}
+				else if (evt.Conditions[0].IsOfType(new GroupEndCondition())) //if this event is a group end, don't include it in the main event update loop, just close the current group
+				{
+					result.Remove(result.Length - 1, 1); //Remove the last tab
+					result.Append("}\n");
+				}
+
 				continue;
 			}
 
@@ -60,7 +70,7 @@ public class EventProcessor
 		{
 			var evt = _exporter.MfaData.Frames[frameIndex].Events.Items[j];
 
-			if (evt.Conditions[0].IsOfType(new GroupStartCondition()) || evt.Conditions[0].IsOfType(new GroupEndCondition()) || evt.Conditions[0].IsOfType(new CommentCondition())) continue; //if this event is a group start or end, don't include it in the event includes
+			if (ShouldSkipEvent(evt)) continue;
 
 			result.AppendLine($"void GeneratedFrame{frameIndex}::Event_{j}()");
 			result.AppendLine("{");
@@ -332,7 +342,7 @@ public class EventProcessor
 		{
 			var evt = _exporter.MfaData.Frames[frameIndex].Events.Items[j];
 
-			if (evt.Conditions[0].IsOfType(new GroupStartCondition()) || evt.Conditions[0].IsOfType(new GroupEndCondition()) || evt.Conditions[0].IsOfType(new CommentCondition())) continue; //if this event is a group start or end, don't include it in the event includes
+			if (ShouldSkipEvent(evt)) continue;
 
 			result.AppendLine($"void Event_{j}();");
 		}
