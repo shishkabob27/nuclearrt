@@ -42,6 +42,9 @@ public:
 		//todo: only set valid directions
 		movementDirection = directions[Application::Instance().RandomRange(0, static_cast<short>(directions.size() - 1))];
 	}
+
+	void LookAtObject(ObjectInstance* targetObject, int xOffset, int yOffset);
+	void LookAtPoint(int x, int y);
 	virtual int GetMovementDirection() { return movementDirection; } // 0-31 with 0 being right and going counter-clockwise
 	virtual void Start() {}
 	virtual void Stop() {}
