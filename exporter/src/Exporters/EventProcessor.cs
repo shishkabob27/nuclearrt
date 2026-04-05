@@ -193,12 +193,10 @@ public class EventProcessor
 		}
 
 		//Create any loop functions
-		foreach (var loopName in GetAllLoopNames(frameIndex))
+		if (HasAnyLoopEvents(frameIndex))
 		{
-			result.AppendLine($"void GeneratedFrame{frameIndex}::{loopName}_loop()");
+			result.AppendLine($"void GeneratedFrame{frameIndex}::OnLoop(const std::string& loopName)");
 			result.AppendLine("{");
-
-			//go through all events and find events that should be called in this loop
 			for (int j = 0; j < _exporter.MfaData.Frames[frameIndex].Events.Items.Count; j++)
 			{
 				var evt = _exporter.MfaData.Frames[frameIndex].Events.Items[j];
@@ -207,12 +205,8 @@ public class EventProcessor
 				{
 					if (!condition.IsOfType(new LoopCondition())) continue;
 
-					string loopNameSanitized = StringUtils.SanitizeObjectName(ExpressionConverter.ConvertExpression(condition.Items[0]?.Loader as ExpressionParameter).ToString());
-					if (loopNameSanitized == loopName)
-					{
-						//TODO: Check if group is active?
-						result.AppendLine($"\tEvent_{j}();");
-					}
+					string loopNameExpr = ExpressionConverter.ConvertExpression(condition.Items[0]?.Loader as ExpressionParameter);
+					result.AppendLine($"\tif (LoopNameEquals(loopName, {loopNameExpr})) Event_{j}();");
 				}
 			}
 
@@ -400,18 +394,18 @@ public class EventProcessor
 
 	public string BuildLoopIncludes(int frameIndex)
 	{
-		StringBuilder result = new();
+		if (!HasAnyLoopEvents(frameIndex)) return "";
 
-		List<string> loopNames = GetAllLoopNames(frameIndex);
+		return "void OnLoop(const std::string& loopName) override;\n";
+	}
 
-		foreach (var loopName in loopNames)
+	private bool HasAnyLoopEvents(int frameIndex)
+	{
+		foreach (var evt in _exporter.MfaData.Frames[frameIndex].Events.Items)
 		{
-			result.AppendLine($"bool loop_{loopName}_running = false;");
-			result.AppendLine($"int loop_{loopName}_index = 0;");
-			result.AppendLine($"void {loopName}_loop();");
+			if (DoesEventHaveLoop(evt) != null) return true;
 		}
-
-		return result.ToString();
+		return false;
 	}
 
 	public string BuildRunOnceCondition(int frameIndex)

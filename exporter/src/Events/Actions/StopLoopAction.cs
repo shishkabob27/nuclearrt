@@ -11,9 +11,9 @@ public class StopLoopAction : ActionBase
 	{
 		StringBuilder result = new();
 
-		string loopName = StringUtils.SanitizeObjectName(ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[0].Loader, eventBase).ToString());
+		string loopName = ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[0].Loader, eventBase);
 
-		result.AppendLine($"loop_{loopName}_running = false;");
+		result.AppendLine($"StopLoop({loopName});");
 
 		return result.ToString();
 	}

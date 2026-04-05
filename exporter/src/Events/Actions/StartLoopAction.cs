@@ -11,22 +11,12 @@ public class StartLoopAction : ActionBase
 	{
 		StringBuilder result = new();
 
-		string loopName = StringUtils.SanitizeObjectName(ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[0].Loader, eventBase).ToString());
+		eventBase.ObjectInfoList = -1; // NOTE: im doing this because or else object expressions will be writen as "instance->???" rather than "player_selector->begin()->???"
 
-		eventBase.ObjectInfoList = -1; // TODO: im doing this because or else it will write it as an "instance->???" rather than "player_selector->begin()->???"
+		string loopName = ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[0].Loader, eventBase);
+		string count = ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[1].Loader, eventBase);
 
-		result.AppendLine("{");
-
-		result.AppendLine($"loop_{loopName}_running = true;");
-		result.AppendLine($"loop_{loopName}_index = 0;");
-		result.AppendLine($"int loopTimes = {ExpressionConverter.ConvertExpression((ExpressionParameter)eventBase.Items[1].Loader, eventBase)};");
-		result.AppendLine($"while (loop_{loopName}_running && loop_{loopName}_index < loopTimes) {{");
-		result.AppendLine($"    {loopName}_loop();");
-		result.AppendLine($"    if (!loop_{loopName}_running) break;");
-		result.AppendLine($"    loop_{loopName}_index++;");
-		result.AppendLine("}");
-
-		result.AppendLine("}");
+		result.AppendLine($"StartLoop({loopName}, {count});");
 
 		return result.ToString();
 	}
